@@ -25,3 +25,5 @@ fun randomNonceString(length: Int = 32): String {
         .map { charset.random() }
         .joinToString("")
 }
+
+expect fun sha256(text: String): String

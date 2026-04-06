@@ -1,47 +1,39 @@
 package com.garrettbutchko.minimate.utilities
 
-import android.graphics.Bitmap
-import android.graphics.Color
-import java.io.ByteArrayOutputStream
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.dp
 
-actual fun generateQRCodeData(string: String): ByteArray {
-    val bitmap = generateQRCodeBitmap(string) ?: return ByteArray(0)
-    val stream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-    return stream.toByteArray()
+fun generateQRCodeImageBitmap(string: String): ImageBitmap? {
+    val bytes = generateQRCodeData(string)
+    if (bytes.isEmpty()) return null
+
+    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    return bitmap?.asImageBitmap()
 }
 
-fun generateQRCodeBitmap(string: String): Bitmap? {
-    // Note: Android does not have a native QR code generator built into the OS.
-    // To implement this fully on Android, you will need to add a library such as ZXing to your common/android dependencies.
-    // Example: implementation("com.google.zxing:core:3.5.3")
-    //
-    // Then you can uncomment the following code:
-    /*
-    try {
-        val hints = mapOf(
-            com.google.zxing.EncodeHintType.ERROR_CORRECTION to com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.M
-        )
-        val bitMatrix = com.google.zxing.MultiFormatWriter().encode(
-            string,
-            com.google.zxing.BarcodeFormat.QR_CODE,
-            512,
-            512,
-            hints
-        )
-        val width = bitMatrix.width
-        val height = bitMatrix.height
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
-        for (x in 0 until width) {
-            for (y in 0 until height) {
-                bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
-            }
-        }
-        return bitmap
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return null
+@Composable
+fun QRCodeDisplay(qrDataString: String) {
+    // 1. Convert the string to an ImageBitmap (using your function)
+    val qrCodeBitmap = remember(qrDataString) {
+        generateQRCodeImageBitmap(qrDataString)
     }
-    */
-    return null
+
+    if (qrCodeBitmap != null) {
+        // 2. Display it using the Compose Image component
+        Image(
+            bitmap = qrCodeBitmap,
+            contentDescription = "QR Code for $qrDataString",
+            modifier = Modifier.size(200.dp)
+        )
+    } else {
+        Text("Failed to load QR Code")
+    }
 }

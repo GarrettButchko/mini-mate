@@ -3,7 +3,7 @@
 package com.garrettbutchko.minimate.viewModelsiOSAddOns
 
 import co.touchlab.kermit.Logger
-import com.garrettbutchko.minimate.datamodels.UserModel
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.utilities.randomNonceString
 import com.garrettbutchko.minimate.utilities.sha256
 import dev.gitlive.firebase.auth.OAuthProvider

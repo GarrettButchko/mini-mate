@@ -1,4 +1,14 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
+val mapsApiKey = localProperties.getProperty("MAPS_API_KEY").orEmpty()
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -18,7 +28,9 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.androidx.material.icons.extended)
             implementation(libs.androidx.activity.compose)
+
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -48,6 +60,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        manifestPlaceholders["googleMapsApiKey"] = mapsApiKey
     }
     packaging {
         resources {
@@ -68,6 +81,7 @@ android {
 dependencies {
     implementation(projects.shared)
     implementation(projects.sharedUser)
+    implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.compose.uiTooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.analytics)

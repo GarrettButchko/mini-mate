@@ -31,12 +31,12 @@ kotlin {
 
         commonMain.dependencies {
             implementation(libs.androidx.room.runtime)
-            implementation("co.touchlab:kermit:2.0.2")
+            implementation(libs.kermit)
             api(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
             
             // SKIE Annotations
-            implementation("co.touchlab.skie:configuration-annotations:0.10.10")
+            implementation(libs.configuration.annotations)
 
             // Room SQLite
             implementation(libs.androidx.room.runtime)
@@ -61,13 +61,18 @@ kotlin {
         }
 
         androidMain.dependencies {
-            implementation("com.google.android.libraries.places:places:4.1.0")
-            implementation("com.google.maps.android:maps-compose:6.12.0")
+
+            implementation(libs.androidx.material.icons.extended)
+            implementation(libs.places)
+            implementation(libs.maps.compose)
             implementation(libs.compose.ui)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.androidx.appcompat)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.auth)
+            implementation(libs.google.id)
             api("io.insert-koin:koin-android")
         }
 

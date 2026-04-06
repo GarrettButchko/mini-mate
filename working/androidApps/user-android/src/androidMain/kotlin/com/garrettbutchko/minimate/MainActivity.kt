@@ -3,8 +3,9 @@ package com.garrettbutchko.minimate
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.garrettbutchko.minimate.views.App
+import com.garrettbutchko.minimate.content.App
 import com.garrettbutchko.minimate.di.initKoin
+import com.garrettbutchko.minimate.utilities.NetworkChecker
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext
@@ -19,6 +20,7 @@ class MainActivity : ComponentActivity() {
                 androidLogger()
             }
         }
+        NetworkChecker.initialize(applicationContext)
 
         setContent {
             App()

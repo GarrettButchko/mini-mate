@@ -53,7 +53,6 @@ class GameViewModel(
     val localGameRepository: LocalGameRepository,
     val courseRepo: CourseRepository,
     val analyticsRepo: AnalyticsRepository,
-    val remoteUserRepo: RemoteUserRepository,
     val locationHandler: LocationFinding,
     val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main),
     initialGame: Game = Game(
@@ -84,10 +83,6 @@ class GameViewModel(
     private var isDismissing: Boolean = false
     private var listenerJob: Job? = null
 
-
-    fun setHasLoaded(loaded: Boolean) {
-        hasLoaded = loaded
-    }
 
     fun setCourse(newCourse: Course?) {
         _course.value = newCourse
@@ -615,7 +610,7 @@ class GameViewModel(
         val fetchedCourse: Course? = courseRepo.fetchCourse(id = courseID, mapItem = placeDTO)
 
         setCourse(fetchedCourse)
-        setHasLoaded(true)
+        hasLoaded = true
     }
 
     suspend fun setUp() {
@@ -626,7 +621,7 @@ class GameViewModel(
 
     suspend fun searchNearby(isLoading1: (Boolean) -> Unit, isLoading2: (Boolean) -> Unit) {
         isLoading1(true)
-        setHasLoaded(false)
+        hasLoaded = false
         try {
             findClosestLocationAndLoadCourse()
         } finally {

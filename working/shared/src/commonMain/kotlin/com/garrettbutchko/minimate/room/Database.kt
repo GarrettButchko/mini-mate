@@ -3,9 +3,9 @@ package com.garrettbutchko.minimate.room
 import androidx.room.*
 import com.garrettbutchko.minimate.room.dao.GameDao
 import com.garrettbutchko.minimate.room.dao.UserDao
-import com.garrettbutchko.minimate.datamodels.*
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 

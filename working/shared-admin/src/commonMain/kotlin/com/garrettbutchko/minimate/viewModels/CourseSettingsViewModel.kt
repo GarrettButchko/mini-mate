@@ -4,7 +4,6 @@ import com.garrettbutchko.minimate.Platform
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialLink
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
-import com.garrettbutchko.minimate.di.platformModule
 import com.garrettbutchko.minimate.repositories.CourseRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

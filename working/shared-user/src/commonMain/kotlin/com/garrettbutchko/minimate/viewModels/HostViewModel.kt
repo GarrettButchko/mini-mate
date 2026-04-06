@@ -186,7 +186,7 @@ class HostViewModel(
     }
 
     fun searchNearby() {
-        gameModel.setHasLoaded(false)
+        gameModel.hasLoaded = false
         coroutineScope.launch {
             gameModel.findClosestLocationAndLoadCourse()
             resetTimer()
@@ -220,7 +220,7 @@ class HostViewModel(
         
         if (gameModel.course.value == null && !gameModel.hasLoaded) {
             gameModel.findClosestLocationAndLoadCourse()
-            gameModel.setHasLoaded(true)
+            gameModel.hasLoaded = true
         }
     }
 

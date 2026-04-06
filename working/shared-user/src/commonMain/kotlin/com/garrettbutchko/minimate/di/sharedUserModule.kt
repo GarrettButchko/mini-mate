@@ -40,7 +40,6 @@ val sharedUserModule = module {
             localGameRepository = get(),
             courseRepo = get(),
             analyticsRepo = get(),
-            remoteUserRepo = get(),
             locationHandler = get()
         )
     }

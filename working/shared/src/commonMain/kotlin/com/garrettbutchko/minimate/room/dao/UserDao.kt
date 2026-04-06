@@ -1,7 +1,7 @@
 package com.garrettbutchko.minimate.room.dao
 
 import androidx.room.*
-import com.garrettbutchko.minimate.datamodels.UserModel
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 
 @Dao
 interface UserDao {

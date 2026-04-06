@@ -1,7 +1,7 @@
 package com.garrettbutchko.minimate.repositories.userRepos
 
 import co.touchlab.kermit.Logger
-import com.garrettbutchko.minimate.datamodels.UserModel
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.datamodels.UserDTO
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth

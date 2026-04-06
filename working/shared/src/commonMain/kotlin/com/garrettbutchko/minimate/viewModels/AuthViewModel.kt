@@ -3,7 +3,7 @@ package com.garrettbutchko.minimate.viewModels
 import co.touchlab.skie.configuration.annotations.DefaultArgumentInterop
 import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
-import com.garrettbutchko.minimate.datamodels.UserModel
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.enums.SignInMethod
 import com.garrettbutchko.minimate.repositories.FirebaseAuthRepository
 import com.garrettbutchko.minimate.repositories.userRepos.UserRepository
@@ -42,6 +42,9 @@ open class AuthViewModel(
     private val _firebaseUser = MutableStateFlow<FirebaseUser?>(authRepository.currentUser)
     val firebaseUser: StateFlow<FirebaseUser?> = _firebaseUser.asStateFlow()
 
+    private val _currentUserIdentifier = MutableStateFlow(authRepository.currentUser?.uid)
+    val currentUserIdentifierFlow: StateFlow<String?> = _currentUserIdentifier.asStateFlow()
+
     private val _userModel = MutableStateFlow<UserModel?>(null)
     val userModel: StateFlow<UserModel?> = _userModel.asStateFlow()
 
@@ -51,7 +54,11 @@ open class AuthViewModel(
     var currentNonce: String? = null
 
     val currentUserIdentifier: String?
-        get() = _firebaseUser.value?.uid
+        get() = _currentUserIdentifier.value
+
+    private fun syncCurrentUserIdentifier() {
+        _currentUserIdentifier.value = _firebaseUser.value?.uid
+    }
 
     fun setUserModel(userModel: UserModel?) {
         _userModel.value = userModel
@@ -70,6 +77,7 @@ open class AuthViewModel(
 
     fun refreshUID() {
         _firebaseUser.value = authRepository.currentUser
+        syncCurrentUserIdentifier()
     }
 
     suspend fun refreshVerificationStatus(): Boolean {
@@ -80,6 +88,7 @@ open class AuthViewModel(
         val result = authRepository.createUser(email, password)
         if (result.isSuccess) {
             _firebaseUser.value = result.getOrNull()
+            syncCurrentUserIdentifier()
         }
         return result
     }
@@ -88,6 +97,7 @@ open class AuthViewModel(
         val result = authRepository.signIn(email, password)
         if (result.isSuccess) {
             _firebaseUser.value = result.getOrNull()
+            syncCurrentUserIdentifier()
         }
         return result
     }
@@ -96,6 +106,7 @@ open class AuthViewModel(
         coroutineScope.launch {
             authRepository.logout()
             _firebaseUser.value = null
+            syncCurrentUserIdentifier()
         }
     }
 
@@ -105,6 +116,7 @@ open class AuthViewModel(
             val result = authRepository.deleteAccount(credential)
             if (result.isSuccess) {
                 _firebaseUser.value = null
+                syncCurrentUserIdentifier()
             }
             result
         } else {
@@ -143,6 +155,7 @@ open class AuthViewModel(
             if (result.isSuccess) {
                 val user = result.getOrNull()
                 _firebaseUser.value = user
+                syncCurrentUserIdentifier()
                 completion(Result.success(user))
             } else {
                 completion(Result.failure(result.exceptionOrNull() ?: Exception("Unknown error during Google sign in")))

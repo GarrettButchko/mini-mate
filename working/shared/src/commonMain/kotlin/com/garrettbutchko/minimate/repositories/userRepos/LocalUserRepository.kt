@@ -2,7 +2,7 @@ package com.garrettbutchko.minimate.repositories.userRepos
 
 import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.room.dao.UserDao
-import com.garrettbutchko.minimate.datamodels.UserModel
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import dev.gitlive.firebase.firestore.Timestamp
 
 class LocalUserRepository(private val userDao: UserDao) {

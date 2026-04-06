@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.holeModels.Hole
 import com.garrettbutchko.minimate.dataModels.playerModels.Player
-import com.garrettbutchko.minimate.datamodels.UserModel
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.extensions.toInstant
 import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
 import com.garrettbutchko.minimate.repositories.gameRepos.RemoteGameRepository

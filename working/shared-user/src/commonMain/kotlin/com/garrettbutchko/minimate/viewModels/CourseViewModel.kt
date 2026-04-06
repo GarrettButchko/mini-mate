@@ -22,11 +22,14 @@ class CourseViewModel(
     private val mapActions: CourseMapActions,
     private val locationHandler: LocationFinding
 ) {
+    val mapItems: StateFlow<List<MapItemDTO>> = locationHandler.mapItems
+
     private val _nameExists = MutableStateFlow<Map<String, Boolean>>(emptyMap())
     val nameExists: StateFlow<Map<String, Boolean>> = _nameExists.asStateFlow()
 
     private val _position = MutableStateFlow<MapRegionData?>(null)
     val position: StateFlow<MapRegionData?> = _position.asStateFlow()
+    val hasLocationAccess: StateFlow<Boolean> = locationHandler.hasLocationAccess
 
     private val _isUpperHalf = MutableStateFlow(false)
     val isUpperHalf: StateFlow<Boolean> = _isUpperHalf.asStateFlow()
@@ -44,10 +47,6 @@ class CourseViewModel(
 
     fun setNameExists(value: Map<String, Boolean>) {
         _nameExists.value = value
-    }
-
-    fun setPosition(value: MapRegionData?) {
-        _position.value = value
     }
 
     fun setIsUpperHalf(value: Boolean) {
@@ -86,10 +85,15 @@ class CourseViewModel(
         if (!_hasAppeared.value) {
             _hasAppeared.value = true
             _isUpperHalf.value = false
+            locationHandler.requestLocationAccess()
             locationHandler.setMapItems(emptyList())
             locationHandler.setSelectedItem(null)
             _position.value = locationHandler.updateCameraRegion()
         }
+    }
+
+    fun requestLocationAccess() {
+        locationHandler.requestLocationAccess()
     }
 
     fun setPosition(position: MapRegionData) {
@@ -97,14 +101,16 @@ class CourseViewModel(
     }
 
     fun searchNearby() {
+        println("[CourseViewModel] searchNearby() start userLocation=${locationHandler.userLocation.value}")
         _isLoadingCourses.value = true
         _isUpperHalf.value = true
         
         locationHandler.searchNearbyCourses(0.03, 0.1, 0.1) { success, newPosition ->
+            println("[CourseViewModel] searchNearby() completion success=$success items=${locationHandler.mapItems.value.size} newPosition=$newPosition")
             if (newPosition != null) {
                 _position.value = newPosition
             }
-            _isLoadingCourses.value = !success
+            _isLoadingCourses.value = false
         }
     }
 

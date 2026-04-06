@@ -1,0 +1,342 @@
+package com.garrettbutchko.minimate.utilities
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Looper
+import androidx.core.content.ContextCompat
+import com.garrettbutchko.minimate.dataModels.MapRegionData
+import com.garrettbutchko.minimate.dataModels.mapModels.CoordinateDTO
+import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
+import com.garrettbutchko.minimate.interfaces.LocationFinding
+import com.garrettbutchko.minimate.modelKotlinExtensions.toDTO
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.CircularBounds
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.api.net.SearchByTextRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import com.google.android.gms.maps.model.LatLng
+
+class LocationHandler(private val context: Context) : LocationFinding {
+
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private var updatesRegistered = false
+
+    private val locationListener = LocationListener { location ->
+        val coordinate = CoordinateDTO(
+            latitude = location.latitude,
+            longitude = location.longitude
+        )
+        _userLocation.value = coordinate
+        println("[LocationHandler] location update lat=${coordinate.latitude} lng=${coordinate.longitude}")
+    }
+
+    // It's assumed Places.initialize() has been called in the Application class
+    private val placesClient: PlacesClient by lazy {
+        ensurePlacesInitialized()
+        Places.createClient(context)
+    }
+
+    private fun ensurePlacesInitialized() {
+        if (Places.isInitialized()) return
+
+        val keyFromManifest = runCatching {
+            val appInfo = context.packageManager.getApplicationInfo(
+                context.packageName,
+                PackageManager.GET_META_DATA
+            )
+            appInfo.metaData?.getString("com.google.android.geo.API_KEY")
+        }.getOrNull()
+
+        val keyFromResources = runCatching {
+            val keyResId = context.resources.getIdentifier("google_api_key", "string", context.packageName)
+            if (keyResId != 0) context.getString(keyResId) else null
+        }.getOrNull()
+
+        val apiKey = (keyFromManifest ?: keyFromResources).orEmpty().trim()
+        if (apiKey.isBlank()) {
+            throw IllegalStateException("Missing Google Places API key. Set com.google.android.geo.API_KEY in AndroidManifest or provide string/google_api_key.")
+        }
+
+        Places.initialize(context.applicationContext, apiKey)
+        println("[LocationHandler] Places initialized")
+    }
+
+    private val _mapItems = MutableStateFlow<List<MapItemDTO>>(emptyList())
+    override val mapItems: StateFlow<List<MapItemDTO>> = _mapItems.asStateFlow()
+
+    private val _selectedItem = MutableStateFlow<MapItemDTO?>(null)
+    override val selectedItem: StateFlow<MapItemDTO?> = _selectedItem.asStateFlow()
+
+    private val _userLocation = MutableStateFlow<CoordinateDTO?>(null)
+    override val userLocation: StateFlow<CoordinateDTO?> = _userLocation.asStateFlow()
+
+    private val _hasLocationAccess = MutableStateFlow(false)
+    override val hasLocationAccess: StateFlow<Boolean> = _hasLocationAccess.asStateFlow()
+
+    override fun setMapItems(items: List<MapItemDTO>) {
+        _mapItems.value = items
+    }
+
+    override fun setSelectedItem(item: MapItemDTO?) {
+        _selectedItem.value = item
+    }
+
+    fun setUserLocation(location: CoordinateDTO?) {
+        _userLocation.value = location
+    }
+
+    fun setHasLocationAccess(hasAccess: Boolean) {
+        _hasLocationAccess.value = hasAccess
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun requestLocationAccess() {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasAccess = fineGranted || coarseGranted
+
+        _hasLocationAccess.value = hasAccess
+        println("[LocationHandler] requestLocationAccess hasAccess=$hasAccess")
+        if (!hasAccess) {
+            return
+        }
+
+        val bestLastKnown = listOf(
+            LocationManager.GPS_PROVIDER,
+            LocationManager.NETWORK_PROVIDER,
+            LocationManager.PASSIVE_PROVIDER
+        ).mapNotNull { provider ->
+            runCatching { locationManager.getLastKnownLocation(provider) }.getOrNull()
+        }.maxByOrNull { it.time }
+
+        if (bestLastKnown != null) {
+            _userLocation.value = CoordinateDTO(bestLastKnown.latitude, bestLastKnown.longitude)
+            println("[LocationHandler] lastKnown location lat=${bestLastKnown.latitude} lng=${bestLastKnown.longitude}")
+        }
+
+        if (!updatesRegistered) {
+            updatesRegistered = true
+            runCatching {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    5_000L,
+                    10f,
+                    locationListener,
+                    Looper.getMainLooper()
+                )
+            }
+            runCatching {
+                locationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    5_000L,
+                    10f,
+                    locationListener,
+                    Looper.getMainLooper()
+                )
+            }
+        }
+    }
+
+    override fun getPostalAddress(mapItem: MapItemDTO): String {
+        return mapItem.address?.fullAddress ?: ""
+    }
+
+    override fun updateCameraRegion(): MapRegionData? {
+        val selected = _selectedItem.value
+        if (selected != null) {
+            return MapRegionData(
+                latitude = selected.coordinate.latitude - 0.00175,
+                longitude = selected.coordinate.longitude,
+                latitudeDelta = 0.005,
+                longitudeDelta = 0.005
+            )
+        } else if (_mapItems.value.isNotEmpty()) {
+            val items = _mapItems.value
+            val minLat = items.minOfOrNull { it.coordinate.latitude } ?: 0.0
+            val maxLat = items.maxOfOrNull { it.coordinate.latitude } ?: 0.0
+            val minLon = items.minOfOrNull { it.coordinate.longitude } ?: 0.0
+            val maxLon = items.maxOfOrNull { it.coordinate.longitude } ?: 0.0
+
+            val latRange = maxLat - minLat
+            val lonRange = maxLon - minLon
+
+            val latDelta = latRange * 1.5
+            val lonDelta = lonRange * 1.5
+
+            return MapRegionData(
+                latitude = minLat + (latRange / 2),
+                longitude = minLon + (lonRange / 2),
+                latitudeDelta = if (latDelta == 0.0) 0.05 else latDelta,
+                longitudeDelta = if (lonDelta == 0.0) 0.05 else lonDelta
+            )
+        } else if (_userLocation.value != null) {
+            val userLoc = _userLocation.value
+            return MapRegionData(
+                latitude = userLoc?.latitude ?: 0.0,
+                longitude = userLoc?.longitude ?: 0.0,
+                latitudeDelta = 0.05,
+                longitudeDelta = 0.05
+            )
+        }
+        return null
+    }
+
+    override fun searchNearbyCourses(
+        upwardOffset: Double,
+        latitudeDelta: Double,
+        longitudeDelta: Double,
+        completion: (Boolean, MapRegionData?) -> Unit
+    ) {
+        val userLoc = _userLocation.value
+        println("[LocationHandler] searchNearbyCourses start userLocation=$userLoc mapItems=${_mapItems.value.size}")
+        if (userLoc == null) {
+            println("[LocationHandler] searchNearbyCourses aborted: user location is null")
+            requestLocationAccess()
+            completion(false, null)
+            return
+        }
+
+        val placeFields = listOf(
+            Place.Field.ID, 
+            Place.Field.DISPLAY_NAME, 
+            Place.Field.LOCATION, 
+            Place.Field.FORMATTED_ADDRESS,
+            Place.Field.SHORT_FORMATTED_ADDRESS,
+            Place.Field.NATIONAL_PHONE_NUMBER,
+            Place.Field.WEBSITE_URI
+        )
+
+        // Using SearchByTextRequest to search for "mini golf" around the user
+        val request = SearchByTextRequest.builder("mini golf", placeFields)
+            .setLocationBias(
+                CircularBounds.newInstance(
+                    LatLng(userLoc.latitude + upwardOffset, userLoc.longitude),
+                    50000.0 // 50km radius
+                )
+            )
+            .build()
+
+        val client = runCatching { placesClient }
+            .onFailure { error ->
+                println("[LocationHandler] Places client init failure: ${error.message}")
+            }
+            .getOrNull()
+
+        if (client == null) {
+            completion(false, null)
+            return
+        }
+
+        client.searchByText(request)
+            .addOnSuccessListener { response ->
+                val places = response.places
+                println("[LocationHandler] Places success count=${places.size}")
+                val userLocationObj = Location("").apply {
+                    latitude = userLoc.latitude
+                    longitude = userLoc.longitude
+                }
+
+                val dtos = places.sortedBy { place ->
+                    val placeLoc = Location("").apply {
+                        latitude = place.location?.latitude ?: 0.0
+                        longitude = place.location?.longitude ?: 0.0
+                    }
+                    userLocationObj.distanceTo(placeLoc)
+                }.map { it.toDTO() }
+
+                _mapItems.value = dtos
+                println("[LocationHandler] mapped dto count=${dtos.size}")
+                completion(true, updateCameraRegion())
+            }
+            .addOnFailureListener { error ->
+                println("[LocationHandler] Places failure: ${error.message}")
+                error.printStackTrace()
+                completion(false, null)
+            }
+    }
+
+    override fun findClosestMiniGolf(completion: (MapItemDTO?) -> Unit) {
+        val userLoc = _userLocation.value
+        if (userLoc == null) {
+            requestLocationAccess()
+            completion(null)
+            return
+        }
+
+        val placeFields = listOf(
+            Place.Field.ID, 
+            Place.Field.DISPLAY_NAME, 
+            Place.Field.LOCATION, 
+            Place.Field.FORMATTED_ADDRESS,
+            Place.Field.SHORT_FORMATTED_ADDRESS,
+            Place.Field.NATIONAL_PHONE_NUMBER,
+            Place.Field.WEBSITE_URI
+        )
+
+        val request = SearchByTextRequest.builder("mini golf", placeFields)
+            .setLocationBias(
+                CircularBounds.newInstance(
+                    LatLng(userLoc.latitude, userLoc.longitude),
+                    8046.72 // 5 miles in meters
+                )
+            )
+            .setMaxResultCount(10)
+            .build()
+
+        val client = runCatching { placesClient }
+            .onFailure { error ->
+                println("[LocationHandler] Places client init failure: ${error.message}")
+            }
+            .getOrNull()
+
+        if (client == null) {
+            completion(null)
+            return
+        }
+
+        client.searchByText(request)
+            .addOnSuccessListener { response ->
+                val places = response.places
+                if (places.isEmpty()) {
+                    completion(null)
+                    return@addOnSuccessListener
+                }
+                
+                val userLocationObj = Location("").apply {
+                    latitude = userLoc.latitude
+                    longitude = userLoc.longitude
+                }
+
+                val closest = places.minByOrNull { place ->
+                    val placeLoc = Location("").apply {
+                        latitude = place.location?.latitude ?: 0.0
+                        longitude = place.location?.longitude ?: 0.0
+                    }
+                    userLocationObj.distanceTo(placeLoc)
+                }
+
+                completion(closest?.toDTO())
+            }
+            .addOnFailureListener {
+                it.printStackTrace()
+                completion(null)
+            }
+    }
+}

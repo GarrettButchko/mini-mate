@@ -5,7 +5,7 @@ package com.garrettbutchko.minimate.utilities
 import kotlinx.cinterop.*
 import platform.CoreCrypto.*
 
-fun sha256(text: String): String {
+actual fun sha256(text: String): String {
     val data = text.encodeToByteArray()
     val hash = ByteArray(CC_SHA256_DIGEST_LENGTH)
     

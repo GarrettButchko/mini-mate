@@ -80,10 +80,6 @@ class LocationHandler : LocationFinding {
     }
 
     override fun setSelectedItem(item: MapItemDTO?) {
-        _selectedMapItemToKotlin(item)
-    }
-    
-    private fun _selectedMapItemToKotlin(item: MapItemDTO?) {
         _selectedItem.value = item
     }
 
