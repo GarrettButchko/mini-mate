@@ -7,6 +7,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.content.ContextCompat
 import com.garrettbutchko.minimate.dataModels.MapRegionData
 import com.garrettbutchko.minimate.dataModels.mapModels.CoordinateDTO
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.google.android.gms.maps.model.LatLng
+import kotlin.text.toDouble
 
 class LocationHandler(private val context: Context) : LocationFinding {
 
@@ -161,30 +163,58 @@ class LocationHandler(private val context: Context) : LocationFinding {
     override fun updateCameraRegion(): MapRegionData? {
         val selected = _selectedItem.value
         if (selected != null) {
+
+            // Fixed span roughly equivalent to 500m distance for a detail view
+            val latitudeDelta = 0.005
+            val longitudeDelta = 0.005
+
+            // Consistent with computeBoundingRegion:
+            // puts the coordinate at 15% from the top of the map view.
+            val topPaddingFactor = 0.3
+            val centerLat = selected.coordinate.latitude - (latitudeDelta * (0.5 - topPaddingFactor))
+
             return MapRegionData(
-                latitude = selected.coordinate.latitude - 0.00175,
+                latitude = centerLat,
                 longitude = selected.coordinate.longitude,
-                latitudeDelta = 0.005,
-                longitudeDelta = 0.005
+                latitudeDelta = latitudeDelta,
+                longitudeDelta = longitudeDelta
             )
         } else if (_mapItems.value.isNotEmpty()) {
             val items = _mapItems.value
-            val minLat = items.minOfOrNull { it.coordinate.latitude } ?: 0.0
-            val maxLat = items.maxOfOrNull { it.coordinate.latitude } ?: 0.0
-            val minLon = items.minOfOrNull { it.coordinate.longitude } ?: 0.0
-            val maxLon = items.maxOfOrNull { it.coordinate.longitude } ?: 0.0
+
+
+            // 2. Find the raw bounds
+            val minLat = items.minOf { it.coordinate.latitude }
+            val maxLat = items.maxOf { it.coordinate.latitude }
+            val minLon = items.minOf { it.coordinate.longitude }
+            val maxLon = items.maxOf { it.coordinate.longitude }
 
             val latRange = maxLat - minLat
             val lonRange = maxLon - minLon
+            val topPaddingFactor = 0.3
+            val bottomPaddingFactor = 0.1
 
-            val latDelta = latRange * 1.5
-            val lonDelta = lonRange * 1.5
+            val paddedLatDelta = latRange / 0.5
+
+            val topPadding = paddedLatDelta * topPaddingFactor
+            val bottomPadding = paddedLatDelta * bottomPaddingFactor
+            val latitudeDelta = paddedLatDelta + topPadding + bottomPadding
+
+            val horizontalPaddingPoints = 50.0
+            val screenWidthPoints = context.resources.configuration.screenWidthDp.toDouble()
+            val horizontalPaddingFraction = horizontalPaddingPoints / screenWidthPoints
+
+            val longitudeDelta = lonRange * (1.0 + horizontalPaddingFraction * 2.0)
+
+            val regionTop = maxLat + topPadding
+            val centerLat = regionTop - latitudeDelta * 0.5
+            val centerLon = (minLon + maxLon) / 2.0
 
             return MapRegionData(
-                latitude = minLat + (latRange / 2),
-                longitude = minLon + (lonRange / 2),
-                latitudeDelta = if (latDelta == 0.0) 0.05 else latDelta,
-                longitudeDelta = if (lonDelta == 0.0) 0.05 else lonDelta
+                latitude = centerLat,
+                longitude = centerLon,
+                latitudeDelta = latitudeDelta,
+                longitudeDelta = longitudeDelta
             )
         } else if (_userLocation.value != null) {
             val userLoc = _userLocation.value
@@ -197,6 +227,8 @@ class LocationHandler(private val context: Context) : LocationFinding {
         }
         return null
     }
+
+
 
     override fun searchNearbyCourses(
         upwardOffset: Double,

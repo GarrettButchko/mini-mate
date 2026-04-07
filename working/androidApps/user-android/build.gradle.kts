@@ -30,6 +30,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.material.icons.extended)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.maps.compose)
 
         }
         commonMain.dependencies {

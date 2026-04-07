@@ -8,7 +8,6 @@ import Combine
 import shared_user
 
 struct ScoreCardView: View {
-    @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
     
     @EnvironmentObject var viewManager: ViewManagerSwift

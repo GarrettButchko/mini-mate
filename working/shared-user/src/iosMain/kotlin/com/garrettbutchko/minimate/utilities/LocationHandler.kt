@@ -296,6 +296,7 @@ class LocationHandler : LocationFinding {
         val bottomPaddingFactor = 0.1
 
         val paddedLatDelta = latRange / 0.5
+
         val topPadding = paddedLatDelta * topPaddingFactor
         val bottomPadding = paddedLatDelta * bottomPaddingFactor
         val latitudeDelta = paddedLatDelta + topPadding + bottomPadding

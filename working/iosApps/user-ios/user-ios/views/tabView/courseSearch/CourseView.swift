@@ -16,7 +16,8 @@ struct CourseView: View {
     @StateObject var courseSearch = CourseSearchViewModelSwift()
     
     let courseRepo = CourseRepository()
-    
+    private let mapAnimation = Animation.easeInOut(duration: 0.35)
+
     var body: some View {
         GeometryReader { geometry in
             if courseSearch.hasLocationAccess {
@@ -60,12 +61,12 @@ struct CourseView: View {
                             .cardShadow()
                             .frame(height: geometry.size.height * 0.4)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
-                            .animation(.spring, value: courseSearch.selectedMapItem)
+                            .animation(mapAnimation, value: courseSearch.selectedMapItem)
                         }
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 30)
-                    .animation(.spring, value: courseSearch.isSearchPanelVisible)
+                    .animation(mapAnimation, value: courseSearch.isSearchPanelVisible)
                 }
             } else {
                 VStack {
@@ -149,7 +150,7 @@ struct CourseView: View {
                 }
             }
         }
-        .animation(.spring, value: courseSearch.mapCameraPosition)
+        .animation(mapAnimation, value: courseSearch.mapCameraPosition)
     }
 }
 

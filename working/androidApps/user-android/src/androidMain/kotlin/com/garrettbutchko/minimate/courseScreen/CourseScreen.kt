@@ -4,9 +4,14 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,16 +39,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MyLocation
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import com.garrettbutchko.minimate.dataModels.MapRegionData
+import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
+import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import kotlin.math.log2
+import kotlin.math.min
 import org.koin.core.context.GlobalContext
 
 @Composable
@@ -56,6 +74,7 @@ fun CourseScreen(
     val position by courseVM.position.collectAsState()
     val isUpperHalf by courseVM.isUpperHalf.collectAsState()
     val selectedCourse by courseVM.selectedCourse.collectAsState()
+    val selectedMapItem by courseVM.selectedMapItem.collectAsState()
     val nameExists by courseVM.nameExists.collectAsState()
     val isLoadingCourses by courseVM.isLoadingCourses.collectAsState()
     val mapItems by courseVM.mapItems.collectAsState()
@@ -111,13 +130,19 @@ fun CourseScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (hasLocationAccess) {
-            // Map placeholder
-            MapPlaceholder(position = position)
+            CourseMap(
+                position = position,
+                mapItems = mapItems,
+                selectedMapItem = selectedMapItem,
+                hasLocationAccess = hasLocationAccess,
+                onSelectMapItem = { courseVM.updatePosition(it) }
+            )
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .padding(bottom = 16.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // Top header
@@ -133,8 +158,7 @@ fun CourseScreen(
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            // 1. NO WEIGHT HERE - This lets it wrap the content
-                            .shadow(8.dp, RoundedCornerShape(25.dp))
+                            .shadow(8.dp, CircleShape)
                             .background(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                                 RoundedCornerShape(25.dp)
@@ -143,58 +167,68 @@ fun CourseScreen(
                     )
 
                     LocationButton(
-                        viewModel = courseVM,
                         hasLocationAccess = hasLocationAccess,
                         onRequestPermission = requestPermissions
                     )
                 }
-
-                // Bottom search panel
-                AnimatedVisibility(
-                    visible = !isUpperHalf,
-                    enter = slideInVertically(initialOffsetY = { it }),
-                    exit = slideOutVertically(targetOffsetY = { it })
-                ) {
-                    CourseSearchButton(
-                        isLoading = isLoadingCourses,
-                        onSearch = {
-                            if (hasLocationAccess) {
-                                courseVM.searchNearby()
-                            } else {
-                                requestPermissions()
-                            }
-                        }
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = isUpperHalf,
-                    enter = slideInVertically(initialOffsetY = { it }),
-                    exit = slideOutVertically(targetOffsetY = { it })
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp)
-                            .shadow(8.dp, RoundedCornerShape(25.dp))
-                            .clip(RoundedCornerShape(25.dp)),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-                    ) {
-                        if (selectedCourse != null) {
-                            CourseResultView(
-                                selectedCourse = selectedCourse,
-                                viewModel = courseVM
-                            )
-                        } else {
-                            CourseSearchResultsView(
-                                mapItems = mapItems,
-                                nameExists = nameExists,
-                                isLoading = isLoadingCourses,
-                                onSelect = { selected ->
-                                    println("[CourseScreen] result tapped name=${selected.name} placeId=${selected.placeID}")
-                                    courseVM.updatePosition(selected)
+                AnimatedContent(
+                    targetState = isUpperHalf,
+                    transitionSpec = {
+                        // This defines how they slide relative to each other
+                        slideInVertically(initialOffsetY = { it }) togetherWith
+                                slideOutVertically(targetOffsetY = { it })
+                    },
+                    label = "CourseViewTransition"
+                ) { targetIsUpperHalf ->
+                    // Use the targetState provided by the closure to prevent "flicker"
+                    if (!targetIsUpperHalf) {
+                        CourseSearchButton(
+                            isLoading = isLoadingCourses,
+                            onSearch = { courseVM.searchNearby() }
+                        )
+                    } else {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(8.dp, RoundedCornerShape(25.dp))
+                                .height(250.dp)
+                                .clip(RoundedCornerShape(25.dp)),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                        ) {
+                            AnimatedContent(
+                                targetState = selectedCourse,
+                                transitionSpec = {
+                                    if (targetState != null) {
+                                        // Moving TO ResultView (Slide in from Right, Exit to Left)
+                                        (slideInHorizontally { it } + fadeIn()) togetherWith
+                                                (slideOutHorizontally { -it } + fadeOut())
+                                    } else {
+                                        // Moving BACK to ResultsView (Slide in from Left, Exit to Right)
+                                        (slideInHorizontally { -it } + fadeIn()) togetherWith
+                                                (slideOutHorizontally { it } + fadeOut())
+                                    }
+                                },
+                                label = "CourseDetailTransition"
+                            ) { targetCourse ->
+                                if (targetCourse != null) {
+                                    CourseResultView(
+                                        selectedCourse = targetCourse,
+                                        selectedMapItem = selectedMapItem,
+                                        viewModel = courseVM
+                                    )
+                                } else {
+                                    CourseSearchResultsView(
+                                        mapItems = mapItems,
+                                        nameExists = nameExists,
+                                        isLoading = isLoadingCourses,
+                                        onSelect = { selected, course ->
+                                            courseVM.updatePosition(selected)
+                                            courseVM.setCourse(course)
+                                        },
+                                        onRetry = { courseVM.searchNearby() }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -208,33 +242,85 @@ fun CourseScreen(
 
 
 @Composable
-private fun MapPlaceholder(position: MapRegionData?) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                if (position != null) Color(0xFFE0E0E0) else Color(0xFFF0F0F0)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        val lat = position?.latitude?.toInt() ?: 0
-        val lng = position?.longitude?.toInt() ?: 0
-        Text(
-            "\uD83D\uDDFA️ Map\n(${lat}°, ${lng}°)",
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
+private fun CourseMap(
+    position: MapRegionData?,
+    mapItems: List<MapItemDTO>,
+    selectedMapItem: MapItemDTO?,
+    hasLocationAccess: Boolean,
+    onSelectMapItem: (MapItemDTO) -> Unit
+) {
+    val uiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false)
         )
     }
+
+    val cameraPositionState = rememberCameraPositionState()
+
+    LaunchedEffect(
+        position?.updateKey
+    ) {
+        val region = position ?: return@LaunchedEffect
+
+        val center = LatLng(region.latitude, region.longitude)
+        val halfLat = (region.latitudeDelta / 2.0).coerceAtLeast(1e-6)
+        val halfLng = (region.longitudeDelta / 2.0).coerceAtLeast(1e-6)
+
+        val bounds = LatLngBounds(
+            LatLng(region.latitude - halfLat, region.longitude - halfLng),
+            LatLng(region.latitude + halfLat, region.longitude + halfLng)
+        )
+
+        runCatching {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 0))
+        }.onFailure {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(center, mapZoomFor(region))
+            )
+        }
+    }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        properties = MapProperties(isMyLocationEnabled = hasLocationAccess),
+        uiSettings = uiSettings
+    ) {
+        mapItems.forEach { item ->
+            val coordinate = item.coordinate
+            Marker(
+                state = MarkerState(position = LatLng(coordinate.latitude, coordinate.longitude)),
+                title = item.name,
+                onClick = {
+                    onSelectMapItem(item)
+                    false
+                }
+            )
+        }
+    }
+}
+
+private fun mapZoomFor(region: MapRegionData?): Float {
+    region ?: return 14f
+
+    val latitudeDelta = region.latitudeDelta.coerceAtLeast(1e-6)
+    val longitudeDelta = region.longitudeDelta.coerceAtLeast(1e-6)
+
+    val latitudeZoom = log2(360.0 / latitudeDelta)
+    val longitudeZoom = log2(360.0 / longitudeDelta)
+    val zoom = min(latitudeZoom, longitudeZoom)
+    val zoomBias = 1.5f
+
+    return (zoom.toFloat() + zoomBias).coerceIn(2f, 21f)
 }
 
 @Composable
 private fun LocationButton(
-    viewModel: CourseViewModel,
     hasLocationAccess: Boolean,
     onRequestPermission: () -> Unit
 ) {
-
+    val koin = remember { GlobalContext.get() }
+    val viewModel = koin.get<CourseSearchViewModel>()
         Box(
             modifier = Modifier
                 .size(42.dp)
@@ -245,11 +331,7 @@ private fun LocationButton(
                 )
                 .clip(CircleShape)
                 .clickable {
-                    if (hasLocationAccess) {
-                        viewModel.searchNearby()
-                    } else {
-                        onRequestPermission()
-                    }
+                    viewModel.setNewMapPosition()
                 },
             contentAlignment = Alignment.Center
         ) {

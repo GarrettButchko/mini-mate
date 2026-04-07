@@ -94,7 +94,7 @@ struct CourseSearchResultsView: View {
             
             VStack{
                 HStack {
-                    Text("Courses")
+                    Text("Nearby Courses")
                         .font(.title3).fontWeight(.bold)
                         .foregroundStyle(.mainOpp)
                     Spacer()

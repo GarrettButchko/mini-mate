@@ -7,7 +7,6 @@ import SwiftUI
 import shared_user
 
 struct JoinView: View {
-    @Environment(\.modelContext) private var context
     @StateObject private var viewModel = JoinViewModelSwift()
     @EnvironmentObject var viewManager: ViewManagerSwift
     @EnvironmentObject var gameModel: GameViewModelSwift
