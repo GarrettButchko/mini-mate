@@ -1,4 +1,4 @@
-package com.garrettbutchko.minimate.courseScreen
+package com.garrettbutchko.minimate.content.courseScreen
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -42,6 +42,9 @@ import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import kotlinx.coroutines.delay
 import org.koin.core.context.GlobalContext
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.garrettbutchko.minimate.user.R
 
 @Composable
 fun CourseSearchResultsView(
@@ -204,7 +207,12 @@ fun SearchResultRow(
                             .background(Color(0xFFEEE5FF), shape = CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("★", color = Color(0xFF6B4EFF))
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "App Logo",
+                            modifier = Modifier
+                                .size(20.dp)
+                        )
                     }
                 }
             }

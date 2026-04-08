@@ -1,6 +1,7 @@
-package com.garrettbutchko.minimate.courseScreen
+package com.garrettbutchko.minimate.content.courseScreen
 
 import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,7 @@ import androidx.core.net.toUri
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
+import com.garrettbutchko.minimate.user.R
 import com.garrettbutchko.minimate.viewModels.CourseLocationViewModel
 import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
@@ -203,7 +205,13 @@ fun CourseSupportedLocationCard(locationName: String?) {
         .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
         .padding(14.dp), verticalAlignment = Alignment.Top) {
         Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFEEE5FF))) {
-            Text("★", color = Color(0xFF6B4EFF), modifier = Modifier.align(Alignment.Center))
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "App Logo",
+                modifier = Modifier
+                    .size(20.dp)
+                    .align(Alignment.Center)
+            )
         }
 
         Spacer(Modifier.width(12.dp))

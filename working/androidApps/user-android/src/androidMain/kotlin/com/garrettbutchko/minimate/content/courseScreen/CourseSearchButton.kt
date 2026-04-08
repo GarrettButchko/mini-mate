@@ -1,5 +1,6 @@
-package com.garrettbutchko.minimate.courseScreen
+package com.garrettbutchko.minimate.content.courseScreen
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -32,7 +33,7 @@ fun CourseSearchButton(
                 color = MaterialTheme.colorScheme.onPrimary,
                 strokeWidth = 2.dp
             )
-            androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(8.dp))
             Text("Searching...")
         } else {
             Text("Search Nearby Courses")

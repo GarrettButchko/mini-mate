@@ -1,4 +1,5 @@
 [versions]
+billing = "6.2.1"
 agp = "9.1.0"
 android-compileSdk = "36"
 android-minSdk = "24"
@@ -19,6 +20,7 @@ googleid = "1.2.0"
 junit = "4.13.2"
 kermit = "2.1.0"
 koin = "4.2.0"
+coil = "2.7.0"
 kotlin = "2.3.10"
 ksp = "2.3.6"
 mapsCompose = "8.2.2"
@@ -33,8 +35,10 @@ logback = "1.5.32"
 material3 = "1.10.0-alpha05"
 qrcodeKotlin = "4.5.0"
 foundationLayout = "1.10.6"
+composeCharts = "0.2.1"
 
 [libraries]
+billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
@@ -50,6 +54,7 @@ insert-koin-koin-android = { module = "io.insert-koin:koin-android" }
 insert-koin-koin-core = { module = "io.insert-koin:koin-core" }
 insert-koin-koin-test = { module = "io.insert-koin:koin-test" }
 io-insert-koin-koin-test = { module = "io.insert-koin:koin-test" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-core = { module = "io.insert-koin:koin-core" }
@@ -88,6 +93,7 @@ maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = 
 places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 qrcode-kotlin = { module = "io.github.g0dkar:qrcode-kotlin", version.ref = "qrcodeKotlin" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+bytebeats-compose-charts = { module = "io.github.bytebeats:compose-charts", version.ref = "composeCharts" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

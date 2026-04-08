@@ -1,5 +1,6 @@
 package com.garrettbutchko.minimate.content
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -10,16 +11,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -32,10 +38,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -52,22 +61,35 @@ import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 import com.garrettbutchko.minimate.viewModels.HostViewModel
 import com.garrettbutchko.minimate.viewModels.StatsViewModel
+import com.garrettbutchko.minimate.viewModels.JoinViewModel
 import org.koin.core.context.GlobalContext
-import com.garrettbutchko.minimate.courseScreen.CourseScreen
+import com.garrettbutchko.minimate.content.courseScreen.CourseScreen
+import com.garrettbutchko.minimate.content.game.HostGameView
+import com.garrettbutchko.minimate.content.game.JoinGameView
+import com.garrettbutchko.minimate.content.game.RecapGameView
+import com.garrettbutchko.minimate.content.game.ScoreCardGameView
+import com.garrettbutchko.minimate.content.main.ProView
+import com.garrettbutchko.minimate.helper.IAPManager
 
 @Composable
 fun App() {
+    val context = LocalContext.current
+    val appScope = rememberCoroutineScope()
     val koin = remember { GlobalContext.get() }
 
     val viewManager = remember { koin.get<ViewManager>() }
     val authModel = remember { koin.get<AuthViewModel>() }
     val gameModel = remember { koin.get<GameViewModel>() }
     val hostVM = remember { koin.get<HostViewModel>() }
+    val joinVM = remember { koin.get<JoinViewModel>() }
     val gameManager = remember { koin.get<GameManager>() }
     val statsViewModel = remember { koin.get<StatsViewModel>() }
     val courseViewModel = remember { koin.get<CourseViewModel>() }
     val locationHandler = remember { koin.get<LocationFinding>() }
     val localGameRepo = remember { koin.get<LocalGameRepository>() }
+    val iapManager = remember(context.applicationContext, appScope) {
+        IAPManager(context.applicationContext, appScope)
+    }
 
     val currentView by viewManager.currentView.collectAsState()
     val currentUserId by authModel.currentUserIdentifierFlow.collectAsState()
@@ -76,6 +98,7 @@ fun App() {
 
     var initialLoadComplete by remember { mutableStateOf(false) }
     var showHost by remember { mutableStateOf(true) }
+    var showJoin by remember { mutableStateOf(true) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -96,6 +119,10 @@ fun App() {
 
     LaunchedEffect(Unit) {
         locationHandler.requestLocationAccess()
+    }
+
+    LaunchedEffect(iapManager) {
+        iapManager.initialize()
     }
 
     LaunchedEffect(currentUserId) {
@@ -153,6 +180,7 @@ fun App() {
                         authModel = authModel,
                         gameModel = gameModel,
                         gameManager = gameManager,
+                        iapManager = iapManager,
                         statsViewModel = statsViewModel,
                         courseViewModel = courseViewModel,
                         isLoadingUser = isLoadingUser,
@@ -166,7 +194,9 @@ fun App() {
 
                     is ViewType.ScoreCard -> ScoreCardScreen(
                         isGuest = targetView.isGuest,
-                        onContinue = { viewManager.navigateToMain(1) }
+                        gameModel = gameModel,
+                        authModel = authModel,
+                        viewManager = viewManager
                     )
 
                     is ViewType.Ad -> AdScreen(
@@ -186,12 +216,23 @@ fun App() {
                         onContinue = { viewManager.navigateAfterSignIn() }
                     )
 
-                    ViewType.Host -> HostScreen(
+                    ViewType.Host -> HostGameView(
                         showHost = showHost,
                         onShowHostChange = { showHost = it },
-                        onBack = { viewManager.navigateToWelcome() },
                         hostVM = hostVM,
-                        gameModel = gameModel
+                        gameModel = gameModel,
+                        locationHandler = locationHandler,
+                        localGameRepo = localGameRepo,
+                        onBack = { viewManager.navigateToWelcome() }
+                    )
+
+                    ViewType.Join -> JoinGameView(
+                        showJoin = showJoin,
+                        onShowJoinChange = { showJoin = it },
+                        joinVM = joinVM,
+                        viewManager = viewManager,
+                        gameModel = gameModel,
+                        onBack = { viewManager.navigateToMain(1) }
                     )
                 }
             }
@@ -206,6 +247,7 @@ private fun MainTabView(
     authModel: AuthViewModel,
     gameModel: GameViewModel,
     gameManager: GameManager,
+    iapManager: IAPManager,
     statsViewModel: StatsViewModel,
     courseViewModel: CourseViewModel,
     isLoadingUser: Boolean,
@@ -216,7 +258,6 @@ private fun MainTabView(
     val currentCourse by gameModel.course.collectAsState()
     val userGames by statsViewModel.allGames.collectAsState()
     val isRefreshing by statsViewModel.isRefreshing.collectAsState()
-    val selectedCourse by courseViewModel.selectedCourse.collectAsState()
     val hasConnection = NetworkChecker.shared.isConnected
 
     var selectedTab by remember { mutableIntStateOf(initialSelectedTab) }
@@ -258,20 +299,35 @@ private fun MainTabView(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
                             label = { Text("Stats") },
-                            icon = { Text("📊") }
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Filled.QueryStats,
+                                    contentDescription = "Stats"
+                                )
+                            }
                         )
                         NavigationBarItem(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
                             label = { Text("Home") },
-                            icon = { Text("🏠") }
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Home,
+                                    contentDescription = "Home"
+                                )
+                            }
                         )
                         if (hasConnection) {
                             NavigationBarItem(
                                 selected = selectedTab == 2,
                                 onClick = { selectedTab = 2 },
                                 label = { Text("Courses") },
-                                icon = { Text("⛳") }
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Directions,
+                                        contentDescription = "Courses"
+                                    )
+                                }
                             )
                         }
                     }
@@ -302,7 +358,8 @@ private fun MainTabView(
                                 currentCourse = currentCourse,
                                 authModel = authModel,
                                 viewManager = viewManager,
-                                gameManager = gameManager
+                                gameManager = gameManager,
+                                iapManager = iapManager
                             )
                         }
 
@@ -409,17 +466,15 @@ private fun SignInScreen(
 @Composable
 private fun ScoreCardScreen(
     isGuest: Boolean,
-    onContinue: () -> Unit
+    gameModel: GameViewModel,
+    authModel: AuthViewModel,
+    viewManager: ViewManager
 ) {
-    CenteredInfoCard(
-        title = "Score Card",
-        body = if (isGuest) {
-            "Guest score cards are ready to be rendered here."
-        } else {
-            "Your finished game summary can be shown here."
-        },
-        primaryActionText = "Back to Home",
-        onPrimaryAction = onContinue
+    ScoreCardGameView(
+        isGuest = isGuest,
+        gameModel = gameModel,
+        authModel = authModel,
+        viewManager = viewManager
     )
 }
 
@@ -441,56 +496,17 @@ private fun AdScreen(
 }
 
 @Composable
-private fun HostScreen(
-    showHost: Boolean,
-    onShowHostChange: (Boolean) -> Unit,
-    onBack: () -> Unit,
-    hostVM: HostViewModel,
-    gameModel: GameViewModel
-) {
-    val game by gameModel.game.collectAsState()
-    val timeRemaining by hostVM.timeRemaining.collectAsState()
-    val qrCodeShown by hostVM.showQRCode.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Host", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("showHost = $showHost")
-        Text("Game ID: ${if (game.id.isBlank()) "Not created yet" else game.id}")
-        Text("Time remaining: ${hostVM.timeString()}")
-        Text("QR code visible: $qrCodeShown")
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = { onShowHostChange(!showHost) }) {
-                Text(if (showHost) "Hide Host" else "Show Host")
-            }
-            Button(onClick = onBack) {
-                Text("Back")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "This screen is now connected to the shared host view model and can be expanded with the full host controls.",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Text("Timer snapshot: ${timeRemaining.toInt()} seconds")
-    }
-}
-
-@Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun HomeTabContent(
     currentGame: com.garrettbutchko.minimate.dataModels.gameModels.Game,
     currentCourse: com.garrettbutchko.minimate.dataModels.courseModels.Course?,
     authModel: AuthViewModel,
     viewManager: ViewManager,
-    gameManager: GameManager
+    gameManager: GameManager,
+    iapManager: IAPManager
 ) {
     val user by authModel.userModel.collectAsState()
+    var showProSheet by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -514,8 +530,34 @@ private fun HomeTabContent(
             Button(onClick = { viewManager.navigateToHost() }) {
                 Text("Host")
             }
+            Button(onClick = { viewManager.navigateToJoin() }) {
+                Text("Join")
+            }
+        }
+
+        if (NetworkChecker.shared.isConnected && user?.isPro == false) {
+            Button(onClick = { showProSheet = true }) {
+                Text("Upgrade to Pro")
+            }
         }
     }
+
+    if (showProSheet) {
+        ModalBottomSheet(onDismissRequest = { showProSheet = false }) {
+            ProView(
+                showSheet = showProSheet,
+                onShowSheetChange = { showProSheet = it },
+                authModel = authModel,
+                iapManager = iapManager,
+                activity = contextAsActivityOrNull()
+            )
+        }
+    }
+}
+
+@Composable
+private fun contextAsActivityOrNull(): Activity? {
+    return LocalContext.current as? Activity
 }
 
 @Composable
@@ -550,42 +592,6 @@ private fun StatsTabContent(
 
         Button(onClick = { viewManager.navigateToMain(1) }) {
             Text("Back to Home")
-        }
-    }
-}
-
-@Composable
-private fun CourseTabContent(
-    selectedCourse: com.garrettbutchko.minimate.dataModels.courseModels.Course?,
-    courseViewModel: CourseViewModel,
-    viewManager: ViewManager
-) {
-    val position by courseViewModel.position.collectAsState()
-    val isUpperHalf by courseViewModel.isUpperHalf.collectAsState()
-    val loadingCourses by courseViewModel.isLoadingCourses.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Courses", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Selected course: ${selectedCourse?.name ?: "None"}")
-        Text("Loading nearby courses: $loadingCourses")
-        Text("Upper half view: $isUpperHalf")
-        Text("Camera region: ${position?.latitude ?: "N/A"}, ${position?.longitude ?: "N/A"}")
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = { courseViewModel.searchNearby() }) {
-                Text("Search Nearby")
-            }
-            Button(onClick = { courseViewModel.cancel() }) {
-                Text("Reset")
-            }
-            Button(onClick = { viewManager.navigateToMain(1) }) {
-                Text("Back to Home")
-            }
         }
     }
 }

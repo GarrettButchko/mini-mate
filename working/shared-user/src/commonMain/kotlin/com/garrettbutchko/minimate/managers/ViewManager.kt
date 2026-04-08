@@ -16,6 +16,7 @@ sealed class ViewType {
     data class Ad(val isGuest: Boolean = false) : ViewType()
     data object SignIn : ViewType()
     data object Host : ViewType()
+    data object Join : ViewType()
 }
 
 class ViewManager(
@@ -60,6 +61,10 @@ class ViewManager(
 
     fun navigateToHost() {
         _currentView.value = ViewType.Host
+    }
+
+    fun navigateToJoin() {
+        _currentView.value = ViewType.Join
     }
 
     fun navigateToAd(isGuest: Boolean = false) {

@@ -86,4 +86,9 @@ dependencies {
     debugImplementation(libs.compose.uiTooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.analytics)
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation(libs.billing.ktx)
+    implementation(libs.coil.compose)
+    implementation("nl.dionsegijn:konfetti-compose:2.0.4")
+    implementation("com.google.android.gms:play-services-ads:23.0.0") // Keep as 23.x for stability, can update later.
 }

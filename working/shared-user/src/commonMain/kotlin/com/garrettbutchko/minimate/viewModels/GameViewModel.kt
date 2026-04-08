@@ -142,6 +142,33 @@ class GameViewModel(
         pushUpdate()
     }
 
+    fun updateHoleStroke(playerId: String, holeNumber: Int, strokes: Int) {
+        lastUpdated = Timestamp.now()
+
+        val updatedPlayers = _game.value.players.map { player ->
+            if (player.id != playerId) {
+                player
+            } else {
+                val existing = player.holes.firstOrNull { it.number == holeNumber }
+                val updatedHoles = if (existing != null) {
+                    player.holes.map { hole ->
+                        if (hole.number == holeNumber) hole.copy(strokes = strokes) else hole
+                    }
+                } else {
+                    player.holes + Hole(number = holeNumber, strokes = strokes)
+                }.sortedBy { it.number }
+
+                player.copy(holes = updatedHoles)
+            }
+        }
+
+        _game.value = _game.value.copy(
+            players = updatedPlayers,
+            lastUpdated = lastUpdated
+        )
+        pushUpdate()
+    }
+
     fun stopListening() {
         listenerJob?.cancel()
         listenerJob = null

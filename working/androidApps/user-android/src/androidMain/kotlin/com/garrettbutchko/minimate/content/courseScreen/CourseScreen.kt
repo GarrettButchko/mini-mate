@@ -1,4 +1,4 @@
-package com.garrettbutchko.minimate.courseScreen
+package com.garrettbutchko.minimate.content.courseScreen
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -48,10 +48,14 @@ import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import com.garrettbutchko.minimate.dataModels.MapRegionData
+import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
+import com.garrettbutchko.minimate.utilities.CourseIDGenerator
+import com.garrettbutchko.minimate.utilities.PasswordGenerator
 import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
@@ -133,9 +137,14 @@ fun CourseScreen(
             CourseMap(
                 position = position,
                 mapItems = mapItems,
+                nameExists = nameExists,
                 selectedMapItem = selectedMapItem,
                 hasLocationAccess = hasLocationAccess,
-                onSelectMapItem = { courseVM.updatePosition(it) }
+                onSelectMapItem = { mapItem ->
+                    courseVM.updatePosition(mapItem)
+                    val supported = nameExists[mapItem.name.orEmpty()] ?: false
+                    courseVM.setCourse(mapItem.toFallbackCourse(isSupported = supported))
+                }
             )
 
             Column(
@@ -245,6 +254,7 @@ fun CourseScreen(
 private fun CourseMap(
     position: MapRegionData?,
     mapItems: List<MapItemDTO>,
+    nameExists: Map<String, Boolean>,
     selectedMapItem: MapItemDTO?,
     hasLocationAccess: Boolean,
     onSelectMapItem: (MapItemDTO) -> Unit
@@ -288,9 +298,17 @@ private fun CourseMap(
     ) {
         mapItems.forEach { item ->
             val coordinate = item.coordinate
+            val isSupported = nameExists[item.name.orEmpty()] ?: false
+            val markerHue = if (isSupported) {
+                BitmapDescriptorFactory.HUE_VIOLET
+            } else {
+                BitmapDescriptorFactory.HUE_GREEN
+            }
+
             Marker(
                 state = MarkerState(position = LatLng(coordinate.latitude, coordinate.longitude)),
                 title = item.name,
+                icon = BitmapDescriptorFactory.defaultMarker(markerHue),
                 onClick = {
                     onSelectMapItem(item)
                     false
@@ -369,6 +387,17 @@ private fun LocationPermissionPrompt(onRequest: () -> Unit) {
             Text("Allow Location")
         }
     }
+}
+
+private fun MapItemDTO.toFallbackCourse(isSupported: Boolean): Course {
+    return Course.create(
+        id = CourseIDGenerator.generateCourseID(this),
+        name = name ?: "Unknown",
+        password = PasswordGenerator.generateStrong(),
+        latitude = coordinate.latitude,
+        longitude = coordinate.longitude,
+        isSupported = isSupported
+    ).copy(placeID = placeID)
 }
 
 

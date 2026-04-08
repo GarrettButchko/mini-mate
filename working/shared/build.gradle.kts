@@ -55,7 +55,6 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
 
-
             api(project.dependencies.platform(libs.koin.bom))
             api("io.insert-koin:koin-core")
         }
@@ -63,6 +62,7 @@ kotlin {
         androidMain.dependencies {
 
             implementation(libs.androidx.material.icons.extended)
+            implementation(libs.coil.compose)
             implementation(libs.places)
             implementation(libs.maps.compose)
             implementation(libs.compose.ui)
@@ -73,6 +73,7 @@ kotlin {
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.auth)
             implementation(libs.google.id)
+            implementation(libs.bytebeats.compose.charts)
             api("io.insert-koin:koin-android")
         }
 
