@@ -20,7 +20,6 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
  */
 @Composable
 fun InterstitialAdView(
-    adUnitID: String,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current

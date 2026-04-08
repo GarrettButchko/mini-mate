@@ -51,7 +51,7 @@ import androidx.core.net.toUri
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
-import com.garrettbutchko.minimate.user.R
+import com.garrettbutchko.minimate.shared.R
 import com.garrettbutchko.minimate.viewModels.CourseLocationViewModel
 import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
@@ -206,7 +206,7 @@ fun CourseSupportedLocationCard(locationName: String?) {
         .padding(14.dp), verticalAlignment = Alignment.Top) {
         Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFEEE5FF))) {
             Image(
-                painter = painterResource(id = R.drawable.logo),
+                painter = painterResource(id = R.drawable.logo_image_opp),
                 contentDescription = "App Logo",
                 modifier = Modifier
                     .size(20.dp)

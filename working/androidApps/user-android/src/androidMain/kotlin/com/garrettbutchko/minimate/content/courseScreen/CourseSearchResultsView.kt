@@ -44,7 +44,7 @@ import kotlinx.coroutines.delay
 import org.koin.core.context.GlobalContext
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
-import com.garrettbutchko.minimate.user.R
+import com.garrettbutchko.minimate.shared.R
 
 @Composable
 fun CourseSearchResultsView(

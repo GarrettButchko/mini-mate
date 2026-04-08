@@ -19,6 +19,7 @@ plugins {
 }
 
 dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google {
             mavenContent {
@@ -30,6 +31,8 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
+
 
 include(":shared", ":shared-admin", ":shared-user", ":admin-android", ":user-android")
 

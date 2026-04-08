@@ -14,6 +14,10 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${googleMapsApiKey}" />
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8261962597301587~4590735902"/>
+
 
         <activity
             android:exported="true"

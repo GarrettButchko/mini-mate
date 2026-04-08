@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#F4F5F5</color>
+    <color name="courseSub">#EEEEEE</color>
+    <color name="main">#FFFFFF</color>
+    <color name="mainOpp">#000000</color>
+    <color name="sub">#FFFFFF</color>
+    <color name="subOpp">#1C1C1F</color>
+    <color name="subThree">#B9B9B9</color>
+    <color name="subTwo">#F4F4F4</color>
+    <color name="textField">#E0DFE6</color>
+</resources>

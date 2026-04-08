@@ -31,6 +31,5 @@ struct SectionStatsView<Content: View>: View {
                 .subVsColor(makeColor: makeColor)
                 .cardShadow()
         }
-        
     }
 }
