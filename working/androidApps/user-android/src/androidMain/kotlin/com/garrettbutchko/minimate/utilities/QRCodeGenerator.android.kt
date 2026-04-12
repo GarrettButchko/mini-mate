@@ -1,4 +1,4 @@
-package com.garrettbutchko.minimate.utilities
+package com.garrettbutchko.minimate.content.utilities
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
+import com.garrettbutchko.minimate.utilities.generateQRCodeData
 
 fun generateQRCodeImageBitmap(string: String): ImageBitmap? {
     val bytes = generateQRCodeData(string)

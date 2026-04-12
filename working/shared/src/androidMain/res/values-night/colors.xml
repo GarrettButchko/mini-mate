@@ -7,6 +7,7 @@
     <color name="sub">#1C1C1E</color>
     <color name="subOpp">#EEEEEF</color>
     <color name="subThree">#444444</color>
+    <color name="subThreeOpp">#B9B9B9</color>
     <color name="subTwo">#2A2A2E</color>
     <color name="textField">#3A3A3C</color>
 </resources>

@@ -41,11 +41,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.garrettbutchko.minimate.user.R
 import com.garrettbutchko.minimate.managers.GameManager
 import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.managers.ViewType
@@ -58,6 +60,8 @@ import com.garrettbutchko.minimate.viewModels.GameViewModel
 import com.garrettbutchko.minimate.viewModels.HostViewModel
 import com.garrettbutchko.minimate.viewModels.StatsViewModel
 import com.garrettbutchko.minimate.viewModels.JoinViewModel
+import com.garrettbutchko.minimate.viewModels.signInWithGoogle
+import kotlinx.coroutines.launch
 import org.koin.core.context.GlobalContext
 import com.garrettbutchko.minimate.content.courseScreen.CourseScreen
 import com.garrettbutchko.minimate.content.game.HostGameView
@@ -66,46 +70,65 @@ import com.garrettbutchko.minimate.content.game.ScoreCardGameView
 import com.garrettbutchko.minimate.content.helper.InterstitialAdView
 import com.garrettbutchko.minimate.content.main.MainContentView
 import com.garrettbutchko.minimate.content.preViews.SignInView
-import com.garrettbutchko.minimate.content.preViews.WelcomeView
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
-import com.garrettbutchko.minimate.dataModels.userModels.UserModel
+import com.garrettbutchko.minimate.content.preViews.WelcomeView
+import com.garrettbutchko.minimate.content.stats.StatsView
+import com.garrettbutchko.minimate.generateUUID
+import com.garrettbutchko.minimate.viewModels.GuestData
 import com.garrettbutchko.minimate.helper.IAPManager
+
+private data class AppDependencies(
+    val viewManager: ViewManager,
+    val authModel: AuthViewModel,
+    val gameModel: GameViewModel,
+    val hostVM: HostViewModel,
+    val joinVM: JoinViewModel,
+    val gameManager: GameManager,
+    val statsViewModel: StatsViewModel,
+    val courseViewModel: CourseViewModel,
+    val locationHandler: LocationFinding,
+    val localGameRepo: LocalGameRepository
+)
+
+@Composable
+private fun rememberAppDependencies(): AppDependencies {
+    val koin = remember { GlobalContext.get() }
+    return remember(koin) {
+        AppDependencies(
+            viewManager = koin.get(),
+            authModel = koin.get(),
+            gameModel = koin.get(),
+            hostVM = koin.get(),
+            joinVM = koin.get(),
+            gameManager = koin.get(),
+            statsViewModel = koin.get(),
+            courseViewModel = koin.get(),
+            locationHandler = koin.get(),
+            localGameRepo = koin.get()
+        )
+    }
+}
 
 @Composable
 fun App() {
     val context = LocalContext.current
+    val defaultWebClientId = stringResource(R.string.default_web_client_id)
     val appScope = rememberCoroutineScope()
-    val koin = remember { GlobalContext.get() }
+    val deps = rememberAppDependencies()
 
-    val viewManager = remember { koin.get<ViewManager>() }
-    val authModel = remember { koin.get<AuthViewModel>() }
-    val gameModel = remember { koin.get<GameViewModel>() }
-    val hostVM = remember { koin.get<HostViewModel>() }
-    val joinVM = remember { koin.get<JoinViewModel>() }
-    val gameManager = remember { koin.get<GameManager>() }
-    val statsViewModel = remember { koin.get<StatsViewModel>() }
-    val courseViewModel = remember { koin.get<CourseViewModel>() }
-    val locationHandler = remember { koin.get<LocationFinding>() }
-    val localGameRepo = remember { koin.get<LocalGameRepository>() }
-    val iapManager = remember(context.applicationContext, appScope) {
-        IAPManager(context.applicationContext, appScope)
-    }
+    val currentView by deps.viewManager.currentView.collectAsState()
+    var guestGameDate by remember { mutableStateOf<String?>(null) }
+    val guestGame = remember { mutableStateOf<Game?>(null) }
 
-    val currentView by viewManager.currentView.collectAsState()
-    val currentUserId by authModel.currentUserIdentifierFlow.collectAsState()
-    val userModel by authModel.userModel.collectAsState()
-    val isLoadingUser by authModel.isLoadingUser.collectAsState()
-
-    var initialLoadComplete by remember { mutableStateOf(false) }
     var showHost by remember { mutableStateOf(true) }
     var showJoin by remember { mutableStateOf(true) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(lifecycleOwner, locationHandler) {
+    DisposableEffect(lifecycleOwner, deps.locationHandler) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                locationHandler.requestLocationAccess()
+                deps.locationHandler.requestLocationAccess()
             }
         }
 
@@ -118,7 +141,174 @@ fun App() {
     }
 
     LaunchedEffect(Unit) {
+        deps.locationHandler.requestLocationAccess()
+    }
+
+    LaunchedEffect(currentView) {
+        if (currentView is ViewType.SignIn) {
+            val game = deps.gameModel.fetchGuestGame()
+            guestGame.value = game
+            guestGameDate = game?.let { "Saved guest game found" }
+        }
+    }
+
+    MaterialTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            AnimatedContent(
+                targetState = currentView,
+                transitionSpec = {
+                    when (targetState) {
+                        is ViewType.Main -> {
+                            (fadeIn(tween(220)) + scaleIn(initialScale = 0.97f, animationSpec = tween(220)))
+                                .togetherWith(fadeOut(tween(180)))
+                        }
+
+                        else -> {
+                            fadeIn(tween(180)).togetherWith(fadeOut(tween(180)))
+                        }
+                    }
+                },
+                label = "user-root-navigation"
+            ) { targetView ->
+                when (targetView) {
+                    is ViewType.Main -> MainTabView(
+                        initialSelectedTab = targetView.tab,
+                        viewManager = deps.viewManager,
+                        authModel = deps.authModel,
+                        gameModel = deps.gameModel,
+                        gameManager = deps.gameManager,
+                        localGameRepo = deps.localGameRepo,
+                        locationHandler = deps.locationHandler,
+                        statsViewModel = deps.statsViewModel,
+                        courseViewModel = deps.courseViewModel
+                    )
+
+                    ViewType.Welcome -> WelcomeView()
+
+                    is ViewType.ScoreCard -> ScoreCardGameView(
+                        isGuest = targetView.isGuest,
+                        gameModel = deps.gameModel,
+                        authModel = deps.authModel,
+                        viewManager = deps.viewManager,
+                        modifier = Modifier
+                    )
+
+                    is ViewType.Ad -> InterstitialAdView(
+                        adUnitID = "ca-app-pub-8261962597301587/3394145015"
+                    ) {
+                        if (targetView.isGuest) {
+                            deps.viewManager.navigateToSignIn()
+                        } else {
+                            deps.viewManager.navigateToMain(1)
+                        }
+                    }
+
+                    ViewType.SignIn -> SignInView(
+                        isMiniMateApp = true,
+                        authModel = deps.authModel,
+                        onSignInWithGoogle = {
+                            val clientId = defaultWebClientId
+                            if (clientId.isBlank()) {
+                                println("Missing default_web_client_id string; Google sign-in not configured.")
+                            } else {
+                                deps.authModel.signInWithGoogle(context, clientId) { result ->
+                                    deps.authModel.handleSignInResult(
+                                        result = result,
+                                        onErrorMessage = { msg, _ -> println("Google sign-in error: ${msg ?: "Unknown error"}") },
+                                        onClearGuestGame = {
+                                            appScope.launch {
+                                                deps.localGameRepo.deleteGuestGame()
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        },
+                        onCreateGuestGame = { name, email ->
+                            deps.gameModel.createGame(
+                                online = false,
+                                guestData = GuestData(
+                                    id = generateUUID(),
+                                    email = email.ifBlank { null },
+                                    name = name
+                                )
+                            )
+                            deps.viewManager.navigateToHost()
+                        },
+                        guestGameDate = guestGameDate,
+                        guestGame = guestGame.value
+                    )
+
+                    ViewType.Host -> HostGameView(
+                        showHost = showHost,
+                        onShowHostChange = { showHost = it },
+                        hostVM = deps.hostVM,
+                        gameModel = deps.gameModel,
+                        locationHandler = deps.locationHandler,
+                        localGameRepo = deps.localGameRepo,
+                        onBack = { deps.viewManager.navigateToWelcome() }
+                    )
+
+                    ViewType.Join -> JoinGameView(
+                        showJoin = showJoin,
+                        onShowJoinChange = { showJoin = it },
+                        joinVM = deps.joinVM,
+                        viewManager = deps.viewManager,
+                        gameModel = deps.gameModel,
+                        onBack = { deps.viewManager.navigateToMain(1) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainTabView(
+    initialSelectedTab: Int,
+    viewManager: ViewManager,
+    authModel: AuthViewModel,
+    gameModel: GameViewModel,
+    gameManager: GameManager,
+    localGameRepo: LocalGameRepository,
+    locationHandler: LocationFinding,
+    statsViewModel: StatsViewModel,
+    courseViewModel: CourseViewModel
+) {
+    val context = LocalContext.current
+    val appScope = rememberCoroutineScope()
+    val iapManager = remember(context.applicationContext, appScope) {
+        IAPManager(context.applicationContext, appScope)
+    }
+
+    val currentUserId by authModel.currentUserIdentifierFlow.collectAsState()
+    val currentUserModel by authModel.userModel.collectAsState()
+    val isLoadingUser by authModel.isLoadingUser.collectAsState()
+    val userGames by statsViewModel.allGames.collectAsState()
+    val isRefreshing by statsViewModel.isRefreshing.collectAsState()
+    val hasConnection = NetworkChecker.shared.isConnected
+
+    var selectedTab by remember { mutableIntStateOf(initialSelectedTab) }
+    var loadedTabs by remember { mutableStateOf(setOf(1)) }
+    var initialLoadComplete by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialSelectedTab) {
+        selectedTab = initialSelectedTab
+    }
+
+    LaunchedEffect(selectedTab) {
+        loadedTabs = loadedTabs + selectedTab
+    }
+
+    LaunchedEffect(hasConnection) {
+        if (!hasConnection && selectedTab == 2) {
+            selectedTab = 1
+        }
+    }
+
+    LaunchedEffect(Unit) {
         locationHandler.requestLocationAccess()
+        gameManager.onAppear()
     }
 
     LaunchedEffect(iapManager) {
@@ -148,129 +338,11 @@ fun App() {
             localGameRepo.deleteAllUnusedGames()
         } catch (e: Exception) {
             println("Failed to bootstrap user data on Android: ${e.message}")
-            authModel.setUserModel(userModel)
+            authModel.setUserModel(currentUserModel)
         } finally {
             initialLoadComplete = true
             authModel.setLoading(false)
         }
-    }
-
-    MaterialTheme {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            AnimatedContent(
-                targetState = currentView,
-                transitionSpec = {
-                    when (targetState) {
-                        is ViewType.Main -> {
-                            (fadeIn(tween(220)) + scaleIn(initialScale = 0.97f, animationSpec = tween(220)))
-                                .togetherWith(fadeOut(tween(180)))
-                        }
-
-                        else -> {
-                            fadeIn(tween(180)).togetherWith(fadeOut(tween(180)))
-                        }
-                    }
-                },
-                label = "user-root-navigation"
-            ) { targetView ->
-                when (targetView) {
-                    is ViewType.Main -> MainTabView(
-                        initialSelectedTab = targetView.tab,
-                        viewManager = viewManager,
-                        authModel = authModel,
-                        gameModel = gameModel,
-                        gameManager = gameManager,
-                        iapManager = iapManager,
-                        locationHandler = locationHandler,
-                        statsViewModel = statsViewModel,
-                        courseViewModel = courseViewModel,
-                        isLoadingUser = isLoadingUser,
-                        initialLoadComplete = initialLoadComplete,
-                        currentUserModel = userModel
-                    )
-
-                    ViewType.Welcome -> WelcomeView()
-
-                    is ViewType.ScoreCard -> ScoreCardGameView(
-                        isGuest = TODO(),
-                        gameModel = TODO(),
-                        authModel = TODO(),
-                        viewManager = TODO(),
-                        modifier = TODO()
-                    )
-
-                    is ViewType.Ad -> InterstitialAdView() {}
-
-                    ViewType.SignIn -> SignInView(
-                        isMiniMateApp = TODO(),
-                        onSignInWithGoogle = TODO(),
-                        onSignInWithApple = TODO(),
-                        onCreateGuestGame = TODO(),
-                        guestGameDate = TODO()
-                    )
-
-                    ViewType.Host -> HostGameView(
-                        showHost = showHost,
-                        onShowHostChange = { showHost = it },
-                        hostVM = hostVM,
-                        gameModel = gameModel,
-                        locationHandler = locationHandler,
-                        localGameRepo = localGameRepo,
-                        onBack = { viewManager.navigateToWelcome() }
-                    )
-
-                    ViewType.Join -> JoinGameView(
-                        showJoin = showJoin,
-                        onShowJoinChange = { showJoin = it },
-                        joinVM = joinVM,
-                        viewManager = viewManager,
-                        gameModel = gameModel,
-                        onBack = { viewManager.navigateToMain(1) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MainTabView(
-    initialSelectedTab: Int,
-    viewManager: ViewManager,
-    authModel: AuthViewModel,
-    gameModel: GameViewModel,
-    gameManager: GameManager,
-    iapManager: IAPManager,
-    locationHandler: LocationFinding,
-    statsViewModel: StatsViewModel,
-    courseViewModel: CourseViewModel,
-    isLoadingUser: Boolean,
-    initialLoadComplete: Boolean,
-    currentUserModel: UserModel?
-) {
-    val userGames by statsViewModel.allGames.collectAsState()
-    val isRefreshing by statsViewModel.isRefreshing.collectAsState()
-    val hasConnection = NetworkChecker.shared.isConnected
-
-    var selectedTab by remember { mutableIntStateOf(initialSelectedTab) }
-    var loadedTabs by remember { mutableStateOf(setOf(1)) }
-
-    LaunchedEffect(initialSelectedTab) {
-        selectedTab = initialSelectedTab
-    }
-
-    LaunchedEffect(selectedTab) {
-        loadedTabs = loadedTabs + selectedTab
-    }
-
-    LaunchedEffect(hasConnection) {
-        if (!hasConnection && selectedTab == 2) {
-            selectedTab = 1
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        gameManager.onAppear()
     }
 
     LaunchedEffect(selectedTab) {
@@ -332,7 +404,7 @@ private fun MainTabView(
                             0,
                             loadedTabs,
                             onLoaded = { loadedTabs = loadedTabs + it }) {
-                            StatsTabContent(
+                            StatsView(
                                 userGames = userGames,
                                 isRefreshing = isRefreshing,
                                 authModel = authModel,
@@ -428,41 +500,6 @@ private fun LoadingOverlay() {
 
 
 
-@Composable
-private fun StatsTabContent(
-    userGames: List<Game>,
-    isRefreshing: Boolean,
-    authModel: AuthViewModel,
-    viewManager: ViewManager,
-    gameManager: GameManager
-) {
-    val user by authModel.userModel.collectAsState()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Stats", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("Refreshing: $isRefreshing")
-        Text("Games in cache: ${userGames.size}")
-        Text("Total games played: ${gameManager.totalGamesPlayed()}")
-        Text("Total strokes: ${gameManager.totalStrokes()}")
-        Text("Average strokes per game: ${gameManager.averageStrokesPerGame()}")
-        Text("Average strokes per hole: ${gameManager.averageStrokesPerHole()}")
-        Text("Best game: ${gameManager.bestGameStrokes()?.toString() ?: "N/A"}")
-        Text("Worst game: ${gameManager.worstGameStrokes()?.toString() ?: "N/A"}")
-
-        if (user == null) {
-            Text("Stats will populate after the signed-in user loads.")
-        }
-
-        Button(onClick = { viewManager.navigateToMain(1) }) {
-            Text("Back to Home")
-        }
-    }
-}
 
 @Composable
 private fun MissingTabConnectionMessage() {

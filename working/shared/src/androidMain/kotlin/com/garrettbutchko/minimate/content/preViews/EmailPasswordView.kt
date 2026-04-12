@@ -24,6 +24,10 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import com.garrettbutchko.minimate.viewModels.AuthViewModel
+import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import androidx.compose.ui.res.colorResource
+import com.garrettbutchko.minimate.shared.R
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +38,8 @@ enum class Field {
 
 @Composable
 fun EmailPasswordView(
-    // authModel: AuthViewModel, // Pass your ViewModel here
+    authModel: AuthViewModel?,
+    guestGame: Game?,
     showEmail: Boolean,
     onShowEmailChange: (Boolean) -> Unit,
     email: String,
@@ -43,8 +48,6 @@ fun EmailPasswordView(
     onPasswordChange: (String) -> Unit,
     confirmPassword: String,
     onConfirmPasswordChange: (String) -> Unit,
-    // guestGame: Game?,
-    // onGuestGameChange: (Game?) -> Unit,
     initialShowSignUp: Boolean = false,
     onBack: () -> Unit
 ) {
@@ -67,7 +70,7 @@ fun EmailPasswordView(
         email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || password != confirmPassword
     }
 
-    Box(modifier = Modifier.fillMaxSize().imePadding()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,14 +84,14 @@ fun EmailPasswordView(
                 text = if (showSignUp) "Sign Up" else "Login",
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = colorResource(id = R.color.mainOpp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Enter email and password",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Light,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = colorResource(id = R.color.subThreeOpp)
             )
 
             Spacer(modifier = Modifier.height(50.dp))
@@ -129,16 +132,48 @@ fun EmailPasswordView(
                     onClick = {
                         focusManager.clearFocus()
                         if (!showSignUp) {
-                            // authModel.signInUIManage(...)
+                            authModel?.signInUIManage(
+                                emailInput = email,
+                                passwordInput = password,
+                                guestGame = guestGame,
+                                onClearForm = {
+                                    onEmailChange("")
+                                    onPasswordChange("")
+                                    onConfirmPasswordChange("")
+                                },
+                                onShowSignUp = { showSignUp = true },
+                                onErrorMessage = { msg, type -> 
+                                    errorMessage = msg
+                                    isErrorPositive = type
+                                },
+                                onClearGuestGame = { /* Handled in AuthViewModel / Repo */ }
+                            )
                         } else {
-                            // authModel.signUpUIManage(...)
+                            authModel?.signUpUIManage(
+                                emailInput = email,
+                                passwordInput = password,
+                                guestGame = guestGame,
+                                onClearForm = {
+                                    onEmailChange("")
+                                    onPasswordChange("")
+                                    onConfirmPasswordChange("")
+                                },
+                                onSuccess = {
+                                    showSignUp = false
+                                },
+                                onErrorMessage = { msg, type -> 
+                                    errorMessage = msg
+                                    isErrorPositive = type
+                                },
+                                onClearGuestGame = { /* Handled in AuthViewModel / Repo */ }
+                            )
                         }
                     },
                     enabled = !disabled,
                     shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Green,
-                        disabledContainerColor = Color.Green.copy(alpha = 0.5f)
+                        containerColor = colorResource(id = R.color.swiftGreen),
+                        disabledContainerColor = colorResource(id = R.color.swiftGreen).copy(alpha = 0.5f)
                     ),
                     modifier = Modifier
                         .height(50.dp)
@@ -158,14 +193,14 @@ fun EmailPasswordView(
                             .align(Alignment.CenterHorizontally)
                             .clip(RoundedCornerShape(20.dp))
                             .background(
-                                if (isErrorPositive) Color.Green.copy(alpha = 0.2f) 
-                                else Color.Red.copy(alpha = 0.2f)
+                                if (isErrorPositive) colorResource(id = R.color.swiftGreen).copy(alpha = 0.2f) 
+                                else colorResource(id = R.color.swiftRed).copy(alpha = 0.2f)
                             )
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = msg,
-                            color = if (isErrorPositive) Color.Green else Color.Red,
+                            color = if (isErrorPositive) colorResource(id = R.color.swiftGreen) else colorResource(id = R.color.swiftRed),
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -189,12 +224,12 @@ fun EmailPasswordView(
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.TopStart)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+                .background(colorResource(id = R.color.sub).copy(alpha = 0.7f), CircleShape)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = Color.Green
+                tint = colorResource(id = R.color.swiftGreen)
             )
         }
     }
@@ -207,22 +242,25 @@ fun EmailSection(
     focusRequester: FocusRequester
 ) {
     Column {
-        Text(text = "Email", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = "Email", color = colorResource(id = R.color.subThreeOpp))
         TextField(
             value = email,
             onValueChange = onEmailChange,
-            placeholder = { Text("example@example.com") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+            placeholder = { Text("example@example.com", color = colorResource(id = R.color.subThreeOpp).copy(alpha = 0.5f)) },
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = colorResource(id = R.color.subThreeOpp)) },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
             singleLine = true,
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                focusedContainerColor = colorResource(id = R.color.sub).copy(alpha = 0.7f),
+                unfocusedContainerColor = colorResource(id = R.color.sub).copy(alpha = 0.7f),
                 focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedTextColor = colorResource(id = R.color.mainOpp),
+                unfocusedTextColor = colorResource(id = R.color.mainOpp),
+                cursorColor = colorResource(id = R.color.swiftGreen)
             ),
             shape = RoundedCornerShape(25.dp),
             modifier = Modifier
@@ -240,12 +278,12 @@ fun PasswordSection(
     focusRequester: FocusRequester
 ) {
     Column {
-        Text(text = title, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = title, color = colorResource(id = R.color.subThreeOpp))
         TextField(
             value = password,
             onValueChange = onPasswordChange,
-            placeholder = { Text("••••••") },
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+            placeholder = { Text("••••••", color = colorResource(id = R.color.subThreeOpp).copy(alpha = 0.5f)) },
+            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = colorResource(id = R.color.subThreeOpp)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
@@ -253,10 +291,13 @@ fun PasswordSection(
             ),
             singleLine = true,
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                focusedContainerColor = colorResource(id = R.color.sub).copy(alpha = 0.7f),
+                unfocusedContainerColor = colorResource(id = R.color.sub).copy(alpha = 0.7f),
                 focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedTextColor = colorResource(id = R.color.mainOpp),
+                unfocusedTextColor = colorResource(id = R.color.mainOpp),
+                cursorColor = colorResource(id = R.color.swiftGreen)
             ),
             shape = RoundedCornerShape(25.dp),
             modifier = Modifier

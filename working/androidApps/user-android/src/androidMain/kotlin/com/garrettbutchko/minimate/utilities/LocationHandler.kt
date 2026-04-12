@@ -1,5 +1,6 @@
 package com.garrettbutchko.minimate.utilities
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.google.android.gms.maps.model.LatLng
+import kotlin.invoke
 import kotlin.text.toDouble
 
 class LocationHandler(private val context: Context) : LocationFinding {
@@ -106,11 +108,11 @@ class LocationHandler(private val context: Context) : LocationFinding {
     override fun requestLocationAccess() {
         val fineGranted = ContextCompat.checkSelfPermission(
             context,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
         val coarseGranted = ContextCompat.checkSelfPermission(
             context,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
         val hasAccess = fineGranted || coarseGranted
 

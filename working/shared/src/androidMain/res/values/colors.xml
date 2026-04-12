@@ -6,7 +6,23 @@
     <color name="mainOpp">#000000</color>
     <color name="sub">#FFFFFF</color>
     <color name="subOpp">#1C1C1F</color>
-    <color name="subThree">#B9B9B9</color>
+    <color name="subThree">#444444</color>
+    <color name="subThreeOpp">#B9B9B9</color>
     <color name="subTwo">#F4F4F4</color>
     <color name="textField">#E0DFE6</color>
+    <color name="MMMBlue">#FF1F4073</color>
+    <color name="MMMGreen">#FF2E7361</color>
+
+    <color name="swiftRed">#FFFF383C</color>
+    <color name="swiftOrange">#FFFF8D28</color>
+    <color name="swiftYellow">#FFFFCC00</color>
+    <color name="swiftGreen">#FF34C759</color>
+    <color name="swiftMint">#FF00C8B3</color>
+    <color name="swiftTeal">#FF00C3D0</color>
+    <color name="swiftCyan">#FF00C0E8</color>
+    <color name="swiftBlue">#FF0088FF</color>
+    <color name="swiftIndigo">#FF6155F5</color>
+    <color name="swiftPurple">#FFCB30E0</color>
+    <color name="swiftPink">#FFFF2D55</color>
+    <color name="swiftBrown">#FFAC7F5E</color>
 </resources>

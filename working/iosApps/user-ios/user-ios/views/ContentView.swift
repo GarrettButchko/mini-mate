@@ -74,6 +74,8 @@ struct ContentView: View {
             SignInView()
         case .host:
             HostView(showHost: $showHost, isGuest: true)
+        case .join(_):
+            Text(":")
         }
     }
     

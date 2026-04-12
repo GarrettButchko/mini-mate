@@ -4,7 +4,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -23,13 +22,23 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.util.Patterns
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
+import com.garrettbutchko.minimate.shared.R
 
-@OptIn(ExperimentalAnimationApi::class)
+
+import com.garrettbutchko.minimate.viewModels.AuthViewModel
+import com.garrettbutchko.minimate.dataModels.gameModels.Game
+
 @Composable
 fun SignInView(
     isMiniMateApp: Boolean = true, // Set to false for MANAGER app
+    authModel: AuthViewModel? = null,
+    guestGame: Game? = null,
     onSignInWithGoogle: () -> Unit,
-    onSignInWithApple: () -> Unit,
     onCreateGuestGame: (name: String, email: String) -> Unit,
     guestGameDate: String? = null // Passed down if guest game is found
 ) {
@@ -39,7 +48,10 @@ fun SignInView(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    val gradientColors = listOf(Color.Blue, Color.Green)
+    val gradientColors = listOf(
+        colorResource(id = R.color.swiftBlue),
+        colorResource(id = R.color.swiftGreen)
+    )
 
     Box(
         modifier = Modifier
@@ -58,7 +70,7 @@ fun SignInView(
                     .fillMaxWidth()
                     .heightIn(max = 600.dp)
                     .clip(RoundedCornerShape(35.dp))
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+                    .background(colorResource(id = R.color.main).copy(alpha = 0.5f)),
             ) {
                 AnimatedContent(
                     targetState = showEmailSignIn,
@@ -78,12 +90,13 @@ fun SignInView(
                             isMiniMateApp = isMiniMateApp,
                             onShowEmailSignInChange = { showEmailSignIn = it },
                             onSignInWithGoogle = onSignInWithGoogle,
-                            onSignInWithApple = onSignInWithApple,
                             onCreateGuestGame = onCreateGuestGame,
                             guestGameDate = guestGameDate
                         )
                     } else {
                         EmailPasswordView(
+                            authModel = authModel,
+                            guestGame = guestGame,
                             showEmail = showEmailSignIn,
                             onShowEmailChange = { showEmailSignIn = it },
                             email = email,
@@ -124,16 +137,19 @@ fun SignInHeader(isMiniMateApp: Boolean) {
                 color = Color.White
             )
         }
-        
-        // Placeholder for logoOpp
-        Box(
+
+        val logoRes = if (isSystemInDarkTheme()) {
+            R.drawable.logo_image
+        } else {
+            R.drawable.logo_image_opp
+        }
+        Image(
+            painter = painterResource(id = logoRes),
+            contentDescription = "Logo",
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(75.dp)
-                .background(Color.White.copy(alpha = 0.2f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Logo", color = Color.White, fontSize = 12.sp)
-        }
+        )
     }
 }
 
@@ -142,7 +158,6 @@ fun StartButtons(
     isMiniMateApp: Boolean,
     onShowEmailSignInChange: (Boolean) -> Unit,
     onSignInWithGoogle: () -> Unit,
-    onSignInWithApple: () -> Unit,
     onCreateGuestGame: (name: String, email: String) -> Unit,
     guestGameDate: String?
 ) {
@@ -203,7 +218,7 @@ fun StartButtons(
 
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (isMiniMateApp && guestGameDate != null) {
             // Guest Game Info
@@ -240,8 +255,8 @@ fun StartButtons(
                     .height(50.dp),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    contentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = colorResource(id = R.color.main).copy(alpha = 0.5f),
+                    contentColor = colorResource(id = R.color.mainOpp)
                 )
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
@@ -256,7 +271,7 @@ fun StartButtons(
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
+            colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.swiftGreen))
         ) {
             Icon(Icons.Default.Email, contentDescription = null)
             Spacer(Modifier.width(8.dp))
@@ -269,24 +284,22 @@ fun StartButtons(
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+            colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.swiftBlue))
         ) {
-            Text("G", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White) // Placeholder for Google Icon
+            Box (modifier = Modifier
+                .background(
+                    Color.White,
+                    CircleShape
+                )
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.google),
+                    contentDescription = "Google Logo",
+                    modifier = Modifier.size(23.dp)
+                )
+            }
             Spacer(Modifier.width(8.dp))
             Text("Sign in with Google", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        }
-
-        Button(
-            onClick = onSignInWithApple,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
-        ) {
-            Text("", fontSize = 24.sp, color = Color.White) // Apple Logo Character
-            Spacer(Modifier.width(8.dp))
-            Text("Sign in with Apple", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }

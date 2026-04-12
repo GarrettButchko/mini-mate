@@ -1,13 +1,29 @@
 package com.garrettbutchko.minimate.viewModels
 
 import android.content.Context
+import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
+
+private fun parseGoogleIdTokenCredential(credential: Credential): GoogleIdTokenCredential {
+    return when (credential) {
+        is CustomCredential -> {
+            if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                GoogleIdTokenCredential.createFrom(credential.data)
+            } else {
+                throw IllegalStateException("Unexpected custom credential type: ${credential.type}")
+            }
+        }
+
+        else -> throw IllegalStateException("Unexpected credential type: ${credential.type}")
+    }
+}
 
 /**
  * Signs in the user using Google Sign-In and Firebase via KMP (Android implementation).
@@ -35,14 +51,9 @@ fun AuthViewModel.signInWithGoogle(
     coroutineScope.launch {
         try {
             val result = credentialManager.getCredential(context, request)
-            val credential = result.credential
-            
-            if (credential is GoogleIdTokenCredential) {
-                // Pass the idToken and null for accessToken as Credential Manager for Google ID only returns the ID token.
-                signInWithGoogleTokens(credential.idToken, null, completion)
-            } else {
-                completion(Result.failure(Exception("Unexpected credential type: ${credential.type}")))
-            }
+            val googleCredential = parseGoogleIdTokenCredential(result.credential)
+            // Credential Manager Google ID flow returns an ID token; access token is null here.
+            signInWithGoogleTokens(googleCredential.idToken, null, completion)
         } catch (e: GetCredentialException) {
             completion(Result.failure(e))
         } catch (e: Exception) {
@@ -78,13 +89,8 @@ fun AuthViewModel.reauthenticateWithGoogle(
     coroutineScope.launch {
         try {
             val result = credentialManager.getCredential(context, request)
-            val credential = result.credential
-            
-            if (credential is GoogleIdTokenCredential) {
-                completion(Result.success(credential.idToken to null))
-            } else {
-                completion(Result.failure(Exception("Unexpected credential type: ${credential.type}")))
-            }
+            val googleCredential = parseGoogleIdTokenCredential(result.credential)
+            completion(Result.success(googleCredential.idToken to null))
         } catch (e: Exception) {
             completion(Result.failure(e))
         }

@@ -8,9 +8,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:889696350396:android:3d6f25bf5840cefb2f60b9",
+        "mobilesdk_app_id": "1:889696350396:android:c0cbed006389e5632f60b9",
         "android_client_info": {
-          "package_name": "com.garrettbutchko.minimate.user"
+          "package_name": "com.garrettbutchko.minimate.admin"
         }
       },
       "oauth_client": [
@@ -32,10 +32,54 @@
               "client_type": 3
             },
             {
-              "client_id": "889696350396-6gp2nrr77r5v8co0is7r25kbdpf3lsa8.apps.googleusercontent.com",
+              "client_id": "889696350396-3g4g7q8sjbv9tcc4ul6s9sg6v9aqvp9d.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.garrettbutchko.MiniMate-Manager"
+                "bundle_id": "com.garrettbutchko.minimate.admin"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:889696350396:android:3d6f25bf5840cefb2f60b9",
+        "android_client_info": {
+          "package_name": "com.garrettbutchko.minimate.user"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "889696350396-8qd8ktq3hb7lisq5t274pf1uq185f3q6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.garrettbutchko.minimate.user",
+            "certificate_hash": "6e27ef135d99f5cd50002ec5f2e9a436aff56657"
+          }
+        },
+        {
+          "client_id": "889696350396-dm59iue9trj7h2bpnut9gsvudddnotfu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUaULjrHBEJGsWAjeXwbF8BRgF_ZdQdpY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "889696350396-dm59iue9trj7h2bpnut9gsvudddnotfu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "889696350396-3g4g7q8sjbv9tcc4ul6s9sg6v9aqvp9d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.garrettbutchko.minimate.admin"
               }
             }
           ]

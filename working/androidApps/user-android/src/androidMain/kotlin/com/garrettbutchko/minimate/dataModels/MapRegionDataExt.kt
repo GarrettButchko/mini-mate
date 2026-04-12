@@ -1,5 +1,6 @@
 package com.garrettbutchko.minimate.dataModels
 
+import com.garrettbutchko.minimate.dataModels.MapRegionData
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import kotlin.math.abs

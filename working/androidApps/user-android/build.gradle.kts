@@ -9,6 +9,7 @@ val localProperties = Properties().apply {
 }
 
 val mapsApiKey = localProperties.getProperty("MAPS_API_KEY").orEmpty()
+val webClientId = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID").orEmpty()
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -31,6 +32,9 @@ kotlin {
             implementation(libs.androidx.material.icons.extended)
             implementation(libs.androidx.activity.compose)
             implementation(libs.maps.compose)
+            implementation(libs.play.maps)
+            implementation(libs.play.location)
+            implementation(libs.places)
 
         }
         commonMain.dependencies {
@@ -82,6 +86,7 @@ android {
 dependencies {
     implementation(projects.shared)
     implementation(projects.sharedUser)
+    implementation(libs.firebase.auth)
     implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.compose.uiTooling)
     implementation(platform(libs.firebase.bom))
@@ -90,5 +95,5 @@ dependencies {
     implementation(libs.billing.ktx)
     implementation(libs.coil.compose)
     implementation("nl.dionsegijn:konfetti-compose:2.0.4")
-    implementation("com.google.android.gms:play-services-ads:23.0.0") // Keep as 23.x for stability, can update later.
+    implementation(libs.play.ads)
 }

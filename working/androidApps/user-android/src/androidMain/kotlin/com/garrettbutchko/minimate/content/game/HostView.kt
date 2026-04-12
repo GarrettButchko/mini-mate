@@ -58,6 +58,7 @@ import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 import com.garrettbutchko.minimate.viewModels.HostViewModel
 import com.garrettbutchko.minimate.viewModels.toImageBitmap
+
 import kotlinx.coroutines.launch
 
 @Composable
