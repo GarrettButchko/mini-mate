@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
@@ -36,7 +38,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -68,18 +70,27 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.ProfileView
 import com.garrettbutchko.minimate.content.TitleView
+import com.garrettbutchko.minimate.content.helper.LogoDefault
+import com.garrettbutchko.minimate.content.helper.modifiers.BarChartView
 import com.garrettbutchko.minimate.helper.IAPManager
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.logic.MainViewBusinessLogic
 import com.garrettbutchko.minimate.managers.GameManager
 import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.modelKotlinExtensions.courseColors
+import com.garrettbutchko.minimate.modelKotlinExtensions.scoreCardColor
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.shared.R
+import com.garrettbutchko.minimate.content.helper.PhotoIconView
+import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
+import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
+import com.garrettbutchko.minimate.content.stats.SectionStatsCard
+import com.garrettbutchko.minimate.content.stats.StatCard
+import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
 
 
 
@@ -202,7 +213,9 @@ fun MainContentView(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(bgColor),
+                    .background(bgColor)
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
@@ -253,11 +266,10 @@ fun MainContentView(
                 item {
                     LastGameCard(
                         gameManager = gameManager,
+                        tintColor = course?.scoreCardColor ?: course?.courseColors?.firstOrNull(),
                         onOpenStats = { viewManager.navigateToMain(0) }
                     )
                 }
-
-                item { Spacer(modifier = Modifier.height(88.dp)) }
             }
 
 
@@ -601,12 +613,18 @@ private fun LocationCard(
     onExit: () -> Unit
 ) {
     val context = LocalContext.current
-
-    Card {
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .shadow(
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(25.dp)
+                )
+                .background(
+                    color = colorResource(id = R.color.sub),
+                    shape = RoundedCornerShape(25.dp)
+                )
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (hasLocationAccess) {
@@ -651,46 +669,84 @@ private fun LocationCard(
                 )
             }
         }
-    }
+
 }
 
 @Composable
 private fun LastGameCard(
     gameManager: GameManager,
+    tintColor: Color?,
     onOpenStats: () -> Unit
 ) {
-    val latestGame = remember(gameManager.userGames.collectAsState().value) { gameManager.latestGame() }
+    val logic = remember { MainViewBusinessLogic() }
+    val gameState = gameManager.userGames.collectAsState().value
+    val latestGame = remember(gameState) { gameManager.latestGame() }
+    val winner = remember(gameState) { gameManager.winnerOfLatestGame() }
+    val holes = remember(gameState) { gameManager.usersHolesOfLatestGame() }
+    val strokes = remember(gameState) { gameManager.usersScoreOfLatestGame() }
 
-    Card {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Text("Last Game", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    if (latestGame != null) {
+        val cardHeight = 130.dp
 
-            if (latestGame == null) {
-                Text("No games yet. Start your first round.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                val winner = gameManager.winnerOfLatestGame()
-                val holes = gameManager.usersHolesOfLatestGame()
-                val average = if (holes.isNotEmpty()) holes.sumOf { it.strokes }.toFloat() / holes.size else 0f
+        Box(modifier = Modifier.clickable(onClick = onOpenStats)) {
+            SectionStatsCard(
+                title = "Last Game",
+                spacing = 12.dp,
+                makeColor = tintColor,
+                content = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (latestGame.players.size > 1 && winner != null) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(cardHeight)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.subVsColor(tintColor))
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                PhotoIconView(
+                                    photoURL = winner.photoURL,
+                                    name = logic.formatWinnerName(winner.name),
+                                    ballColor = winner.ballColor,
+                                    imageSize = 30.dp,
+                                    backgroundColor = Color.Yellow
+                                )
+                            }
+                        }
 
-                if (latestGame.players.size > 1 && winner != null) {
-                    Text("Winner: ${winner.name}", style = MaterialTheme.typography.bodyMedium)
+                        StatCard(
+                            title = "Your Strokes",
+                            value = strokes.toString(),
+                            makeColor = tintColor,
+                            cornerRadius = 12.dp,
+                            cardHeight = cardHeight,
+                            infoText = "The number of strokes you had last game.",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.subTwoVsColor(tintColor))
+                    ) {
+                        BarChartView(
+                            data = holes,
+                            title = "Recap of Game"
+                        )
+                    }
                 }
-                Text("Your Strokes: ${gameManager.usersScoreOfLatestGame()}")
-                Text("Avg per hole: ${"%.2f".format(average)}")
-
-                HorizontalDivider()
-
-                Button(onClick = onOpenStats, modifier = Modifier.fillMaxWidth()) {
-                    Text("Open Stats")
-                }
-            }
+            )
         }
+    } else {
+        LogoDefault(topPadding = 0.dp)
     }
+
 }
 
 @Composable
@@ -710,7 +766,3 @@ private fun NoticeCard(message: String) {
 private fun contextAsActivityOrNull(): Activity? {
     return LocalActivity.current
 }
-
-
-
-

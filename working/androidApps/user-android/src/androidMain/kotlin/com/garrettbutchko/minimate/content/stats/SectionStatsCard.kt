@@ -1,7 +1,9 @@
 package com.garrettbutchko.minimate.content.stats
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -9,10 +11,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
+import com.garrettbutchko.minimate.shared.R
 
 @Composable
 fun SectionStatsCard(
@@ -21,15 +28,19 @@ fun SectionStatsCard(
     makeColor: Color? = null,
     content: @Composable () -> Unit
 ) {
-    Card(
-        shape = RoundedCornerShape(25.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = makeColor ?: MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
+
         Column(
-            modifier = androidx.compose.ui.Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(25.dp)
+                )
+                .background(
+                    color = Color.subVsColor(makeColor),
+                    shape = RoundedCornerShape(25.dp)
+                )
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(spacing)
         ) {
             Text(
@@ -40,6 +51,6 @@ fun SectionStatsCard(
             )
             content()
         }
-    }
+
 }
 

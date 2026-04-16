@@ -15,7 +15,6 @@ struct StatCard: View {
     var color: Color? = nil
     var makeColor: Color? = nil
     var cornerRadius: CGFloat = 12
-    var cardHeight: CGFloat? = nil
     var infoText: String = "No Text Yet"
     
     var body: some View {
@@ -64,7 +63,6 @@ struct StatCard: View {
                 }
             }
         .padding()
-        .frame(height: cardHeight)
         .background{
             RoundedRectangle(cornerRadius: cornerRadius)
                 .subTwoVsColor(makeColor: makeColor)

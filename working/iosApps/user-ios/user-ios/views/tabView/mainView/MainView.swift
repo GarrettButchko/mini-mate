@@ -627,8 +627,8 @@ struct MainView: View {
     
     @ViewBuilder
     var lastGameStats: some View {
+        
         if showLastGameStats, let lastGame = gameManager.kotlin.latestGame() {
-            
             Button {
                 gameReview = lastGame
             } label: {
