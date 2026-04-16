@@ -203,7 +203,9 @@ class LocationHandler(private val context: Context) : LocationFinding {
             val latitudeDelta = paddedLatDelta + topPadding + bottomPadding
 
             val horizontalPaddingPoints = 50.0
-            val screenWidthPoints = context.resources.configuration.screenWidthDp.toDouble()
+            val screenWidthPoints = context.resources.configuration.screenWidthDp
+                .toDouble()
+                .coerceAtLeast(1.0)
             val horizontalPaddingFraction = horizontalPaddingPoints / screenWidthPoints
 
             val longitudeDelta = lonRange * (1.0 + horizontalPaddingFraction * 2.0)

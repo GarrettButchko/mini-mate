@@ -37,7 +37,7 @@ fun AuthViewModel.signInWithGoogle(
     serverClientId: String,
     completion: (Result<FirebaseUser?>) -> Unit
 ) {
-    val credentialManager = CredentialManager.create(context)
+    val credentialManager = CredentialManager.create(context.applicationContext)
     val googleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false)
         .setServerClientId(serverClientId)
@@ -76,7 +76,7 @@ fun AuthViewModel.reauthenticateWithGoogle(
     serverClientId: String,
     completion: (Result<Pair<String, String?>>) -> Unit
 ) {
-    val credentialManager = CredentialManager.create(context)
+    val credentialManager = CredentialManager.create(context.applicationContext)
     val googleIdOption = GetGoogleIdOption.Builder()
         .setFilterByAuthorizedAccounts(false)
         .setServerClientId(serverClientId)

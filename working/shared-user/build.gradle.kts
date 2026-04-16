@@ -67,8 +67,8 @@ kotlin {
         }
 
         androidMain.dependencies {
-            implementation("com.google.android.libraries.places:places:4.1.0")
-            implementation("com.google.maps.android:maps-compose:6.12.0")
+            implementation(libs.places)
+            implementation(libs.maps.compose)
             implementation(libs.compose.ui)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)

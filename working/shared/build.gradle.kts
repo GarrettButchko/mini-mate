@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
-    id("co.touchlab.skie") version "0.10.10"
+    id("co.touchlab.skie") version "0.10.11"
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room)
 }
@@ -100,6 +100,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

@@ -52,7 +52,7 @@ import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.utilities.CourseIDGenerator
 import com.garrettbutchko.minimate.utilities.PasswordGenerator
-import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
+import com.garrettbutchko.minimate.viewModels.CourseLocationViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -74,6 +74,7 @@ fun CourseScreen(
 ) {
     val koin = remember { GlobalContext.get() }
     val courseVM = courseVM ?: koin.get<CourseViewModel>()
+    val courseLocationVM = remember { koin.get<CourseLocationViewModel>() }
 
     val position by courseVM.position.collectAsState()
     val isUpperHalf by courseVM.isUpperHalf.collectAsState()
@@ -138,7 +139,6 @@ fun CourseScreen(
                 position = position,
                 mapItems = mapItems,
                 nameExists = nameExists,
-                selectedMapItem = selectedMapItem,
                 hasLocationAccess = hasLocationAccess,
                 onSelectMapItem = { mapItem ->
                     courseVM.updatePosition(mapItem)
@@ -177,7 +177,8 @@ fun CourseScreen(
 
                     LocationButton(
                         hasLocationAccess = hasLocationAccess,
-                        onRequestPermission = requestPermissions
+                        onRequestPermission = requestPermissions,
+                        onRecenter = { courseVM.recenterMap() }
                     )
                 }
                 AnimatedContent(
@@ -223,18 +224,28 @@ fun CourseScreen(
                                     CourseResultView(
                                         selectedCourse = targetCourse,
                                         selectedMapItem = selectedMapItem,
-                                        viewModel = courseVM
+                                        viewModel = courseVM,
+                                        onBackToResults = {
+                                            courseVM.closeSelectedCourse()
+                                            courseVM.recenterMap()
+                                        },
+                                        onClaimCourse = { courseLocationVM.claimCourse() }
                                     )
                                 } else {
                                     CourseSearchResultsView(
                                         mapItems = mapItems,
                                         nameExists = nameExists,
                                         isLoading = isLoadingCourses,
+                                        courseVM = courseVM,
                                         onSelect = { selected, course ->
                                             courseVM.updatePosition(selected)
                                             courseVM.setCourse(course)
                                         },
-                                        onRetry = { courseVM.searchNearby() }
+                                        onRetry = { courseVM.searchNearby() },
+                                        onCancel = {
+                                            courseVM.cancel()
+                                            courseVM.recenterMap()
+                                        }
                                     )
                                 }
                             }
@@ -255,7 +266,6 @@ private fun CourseMap(
     position: MapRegionData?,
     mapItems: List<MapItemDTO>,
     nameExists: Map<String, Boolean>,
-    selectedMapItem: MapItemDTO?,
     hasLocationAccess: Boolean,
     onSelectMapItem: (MapItemDTO) -> Unit
 ) {
@@ -284,9 +294,11 @@ private fun CourseMap(
         runCatching {
             cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 0))
         }.onFailure {
-            cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(center, mapZoomFor(region))
-            )
+            runCatching {
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(center, mapZoomFor(region))
+                )
+            }
         }
     }
 
@@ -335,34 +347,34 @@ private fun mapZoomFor(region: MapRegionData?): Float {
 @Composable
 private fun LocationButton(
     hasLocationAccess: Boolean,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    onRecenter: () -> Unit
 ) {
-    val koin = remember { GlobalContext.get() }
-    val viewModel = koin.get<CourseSearchViewModel>()
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .shadow(8.dp, CircleShape)
-                .background(
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                    shape = CircleShape
-                )
-                .clip(CircleShape)
-                .clickable {
-                    viewModel.setNewMapPosition()
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                // This is the Android equivalent of "location.fill"
-                imageVector = Icons.Rounded.MyLocation,
-                contentDescription = "Search Nearby",
-                // Use your primary color to make it pop like iOS blue
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .shadow(8.dp, CircleShape)
+            .background(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                shape = CircleShape
             )
-        }
-
+            .clip(CircleShape)
+            .clickable {
+                if (hasLocationAccess) {
+                    onRecenter()
+                } else {
+                    onRequestPermission()
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.MyLocation,
+            contentDescription = "Search Nearby",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+    }
 }
 
 
@@ -399,12 +411,3 @@ private fun MapItemDTO.toFallbackCourse(isSupported: Boolean): Course {
         isSupported = isSupported
     ).copy(placeID = placeID)
 }
-
-
-
-
-
-
-
-
-

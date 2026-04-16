@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,6 +18,7 @@ import kotlinx.coroutines.isActive
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
+import com.garrettbutchko.minimate.shared.R
 
 @Composable
 fun TitleView(
@@ -25,14 +27,14 @@ fun TitleView(
     modifier: Modifier = Modifier
 ) {
     val defaultColors = listOf(
-        Color.Red,
-        Color(0xFFFFA500), // Orange
-        Color.Yellow,
-        Color.Green,
-        Color.Blue,
-        Color(0xFF800080), // Purple
-        Color(0xFF4B0082), // Indigo
-        Color(0xFFFFC0CB)  // Pink
+        colorResource(id = R.color.swiftRed),
+        colorResource(id = R.color.swiftOrange), // Orange
+        colorResource(id = R.color.swiftYellow),
+        colorResource(id = R.color.swiftGreen),
+        colorResource(id = R.color.swiftBlue),
+        colorResource(id = R.color.swiftPurple), // Purple
+        colorResource(id = R.color.swiftIndigo), // Indigo
+        colorResource(id = R.color.swiftPink)  // Pink
     )
     val actualColors = colors ?: defaultColors
 
@@ -40,13 +42,7 @@ fun TitleView(
         modifier = modifier.size(220.dp, 150.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Orbiting background
-        OrbitingCirclesView(
-            colors = actualColors,
-            modifier = Modifier
-                .size(220.dp, 150.dp)
-                .clipToBounds()
-        )
+
 
         // Foreground Title text
         Column(
@@ -73,6 +69,14 @@ fun TitleView(
                 )
             }
         }
+
+        // Orbiting background
+        OrbitingCirclesView(
+            colors = actualColors,
+            modifier = Modifier
+                .size(220.dp, 150.dp)
+                .clipToBounds()
+        )
     }
 }
 
@@ -96,7 +100,7 @@ fun OrbitingCirclesView(
         orbitingCircles = (0 until 8).map { index ->
             OrbitingCircle(
                 angleOffset = index * (360f / 8f),
-                size = Random.nextFloat() * 10f + 10f, // 10..20
+                size = Random.nextFloat() * 30f + 20f, // 10..20
                 speedMultiplier = Random.nextFloat() * 0.4f + 0.8f, // 0.8..1.2
                 verticalScale = Random.nextFloat() * 30f + 30f, // 30..60
                 color = colors[index % colors.size]

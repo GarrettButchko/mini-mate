@@ -36,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,22 +51,16 @@ import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.shared.R
-import com.garrettbutchko.minimate.viewModels.CourseLocationViewModel
-import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
-import org.koin.core.context.GlobalContext
 
 @Composable
 fun CourseResultView(
     selectedCourse: Course,
     selectedMapItem: MapItemDTO?,
-    viewModel: CourseViewModel
+    viewModel: CourseViewModel,
+    onBackToResults: () -> Unit,
+    onClaimCourse: () -> Unit
 ) {
-
-    val koin = remember { GlobalContext.get() }
-    val courseLoc = koin.get<CourseLocationViewModel>()
-    val courseSearch = koin.get< CourseSearchViewModel>()
-
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -95,7 +88,7 @@ fun CourseResultView(
             } else {
                 item {
                     CourseClaimButton(
-                        onClaim = { courseLoc.claimCourse() }
+                        onClaim = onClaimCourse
                     )
                 }
             }
@@ -116,9 +109,7 @@ fun CourseResultView(
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
         ) {
             CourseResultViewHeader(courseName = selectedMapItem?.name ?: selectedCourse.name) {
-                viewModel.closeSelectedCourse()
-                courseSearch.setNewMapPosition()
-
+                onBackToResults()
             }
         }
     }
@@ -359,8 +350,10 @@ fun CourseContactInfoCard(mapItem: MapItemDTO?) {
             if (hasWebsite) {
                 Button(
                     onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, websiteUrl?.toUri())
-                        context.startActivity(intent)
+                        websiteUrl.let { url ->
+                            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                            context.startActivity(intent)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),

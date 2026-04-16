@@ -41,6 +41,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -76,6 +77,7 @@ import com.garrettbutchko.minimate.content.stats.StatsView
 import com.garrettbutchko.minimate.generateUUID
 import com.garrettbutchko.minimate.viewModels.GuestData
 import com.garrettbutchko.minimate.helper.IAPManager
+import com.garrettbutchko.minimate.shared.R as SharedR
 
 private data class AppDependencies(
     val viewManager: ViewManager,
@@ -153,7 +155,10 @@ fun App() {
     }
 
     MaterialTheme {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = colorResource(id = SharedR.color.bg)
+        ) {
             AnimatedContent(
                 targetState = currentView,
                 transitionSpec = {
@@ -357,8 +362,9 @@ private fun MainTabView(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Scaffold(
+                containerColor = colorResource(id = SharedR.color.bg),
                 bottomBar = {
-                    NavigationBar {
+                    NavigationBar(containerColor = colorResource(id = SharedR.color.bg)) {
                         NavigationBarItem(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
@@ -432,7 +438,7 @@ private fun MainTabView(
                                 2,
                                 loadedTabs,
                                 onLoaded = { loadedTabs = loadedTabs + it }) {
-                                CourseScreen()
+                                CourseScreen(courseVM = courseViewModel)
                             }
                         } else {
                             MissingTabConnectionMessage()

@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import com.garrettbutchko.minimate.content.App
 import com.garrettbutchko.minimate.di.initKoin
 import com.garrettbutchko.minimate.utilities.NetworkChecker
@@ -17,6 +18,8 @@ import org.koin.core.context.GlobalContext
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
         
         if (GlobalContext.getOrNull() == null) {
             initKoin {
@@ -27,7 +30,7 @@ class MainActivity : ComponentActivity() {
         NetworkChecker.initialize(applicationContext)
         MobileAds.initialize(this) {}
         MapsInitializer.initialize(applicationContext)
-        
+
         val apiKey = try {
             val appInfo = packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
             appInfo.metaData?.getString("com.google.android.geo.API_KEY")

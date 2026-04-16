@@ -9,10 +9,13 @@ import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.repositories.CourseRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -52,7 +55,9 @@ class CourseViewModel(
     private val _selectedCourse = MutableStateFlow<Course?>(null)
     val selectedCourse: StateFlow<Course?> = _selectedCourse.asStateFlow()
 
-    private val scope = CoroutineScope(Dispatchers.Main)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val inFlightNameChecks = mutableSetOf<String>()
+    private var activeSearchToken: Long = 0L
 
     fun setNameExists(value: Map<String, Boolean>) {
         _nameExists.value = value
@@ -79,13 +84,20 @@ class CourseViewModel(
     fun preloadNameChecks(items: List<MapItemDTO>) {
         items.forEach { item ->
             val name = item.name ?: return@forEach
-            if (_nameExists.value.containsKey(name)) return@forEach
+            if (_nameExists.value.containsKey(name) || inFlightNameChecks.contains(name)) return@forEach
+            inFlightNameChecks.add(name)
 
             scope.launch {
-                val exists = courseRepo.courseNameExistsAndSupported(name)
-                val updatedMap = _nameExists.value.toMutableMap()
-                updatedMap[name] = exists
-                _nameExists.value = updatedMap
+                val exists = runCatching {
+                    withContext(Dispatchers.Default) {
+                        courseRepo.courseNameExistsAndSupported(name)
+                    }
+                }.getOrDefault(false)
+
+                _nameExists.update { current ->
+                    if (current.containsKey(name)) current else current + (name to exists)
+                }
+                inFlightNameChecks.remove(name)
             }
         }
     }
@@ -109,17 +121,36 @@ class CourseViewModel(
         _position.value = position
     }
 
+    fun recenterMap() {
+        val newPosition = locationHandler.updateCameraRegion()
+        if (newPosition != null) {
+            _position.value = newPosition
+        }
+    }
+
     fun searchNearby() {
+        if (_isLoadingCourses.value) {
+            return
+        }
+
+        activeSearchToken += 1
+        val requestToken = activeSearchToken
         println("[CourseViewModel] searchNearby() start userLocation=${locationHandler.userLocation.value}")
         _isLoadingCourses.value = true
         _isUpperHalf.value = true
-        
+
         locationHandler.searchNearbyCourses(0.03, 0.1, 0.1) { success, newPosition ->
             println("[CourseViewModel] searchNearby() completion success=$success items=${locationHandler.mapItems.value.size} newPosition=$newPosition")
-            if (newPosition != null) {
-                _position.value = newPosition
+            scope.launch {
+                if (requestToken != activeSearchToken) {
+                    return@launch
+                }
+
+                if (newPosition != null) {
+                    _position.value = newPosition
+                }
+                _isLoadingCourses.value = false
             }
-            _isLoadingCourses.value = false
         }
     }
 

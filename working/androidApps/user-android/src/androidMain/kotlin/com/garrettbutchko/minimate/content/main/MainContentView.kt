@@ -8,6 +8,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,7 +34,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -44,6 +44,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,23 +55,33 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.garrettbutchko.minimate.content.ProfileView
+import com.garrettbutchko.minimate.content.TitleView
 import com.garrettbutchko.minimate.helper.IAPManager
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.logic.MainViewBusinessLogic
 import com.garrettbutchko.minimate.managers.GameManager
 import com.garrettbutchko.minimate.managers.ViewManager
+import com.garrettbutchko.minimate.modelKotlinExtensions.courseColors
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.garrettbutchko.minimate.shared.R
+
+
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +94,7 @@ fun MainContentView(
     locationHandler: LocationFinding
 ) {
     val logic = remember { MainViewBusinessLogic() }
+    val bgColor = colorResource(id = R.color.bg)
     val user by authModel.userModel.collectAsState()
     val course by gameModel.course.collectAsState()
     val userGames by gameManager.userGames.collectAsState()
@@ -90,10 +102,13 @@ fun MainContentView(
 
     var isOnlineMode by remember { mutableStateOf(false) }
     val showInfoState = remember { mutableStateOf(false) }
+    val showProfileSheetState = remember { mutableStateOf(false) }
     val showProSheetState = remember { mutableStateOf(false) }
     var showPromoStage by remember { mutableStateOf(false) }
     var isSearching by remember { mutableStateOf(false) }
     var isRotating by remember { mutableStateOf(false) }
+    var profileBotMessage by remember { mutableStateOf("") }
+    var isProfileBotError by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
@@ -126,16 +141,68 @@ fun MainContentView(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .background(bgColor)
+    ) {
         MainTopBar(
             greetingName = logic.getGreetingName(user?.name),
             courseName = course?.name,
-            onProfileTap = { showInfoState.value = true }
+            profilePhotoUrl = user?.photoURL,
+            onProfileTap = {
+                profileBotMessage = ""
+                isProfileBotError = false
+                showProfileSheetState.value = true
+            },
+            courseBallColors = course?.courseColors
         )
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        MainActionCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.CenterHorizontally)
+                .padding(horizontal = 16.dp),
+            isOnlineMode = isOnlineMode,
+            disablePlaying = disablePlaying,
+            hasConnection = NetworkChecker.shared.isConnected,
+            infoText = logic.getInfoMessage(isOnlineMode = isOnlineMode),
+            title = logic.getHeaderTitle(isOnlineMode = isOnlineMode),
+            onBackToOffline = { isOnlineMode = false },
+            onInfo = { showInfoState.value = true },
+            onQuick = {
+                if (disablePlaying) {
+                    showProSheetState.value = true
+                } else {
+                    gameModel.createGame(online = false, guestData = null)
+                    viewManager.navigateToHost()
+                }
+            },
+            onConnect = {
+                if (disablePlaying) {
+                    showProSheetState.value = true
+                } else {
+                    isOnlineMode = true
+                }
+            },
+            onHost = {
+                gameModel.createGame(online = true, guestData = null)
+                viewManager.navigateToHost()
+            },
+            onJoin = {
+                gameModel.resetGame()
+                viewManager.navigateToJoin()
+            }
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(bgColor)
+        ) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(bgColor),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
@@ -193,42 +260,7 @@ fun MainContentView(
                 item { Spacer(modifier = Modifier.height(88.dp)) }
             }
 
-            MainActionCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .padding(horizontal = 16.dp),
-                isOnlineMode = isOnlineMode,
-                disablePlaying = disablePlaying,
-                hasConnection = NetworkChecker.shared.isConnected,
-                infoText = logic.getInfoMessage(isOnlineMode = isOnlineMode),
-                title = logic.getHeaderTitle(isOnlineMode = isOnlineMode),
-                onBackToOffline = { isOnlineMode = false },
-                onInfo = { showInfoState.value = true },
-                onQuick = {
-                    if (disablePlaying) {
-                        showProSheetState.value = true
-                    } else {
-                        gameModel.createGame(online = false, guestData = null)
-                        viewManager.navigateToHost()
-                    }
-                },
-                onConnect = {
-                    if (disablePlaying) {
-                        showProSheetState.value = true
-                    } else {
-                        isOnlineMode = true
-                    }
-                },
-                onHost = {
-                    gameModel.createGame(online = true, guestData = null)
-                    viewManager.navigateToHost()
-                },
-                onJoin = {
-                    gameModel.resetGame()
-                    viewManager.navigateToJoin()
-                }
-            )
+
 
             if (NetworkChecker.shared.isConnected && user?.isPro == false) {
                 Box(
@@ -266,6 +298,134 @@ fun MainContentView(
         )
     }
 
+    if (showProfileSheetState.value) {
+        ModalBottomSheet(
+            onDismissRequest = { showProfileSheetState.value = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
+            ProfileView(
+                userProfileImage = user?.photoURL,
+                userName = user?.name ?: "Player",
+                userEmail = user?.email,
+                userGoogleId = user?.googleId ?: "",
+                userIsPro = user?.isPro ?: false,
+                userAccountType = user?.accountType?.joinToString(",") ?: "",
+                botMessage = profileBotMessage,
+                isBotMessageError = isProfileBotError,
+                onPhotoChange = {
+                    profileBotMessage = "Photo updates are not available here yet."
+                    isProfileBotError = true
+                },
+                onGetPro = {
+                    showProfileSheetState.value = false
+                    showProSheetState.value = true
+                },
+                onEditName = { newName ->
+                    val currentUser = user ?: return@ProfileView
+                    scope.launch {
+                        val updated = currentUser.copy(name = newName)
+                        authModel.setUserModel(updated)
+                        runCatching {
+                            authModel.userRepository.saveUnified(updated.googleId, updated)
+                        }.onSuccess {
+                            profileBotMessage = "Name updated."
+                            isProfileBotError = false
+                        }.onFailure {
+                            profileBotMessage = it.message ?: "Unable to update name."
+                            isProfileBotError = true
+                        }
+                    }
+                },
+                onPasswordReset = {
+                    val email = user?.email
+                    if (email.isNullOrBlank()) {
+                        profileBotMessage = "No email found for this account."
+                        isProfileBotError = true
+                        return@ProfileView
+                    }
+
+                    scope.launch {
+                        runCatching { authModel.authRepository.sendPasswordReset(email) }
+                            .getOrElse { Result.failure(it) }
+                            .fold(
+                                onSuccess = {
+                                    profileBotMessage = "Password reset email sent."
+                                    isProfileBotError = false
+                                },
+                                onFailure = {
+                                    profileBotMessage = it.message ?: "Could not send reset email."
+                                    isProfileBotError = true
+                                }
+                            )
+                    }
+                },
+                onLogout = {
+                    showProfileSheetState.value = false
+                    authModel.logout()
+                    viewManager.navigateToWelcome()
+                },
+                onDeleteAccountGoogle = {
+                    scope.launch {
+                        authModel.reauthenticateWithGoogle().fold(
+                            onSuccess = { credential ->
+                                authModel.deleteAccount(credential).fold(
+                                    onSuccess = {
+                                        showProfileSheetState.value = false
+                                        viewManager.navigateToWelcome()
+                                    },
+                                    onFailure = {
+                                        profileBotMessage = it.message ?: "Unable to delete account."
+                                        isProfileBotError = true
+                                    }
+                                )
+                            },
+                            onFailure = {
+                                profileBotMessage = it.message ?: "Google re-authentication failed."
+                                isProfileBotError = true
+                            }
+                        )
+                    }
+                },
+                onDeleteAccountApple = {
+                    profileBotMessage = "Apple account deletion is not available here yet."
+                    isProfileBotError = true
+                },
+                onDeleteAccountEmail = { password ->
+                    val email = user?.email
+                    if (email.isNullOrBlank()) {
+                        profileBotMessage = "No email found for this account."
+                        isProfileBotError = true
+                        return@ProfileView
+                    }
+
+                    scope.launch {
+                        authModel.reauthenticateWithEmail(email, password).fold(
+                            onSuccess = { credential ->
+                                authModel.deleteAccount(credential).fold(
+                                    onSuccess = {
+                                        showProfileSheetState.value = false
+                                        viewManager.navigateToWelcome()
+                                    },
+                                    onFailure = {
+                                        profileBotMessage = it.message ?: "Unable to delete account."
+                                        isProfileBotError = true
+                                    }
+                                )
+                            },
+                            onFailure = {
+                                profileBotMessage = it.message ?: "Re-authentication failed."
+                                isProfileBotError = true
+                            }
+                        )
+                    }
+                },
+                onDismiss = {
+                    showProfileSheetState.value = false
+                }
+            )
+        }
+    }
+
     if (showProSheetState.value) {
         ModalBottomSheet(onDismissRequest = { showProSheetState.value = false }) {
             ProView(
@@ -283,18 +443,23 @@ fun MainContentView(
 private fun MainTopBar(
     greetingName: String,
     courseName: String?,
+    courseBallColors: List<Color>?,
+    profilePhotoUrl: String?,
     onProfileTap: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(colorResource(id = R.color.bg))
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Welcome back,", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(greetingName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                Text("Welcome back,", style = MaterialTheme.typography.bodySmall, color = colorResource(id = R.color.subTwoOpp))
+                Text(greetingName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = colorResource(id = R.color.mainOpp))
                 if (!courseName.isNullOrBlank()) {
                     Text(
                         text = courseName,
@@ -309,17 +474,24 @@ private fun MainTopBar(
             IconButton(onClick = onProfileTap) {
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
                     Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
+                        if (!profilePhotoUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = profilePhotoUrl,
+                                contentDescription = "Profile",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Icon(Icons.Default.Person, contentDescription = "Profile")
+                        }
                     }
                 }
             }
         }
 
-        Card {
-            Box(modifier = Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
-                Text("Mini Mate", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            }
-        }
+        TitleView(colors = courseBallColors)
     }
 }
 
@@ -338,7 +510,7 @@ private fun MainActionCard(
     onHost: () -> Unit,
     onJoin: () -> Unit
 ) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))) {
+    Card(modifier = modifier) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (isOnlineMode) {

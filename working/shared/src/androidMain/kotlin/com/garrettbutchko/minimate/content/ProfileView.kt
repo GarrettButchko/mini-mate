@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.VectorConverter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.garrettbutchko.minimate.shared.BuildConfig
 
 enum class DeleteAlertType {
     GOOGLE, APPLE, EMAIL
@@ -34,6 +36,7 @@ fun ProfileView(
     userGoogleId: String,
     userIsPro: Boolean,
     userAccountType: String,
+    buildTypeLabel: String? = null,
     botMessage: String = "",
     isBotMessageError: Boolean = false,
     onPhotoChange: (Uri) -> Unit,
@@ -63,23 +66,7 @@ fun ProfileView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
     ) {
-        // Handle / Drag indicator
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 38.dp, height = 6.dp)
-                    .clip(CircleShape)
-                    .background(Color.Gray)
-            )
-        }
-
         // Header
         Row(
             modifier = Modifier
@@ -94,9 +81,9 @@ fun ProfileView(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.End) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Tap to change photo", fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 
                 Box(
                     modifier = Modifier
@@ -121,7 +108,7 @@ fun ProfileView(
                         )
                     } else {
                         // Placeholder LogoOpp equivalent
-                        Text("Logo", fontSize = 10.sp, color = Color.White)
+                        Text("", fontSize = 10.sp, color = Color.White)
                     }
                 }
             }
@@ -141,14 +128,12 @@ fun ProfileView(
                             Text("Name: ", fontWeight = FontWeight.SemiBold)
                             Text(userName)
                         }
+                        HorizontalDivider()
                         Row {
                             Text("Email: ", fontWeight = FontWeight.SemiBold)
                             Text(userEmail ?: "N/A")
                         }
-                        Row {
-                            Text("UID: ", fontWeight = FontWeight.SemiBold)
-                            Text(userGoogleId)
-                        }
+                        HorizontalDivider()
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Pro: ", fontWeight = FontWeight.SemiBold)
                             Text(if (userIsPro) "Yes" else "Not Yet!")
@@ -159,39 +144,78 @@ fun ProfileView(
                                 }
                             }
                         }
+                        if (BuildConfig.DEBUG) {
+                            HorizontalDivider()
+                            Row {
+                                Text("Build: ", fontWeight = FontWeight.SemiBold)
+                                Text(buildTypeLabel ?: BuildConfig.BUILD_TYPE)
+                            }
+                            HorizontalDivider()
+                            Row {
+                                Text("UID: ", fontWeight = FontWeight.SemiBold)
+                                Text(userGoogleId)
+                            }
+                            HorizontalDivider()
+                            Row {
+                                Text("PhotoURL: ", fontWeight = FontWeight.SemiBold)
+                                if (userProfileImage != null) {
+                                    Text(userProfileImage)
+                                } else {
+                                    Text("N/A")
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             // Account Management Section
             item {
-                Text("Account Management", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("Account Management", fontWeight = FontWeight.Bold)
                 Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { showEditName = true }) {
-                            Text("Edit Name")
-                        }
-                        
-                        if (userAccountType.contains("email", ignoreCase = true) && !userAccountType.contains("google", ignoreCase = true)) {
-                            TextButton(onClick = onPasswordReset) {
-                                Text("Password Reset")
-                            }
-                        }
-                        
-                        TextButton(onClick = onLogout) {
-                            Text("Logout", color = Color.Red)
+                        Button(
+                            onClick = { showEditName = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Edit Name", color = Color.White)
                         }
 
-                        TextButton(onClick = {
-                            if (userAccountType.contains("google", ignoreCase = true)) {
-                                activeDeleteAlert = DeleteAlertType.GOOGLE
-                            } else if (userAccountType.contains("apple", ignoreCase = true)) {
-                                activeDeleteAlert = DeleteAlertType.APPLE
-                            } else {
-                                activeDeleteAlert = DeleteAlertType.EMAIL
+                        if (userAccountType.contains("email", ignoreCase = true) && !userAccountType.contains("google", ignoreCase = true)) {
+
+                            Button(
+                                onClick = onPasswordReset,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text("Password Reset", color = Color.White)
                             }
-                        }) {
-                            Text("Delete Account", color = Color.Red)
+                        }
+
+                        Button(
+                            onClick = onLogout,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
+                        ) {
+                            Text("Logout", color = Color.White)
+                        }
+
+
+                        Button(
+                            onClick = {
+                                if (userAccountType.contains("google", ignoreCase = true)) {
+                                    activeDeleteAlert = DeleteAlertType.GOOGLE
+                                } else if (userAccountType.contains("apple", ignoreCase = true)) {
+                                    activeDeleteAlert = DeleteAlertType.APPLE
+                                } else {
+                                    activeDeleteAlert = DeleteAlertType.EMAIL
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        ) {
+                            Text("Delete Account", color = Color.White)
                         }
                     }
                 }

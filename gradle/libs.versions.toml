@@ -1,7 +1,7 @@
 [versions]
 billing = "6.2.1"
-agp = "9.1.0"
-android-compileSdk = "36"
+agp = "9.1.1"
+android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "35"
 androidx-activity = "1.13.0"
@@ -10,7 +10,7 @@ androidx-core = "1.18.0"
 androidx-espresso = "3.7.0"
 androidx-lifecycle = "2.9.6"
 androidx-testExt = "1.3.0"
-androidx-credentials = "1.5.0"
+androidx-credentials = "1.6.0"
 composeMultiplatform = "1.10.2"
 configurationAnnotations = "0.10.11"
 firebaseBom = "34.10.0"
@@ -39,6 +39,7 @@ material3 = "1.10.0-alpha05"
 qrcodeKotlin = "4.5.0"
 foundationLayout = "1.10.6"
 composeCharts = "0.2.1"
+uiGraphics = "1.10.6"
 
 [libraries]
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
@@ -100,6 +101,7 @@ places = { module = "com.google.android.libraries.places:places", version.ref = 
 qrcode-kotlin = { module = "io.github.g0dkar:qrcode-kotlin", version.ref = "qrcodeKotlin" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 bytebeats-compose-charts = { module = "io.github.bytebeats:compose-charts", version.ref = "composeCharts" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

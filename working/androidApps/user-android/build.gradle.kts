@@ -59,6 +59,10 @@ android {
     namespace = "com.garrettbutchko.minimate.user"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.garrettbutchko.minimate.user"
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -73,6 +77,8 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+        }
         getByName("release") {
             isMinifyEnabled = false
         }

@@ -38,10 +38,8 @@ import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.logic.SearchResultBusinessLogic
 import com.garrettbutchko.minimate.utilities.CourseIDGenerator
 import com.garrettbutchko.minimate.utilities.PasswordGenerator
-import com.garrettbutchko.minimate.viewModels.CourseSearchViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import kotlinx.coroutines.delay
-import org.koin.core.context.GlobalContext
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.garrettbutchko.minimate.shared.R
@@ -51,13 +49,11 @@ fun CourseSearchResultsView(
     mapItems: List<MapItemDTO> = emptyList(),
     nameExists: Map<String, Boolean>,
     isLoading: Boolean,
+    courseVM: CourseViewModel,
     onSelect: (MapItemDTO, Course) -> Unit = { _, _ -> },
-    onRetry: () -> Unit = {}
+    onRetry: () -> Unit = {},
+    onCancel: () -> Unit = {}
 ) {
-
-    val koin = remember { GlobalContext.get() }
-    val courseVM = koin.get<CourseViewModel>()
-    val courseSearch = koin.get< CourseSearchViewModel>()
 
     val logic = remember { SearchResultBusinessLogic() }
     var showRetryButton by remember { mutableStateOf(false) }
@@ -151,17 +147,14 @@ fun CourseSearchResultsView(
                 )
 
                 Button(
-                    onClick = {
-                        courseVM.cancel()
-                        courseSearch.setNewMapPosition()
-                    },
+                    onClick = onCancel,
                     modifier = Modifier.size(width = 70.dp, height = 30.dp),
                     contentPadding = PaddingValues(0.dp),
                     shape = RoundedCornerShape(25.dp)
                 ) {
                     Text(
                         text = "Cancel",
-                        style = MaterialTheme.typography.labelMedium // Optional: adjust to fit the small height
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
             }
