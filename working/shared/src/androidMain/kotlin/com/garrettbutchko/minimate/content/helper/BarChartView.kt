@@ -10,8 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.dataModels.holeModels.Hole
+import com.garrettbutchko.minimate.shared.R
 import me.bytebeats.views.charts.bar.BarChart
 import me.bytebeats.views.charts.bar.BarChartData
 import me.bytebeats.views.charts.bar.render.label.SimpleLabelDrawer
@@ -27,9 +29,9 @@ fun BarChartView(
     paddingReview: Boolean = false
 ) {
     val chartData = BarChartData(
-        bars = data.map { hole ->
+        bars = data.mapIndexed { index, hole ->
             BarChartData.Bar(
-                label = "H${hole.number}",
+                label = if (index % 3 == 0) "H${hole.number}" else "",
                 value = hole.strokes.toFloat(),
                 color = strokeColor(hole.strokes)
             )
@@ -44,8 +46,9 @@ fun BarChartView(
             .padding(end = if (paddingReview) 12.dp else 15.dp)
             .fillMaxWidth()
     ) {
-        val axisColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+        val mainOppColor = colorResource(id = R.color.mainOpp)
+        val axisColor = mainOppColor.copy(alpha = 0.8f)
+        val gridColor = mainOppColor.copy(alpha = 0.2f)
 
         BarChart(
             barChartData = chartData,
@@ -61,7 +64,7 @@ fun BarChartView(
 
         Text(
             text = title,
-            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            style = MaterialTheme.typography.bodySmall.copy(color = colorResource(id = R.color.subThreeOpp)),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(top = 8.dp)

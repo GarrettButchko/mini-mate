@@ -58,14 +58,12 @@ fun StatsView(
                     title = "Players Faced",
                     value = gameManager.totalPlayersFaced().toString(),
                     infoText = "Number of players other than yourself you played with.",
-                    cardHeight = 104.dp,
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = "Holes Played",
                     value = gameManager.totalHolesPlayed().toString(),
                     infoText = "Total holes played (including unfinished holes).",
-                    cardHeight = 104.dp,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -74,7 +72,6 @@ fun StatsView(
                 title = "Games Played",
                 value = gameManager.totalGamesPlayed().toString(),
                 infoText = "Total games played.",
-                cardHeight = 104.dp
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -82,14 +79,12 @@ fun StatsView(
                     title = "Strokes/Game",
                     value = String.format(Locale.US, "%.1f", averagePerGame),
                     infoText = "Average strokes per game.",
-                    cardHeight = 104.dp,
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = "Strokes/Hole",
                     value = String.format(Locale.US, "%.1f", averagePerHole),
                     infoText = "Average strokes per hole.",
-                    cardHeight = 104.dp,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -108,7 +103,6 @@ fun StatsView(
                     value = bestGame,
                     color = Color(0xFF2E7D32),
                     infoText = "Lowest total strokes in a game.",
-                    cardHeight = 104.dp,
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
@@ -116,7 +110,6 @@ fun StatsView(
                     value = worstGame,
                     color = Color(0xFFC62828),
                     infoText = "Highest total strokes in a game.",
-                    cardHeight = 104.dp,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -124,7 +117,6 @@ fun StatsView(
                 title = "Holes-in-One",
                 value = gameManager.holeInOneCount().toString(),
                 infoText = "Number of holes with one stroke.",
-                cardHeight = 104.dp
             )
         }
 

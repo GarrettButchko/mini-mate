@@ -54,7 +54,7 @@ fun TitleView(
                     text = "Mini",
                     fontSize = if (isManager) 28.sp else 34.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface // Corresponds to .mainOpp
+                    color = colorResource(id = R.color.mainOpp)
                 )
                 Spacer(modifier = Modifier.weight(1f))
             }
@@ -65,7 +65,7 @@ fun TitleView(
                     text = if (isManager) "Manager" else "Mate",
                     fontSize = if (isManager) 28.sp else 34.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color =colorResource(id = R.color.mainOpp)
                 )
             }
         }

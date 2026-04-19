@@ -6,8 +6,17 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +36,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
@@ -54,22 +65,31 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.onSizeChanged
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.ProfileView
 import com.garrettbutchko.minimate.content.TitleView
+import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.modifiers.BarChartView
 import com.garrettbutchko.minimate.helper.IAPManager
@@ -159,6 +179,7 @@ fun MainContentView(
         MainTopBar(
             greetingName = logic.getGreetingName(user?.name),
             courseName = course?.name,
+            courseLogoUrl = course?.logo,
             profilePhotoUrl = user?.photoURL,
             onProfileTap = {
                 profileBotMessage = ""
@@ -168,54 +189,20 @@ fun MainContentView(
             courseBallColors = course?.courseColors
         )
 
-        MainActionCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterHorizontally)
-                .padding(horizontal = 16.dp),
-            isOnlineMode = isOnlineMode,
-            disablePlaying = disablePlaying,
-            hasConnection = NetworkChecker.shared.isConnected,
-            infoText = logic.getInfoMessage(isOnlineMode = isOnlineMode),
-            title = logic.getHeaderTitle(isOnlineMode = isOnlineMode),
-            onBackToOffline = { isOnlineMode = false },
-            onInfo = { showInfoState.value = true },
-            onQuick = {
-                if (disablePlaying) {
-                    showProSheetState.value = true
-                } else {
-                    gameModel.createGame(online = false, guestData = null)
-                    viewManager.navigateToHost()
-                }
-            },
-            onConnect = {
-                if (disablePlaying) {
-                    showProSheetState.value = true
-                } else {
-                    isOnlineMode = true
-                }
-            },
-            onHost = {
-                gameModel.createGame(online = true, guestData = null)
-                viewManager.navigateToHost()
-            },
-            onJoin = {
-                gameModel.resetGame()
-                viewManager.navigateToJoin()
-            }
-        )
+
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(bgColor)
         ) {
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(bgColor)
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(vertical = 12.dp),
+                contentPadding = PaddingValues(top = 132.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
@@ -244,13 +231,13 @@ fun MainContentView(
                                     isRotating = false
                                 }
                             },
-                            onExit = { gameModel.exit() }
+                            onExit = { gameModel.exit() },
+                            makeColor = course?.scoreCardColor
                         )
                     }
                 }
-
-                item {
-                    if (logic.shouldShowProStopper(user?.isPro, user?.gameIDs?.size ?: 0)) {
+                if (logic.shouldShowProStopper(user?.isPro, user?.gameIDs?.size ?: 0)) {
+                    item {
                         NoticeCard(
                             message = "You have reached the free limit. Upgrade to Pro to store more than 2 games."
                         )
@@ -259,20 +246,74 @@ fun MainContentView(
 
                 item {
                     if (NetworkChecker.shared.isConnected && user?.isPro == false) {
-                        NoticeCard(message = "Ads appear here for free users.")
+
+                        val myModifier = if (course?.scoreCardColor != null) {
+                            Modifier
+                                .fillMaxWidth()
+                        } else {
+                            Modifier
+                                .fillMaxWidth()
+                                .shadow(
+                                    elevation = 8.dp,
+                                    shape = RoundedCornerShape(25.dp)
+                                )
+                        }
+
+                        BannerAdView(adUnitID = "ca-app-pub-8261962597301587/9726040339",
+                            modifier = myModifier
+                                .height(80.dp)
+                                .background(
+                                    color = Color.subVsColor(makeColor = course?.scoreCardColor),
+                                    shape = RoundedCornerShape(25.dp)
+                                )
+                                .padding(14.dp))
                     }
                 }
 
                 item {
                     LastGameCard(
                         gameManager = gameManager,
-                        tintColor = course?.scoreCardColor ?: course?.courseColors?.firstOrNull(),
+                        tintColor = course?.scoreCardColor,
                         onOpenStats = { viewManager.navigateToMain(0) }
                     )
                 }
             }
 
-
+            MainActionCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                isOnlineMode = isOnlineMode,
+                hasConnection = NetworkChecker.shared.isConnected,
+                infoText = logic.getInfoMessage(isOnlineMode = isOnlineMode),
+                title = logic.getHeaderTitle(isOnlineMode = isOnlineMode),
+                onBackToOffline = { isOnlineMode = false },
+                onInfo = { showInfoState.value = true },
+                onQuick = {
+                    if (disablePlaying) {
+                        showProSheetState.value = true
+                    } else {
+                        gameModel.createGame(online = false, guestData = null)
+                        viewManager.navigateToHost()
+                    }
+                },
+                onConnect = {
+                    if (disablePlaying) {
+                        showProSheetState.value = true
+                    } else {
+                        isOnlineMode = true
+                    }
+                },
+                onHost = {
+                    gameModel.createGame(online = true, guestData = null)
+                    viewManager.navigateToHost()
+                },
+                onJoin = {
+                    gameModel.resetGame()
+                    viewManager.navigateToJoin()
+                },
+                makeColor = course?.scoreCardColor
+            )
 
             if (NetworkChecker.shared.isConnected && user?.isPro == false) {
                 Box(
@@ -451,14 +492,20 @@ fun MainContentView(
     }
 }
 
+
 @Composable
 private fun MainTopBar(
     greetingName: String,
     courseName: String?,
+    courseLogoUrl: String?,
     courseBallColors: List<Color>?,
     profilePhotoUrl: String?,
     onProfileTap: () -> Unit
 ) {
+    val density = LocalDensity.current
+    var titleSize by remember { mutableStateOf(IntSize.Zero) }
+    val titleHeight = with(density) { titleSize.height.toDp() }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -468,17 +515,28 @@ private fun MainTopBar(
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Welcome back,", style = MaterialTheme.typography.bodySmall, color = colorResource(id = R.color.subTwoOpp))
-                Text(greetingName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = colorResource(id = R.color.mainOpp))
-                if (!courseName.isNullOrBlank()) {
-                    Text(
-                        text = courseName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.onSizeChanged { titleSize = it },
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text("Welcome back,", style = MaterialTheme.typography.bodySmall, color = colorResource(id = R.color.subTwoOpp))
+                    Text(greetingName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = colorResource(id = R.color.mainOpp))
+                }
+
+                if (!courseLogoUrl.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(if (titleHeight > 0.dp) titleHeight else 44.dp)
+                            .background(colorResource(id = R.color.subTwoOpp).copy(alpha = 0.4f))
+                    )
+                    AsyncImage(
+                        model = courseLogoUrl,
+                        contentDescription = "Course logo",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.height(if (titleHeight > 0.dp) titleHeight else 44.dp)
                     )
                 }
             }
@@ -503,7 +561,7 @@ private fun MainTopBar(
             }
         }
 
-        TitleView(colors = courseBallColors)
+        TitleView(colors = courseBallColors, modifier = Modifier.height(150.dp))
     }
 }
 
@@ -511,8 +569,8 @@ private fun MainTopBar(
 private fun MainActionCard(
     modifier: Modifier,
     isOnlineMode: Boolean,
-    disablePlaying: Boolean,
     hasConnection: Boolean,
+    makeColor: Color?,
     title: String,
     infoText: String,
     onBackToOffline: () -> Unit,
@@ -522,66 +580,141 @@ private fun MainActionCard(
     onHost: () -> Unit,
     onJoin: () -> Unit
 ) {
-    Card(modifier = modifier) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isOnlineMode) {
-                    IconButton(onClick = onBackToOffline) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    val myModifier = if (makeColor != null) {
+        modifier
+            .padding(bottom = 16.dp).fillMaxWidth()
+    } else {
+        modifier
+            .padding(bottom = 16.dp)
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(25.dp)
+            )
+    }
+
+    Column(
+        modifier = myModifier
+            .background(
+                color = colorResource(id = R.color.bg).copy(alpha = 0.9f),
+                shape = RoundedCornerShape(25.dp)
+            )
+            .background(
+                color = Color.subVsColor(makeColor = makeColor),
+                shape = RoundedCornerShape(25.dp)
+            )
+            .padding(14.dp)
+            .animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(30.dp), contentAlignment = Alignment.Center) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isOnlineMode,
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut()
+                ) {
+                    Surface(shape = CircleShape, color = colorResource(id = R.color.mainOpp)) {
+                        IconButton(onClick = onBackToOffline, modifier = Modifier.size(30.dp)) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = colorResource(id = R.color.bg),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
-                } else {
-                    Spacer(modifier = Modifier.width(48.dp))
-                }
-
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
-                )
-
-                IconButton(onClick = onInfo) {
-                    Icon(Icons.Default.Info, contentDescription = infoText, tint = MaterialTheme.colorScheme.primary)
                 }
             }
 
-            if (isOnlineMode) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    FilledActionButton(title = "Host", enabled = true, color = Color(0xFF7E57C2), onClick = onHost, modifier = Modifier.weight(1f))
-                    FilledActionButton(title = "Join", enabled = true, color = Color(0xFFF57C00), onClick = onJoin, modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                AnimatedContent(
+                    targetState = title,
+                    transitionSpec = {
+                        (slideInVertically { -it / 2 } + fadeIn() + scaleIn()).togetherWith(
+                            slideOutVertically { it / 2 } + fadeOut() + scaleOut()
+                        )
+                    },
+                    label = "modeTitle"
+                ) { currentTitle ->
+                    Text(
+                        text = currentTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = colorResource(id = R.color.mainOpp),
+                        maxLines = 1
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            IconButton(onClick = onInfo, modifier = Modifier.size(30.dp)) {
+                Icon(Icons.Default.Info, contentDescription = infoText, tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+
+        AnimatedContent(
+            targetState = isOnlineMode,
+            transitionSpec = {
+                if (targetState) {
+                    (slideInHorizontally { it / 2 } + fadeIn()).togetherWith(
+                        slideOutHorizontally { -it / 2 } + fadeOut()
+                    )
+                } else {
+                    (slideInHorizontally { -it / 2 } + fadeIn()).togetherWith(
+                        slideOutHorizontally { it / 2 } + fadeOut()
+                    )
+                }
+            },
+            label = "modeButtons"
+        ) { online ->
+            if (online) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    FilledActionButton(
+                        title = "Host",
+                        enabled = true,
+                        color = Color(0xFF7E57C2),
+                        onClick = onHost,
+                        icon = Icons.Default.Refresh,
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilledActionButton(
+                        title = "Join",
+                        enabled = true,
+                        color = Color(0xFFF57C00),
+                        onClick = onJoin,
+                        icon = Icons.Default.Person,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     FilledActionButton(
                         title = "Quick",
-                        enabled = !disablePlaying,
+                        enabled = true,
                         color = Color(0xFF1E88E5),
                         onClick = onQuick,
+                        icon = Icons.Default.Person,
                         modifier = Modifier.weight(1f)
                     )
 
-                    if (hasConnection) {
-                        FilledActionButton(
-                            title = "Connect",
-                            enabled = !disablePlaying,
-                            color = Color(0xFF43A047),
-                            onClick = onConnect,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        FilledActionButton(
-                            title = "Connect",
-                            enabled = false,
-                            color = Color(0xFF43A047),
-                            onClick = {},
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    FilledActionButton(
+                        title = "Connect",
+                        enabled = hasConnection,
+                        color = Color(0xFF43A047),
+                        onClick = onConnect,
+                        icon = Icons.Default.Public,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
     }
+
 }
 
 @Composable
@@ -590,15 +723,25 @@ private fun FilledActionButton(
     enabled: Boolean,
     color: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = color),
+        shape = RoundedCornerShape(15.dp),
         modifier = modifier.height(50.dp)
     ) {
-        Text(title, color = Color.White)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            }
+            Text(title, color = Color.White)
+        }
     }
 }
 
@@ -610,65 +753,197 @@ private fun LocationCard(
     isRotating: Boolean,
     onSearchNearby: () -> Unit,
     onRetry: () -> Unit,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    makeColor: Color?
 ) {
     val context = LocalContext.current
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(25.dp)
-                )
-                .background(
-                    color = colorResource(id = R.color.sub),
-                    shape = RoundedCornerShape(25.dp)
-                )
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (hasLocationAccess) {
-                Text("Location", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(courseName ?: "No location selected", color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val retryRotation by animateFloatAsState(
+        targetValue = if (isRotating) 360f else 0f,
+        animationSpec = tween(durationMillis = 700),
+        label = "retryRotation"
+    )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (courseName == null) {
-                        Button(onClick = onSearchNearby, enabled = !isSearching) {
-                            if (isSearching) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = Color.White)
-                                Spacer(modifier = Modifier.width(8.dp))
+    val myModifier = if (makeColor != null) {
+        Modifier.fillMaxWidth()
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(25.dp)
+            )
+    }
+
+    Column(
+        myModifier
+            .background(
+                color = Color.subVsColor(makeColor),
+                shape = RoundedCornerShape(25.dp)
+            )
+            .padding(16.dp)
+            .animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        AnimatedContent(
+            targetState = hasLocationAccess,
+            transitionSpec = {
+                (slideInVertically { it / 4 } + fadeIn()).togetherWith(
+                    slideOutVertically { -it / 4 } + fadeOut()
+                )
+            },
+            label = "locationAccessState"
+        ) { hasAccess ->
+            if (hasAccess) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            "Location:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorResource(id = R.color.mainOpp)
+                        )
+
+                        AnimatedContent(
+                            targetState = courseName ?: "No Location",
+                            transitionSpec = {
+                                (slideInVertically { it / 2 } + fadeIn()).togetherWith(
+                                    slideOutVertically { -it / 2 } + fadeOut()
+                                )
+                            },
+                            label = "courseNameState"
+                        ) { currentCourseName ->
+                            Text(
+                                text = currentCourseName,
+                                color = colorResource(id = R.color.subTwoOpp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        AnimatedContent(
+                            targetState = courseName == null,
+                            transitionSpec = {
+                                (slideInHorizontally { it / 2 } + fadeIn()).togetherWith(
+                                    slideOutHorizontally { it / 2 } + fadeOut()
+                                )
+                            },
+                            label = "locationActions"
+                        ) { shouldShowSearch ->
+                            if (shouldShowSearch) {
+                                Button(
+                                    onClick = onSearchNearby,
+                                    enabled = !isSearching,
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5)),
+                                    shape = RoundedCornerShape(15.dp),
+                                    modifier = Modifier.height(50.dp)
+                                ) {
+                                    AnimatedContent(
+                                        targetState = isSearching,
+                                        transitionSpec = {
+                                            (fadeIn() + scaleIn()).togetherWith(fadeOut() + scaleOut())
+                                        },
+                                        label = "searchLoading"
+                                    ) { loading ->
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (loading) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    strokeWidth = 2.dp,
+                                                    color = Color.White
+                                                )
+                                                Text("Searching...", color = Color.White)
+                                            } else {
+                                                Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
+                                                Text("Search Nearby", color = Color.White)
+                                            }
+                                        }
+                                    }
+                                }
                             } else {
-                                Icon(Icons.Default.Search, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    IconButton(onClick = onRetry, enabled = !isSearching) {
+                                        Surface(
+                                            modifier = Modifier.size(50.dp),
+                                            shape = CircleShape,
+                                            color = Color(0xFF1E88E5)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    Icons.Default.Refresh,
+                                                    contentDescription = "Retry",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.rotate(retryRotation)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    IconButton(onClick = onExit) {
+                                        Surface(
+                                            modifier = Modifier.size(50.dp),
+                                            shape = CircleShape,
+                                            color = Color(0xFFE53935)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(Icons.Default.Close, contentDescription = "Clear location", tint = Color.White)
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            Text(if (isSearching) "Searching..." else "Search Nearby")
-                        }
-                    } else {
-                        IconButton(onClick = onRetry, enabled = !isSearching) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Retry", modifier = Modifier.rotate(if (isRotating) 360f else 0f))
-                        }
-                        IconButton(onClick = onExit) {
-                            Icon(Icons.Default.Public, contentDescription = "Clear location")
                         }
                     }
                 }
             } else {
-                Text("Location access required", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    "Mini Mate needs your location to find nearby courses.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Open Settings",
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable {
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                        intent.data = Uri.fromParts("package", context.packageName, null)
-                        context.startActivity(intent)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOff,
+                        contentDescription = "Location access required",
+                        tint = colorResource(id = R.color.subTwoOpp),
+                        modifier = Modifier.size(50.dp)
+                    )
+                    Text(
+                        "Location Access Required",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorResource(id = R.color.mainOpp)
+                    )
+                    Text(
+                        "Mini Mate needs your location to find nearby courses and update your position.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorResource(id = R.color.subTwoOpp),
+                        textAlign = TextAlign.Center
+                    )
+                    Button(
+                        onClick = {
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            intent.data = Uri.fromParts("package", context.packageName, null)
+                            context.startActivity(intent)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5)),
+                        shape = RoundedCornerShape(15.dp),
+                        modifier = Modifier
+                            .height(50.dp)
+                            .width(200.dp)
+                    ) {
+                        Text("Open Settings", color = Color.White, fontWeight = FontWeight.SemiBold)
                     }
-                )
+                }
             }
         }
+    }
 
 }
 
@@ -723,7 +998,6 @@ private fun LastGameCard(
                             value = strokes.toString(),
                             makeColor = tintColor,
                             cornerRadius = 12.dp,
-                            cardHeight = cardHeight,
                             infoText = "The number of strokes you had last game.",
                             modifier = Modifier.weight(1f)
                         )
