@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -34,9 +35,9 @@ fun CourseSearchButton(
                 strokeWidth = 2.dp
             )
             Spacer(Modifier.width(8.dp))
-            Text("Searching...")
+            Text("Searching...", color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp))
         } else {
-            Text("Search Nearby Courses")
+            Text("Search Nearby Courses", color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp))
         }
     }
 }

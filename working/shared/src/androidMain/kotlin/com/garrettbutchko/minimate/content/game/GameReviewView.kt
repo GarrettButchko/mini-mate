@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.game.fix.GameInfoViewAndroid
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
-import com.garrettbutchko.minimate.content.helper.modifiers.BarChartView
+import com.garrettbutchko.minimate.content.helper.BarChartView
 import com.garrettbutchko.minimate.content.helper.modifiers.SyncScrollStates
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.viewModels.GameReviewViewModel

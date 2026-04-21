@@ -41,6 +41,7 @@ import com.garrettbutchko.minimate.utilities.PasswordGenerator
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.Image
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import com.garrettbutchko.minimate.shared.R
 
@@ -84,7 +85,7 @@ fun CourseSearchResultsView(
                     Text(
                         text = "Trying to find nearby courses...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = colorResource(id = R.color.mainOpp),
                         modifier = Modifier.padding(top = 12.dp)
                     )
                     if (showRetryButton) {
@@ -97,7 +98,7 @@ fun CourseSearchResultsView(
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                             )
                         ) {
-                            Text("Try Again")
+                            Text("Try Again", color = colorResource(id = R.color.mainOpp))
                         }
                     }
             }
@@ -113,7 +114,7 @@ fun CourseSearchResultsView(
             ) {
                 itemsIndexed(mapItems) { index, item ->
                     if (index > 0) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        HorizontalDivider(color = colorResource(id = R.color.mainOpp))
                     }
                     SearchResultRow(
                         mapItem = item,
@@ -131,7 +132,7 @@ fun CourseSearchResultsView(
                 .align(Alignment.TopCenter)
 
             ,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+            color = colorResource(id = R.color.bg).copy(alpha = 0.96f)
         ) {
             Row(
                 modifier = Modifier
@@ -143,7 +144,8 @@ fun CourseSearchResultsView(
                 Text(
                     "Nearby Courses",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(id = R.color.mainOpp)
                 )
 
                 Button(
@@ -183,12 +185,13 @@ fun SearchResultRow(
                 Text(
                     mapItem.name ?: "Unknown",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(id = R.color.mainOpp)
                 )
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = colorResource(id = R.color.mainOpp)
                 )
             }
 

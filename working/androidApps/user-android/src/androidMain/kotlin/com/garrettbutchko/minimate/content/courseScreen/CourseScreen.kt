@@ -14,6 +14,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +47,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MyLocation
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.res.colorResource
 import androidx.core.content.ContextCompat
+import com.garrettbutchko.minimate.user.R
 import com.garrettbutchko.minimate.dataModels.MapRegionData
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
@@ -58,6 +61,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
@@ -67,6 +71,8 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlin.math.log2
 import kotlin.math.min
 import org.koin.core.context.GlobalContext
+import com.garrettbutchko.minimate.shared.R.color
+
 
 @Composable
 fun CourseScreen(
@@ -166,10 +172,11 @@ fun CourseScreen(
                         text = "Course Search",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
+                        color = colorResource(id = color.mainOpp),
                         modifier = Modifier
                             .shadow(8.dp, CircleShape)
                             .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                colorResource(id = color.bg),
                                 RoundedCornerShape(25.dp)
                             )
                             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -181,6 +188,7 @@ fun CourseScreen(
                         onRecenter = { courseVM.recenterMap() }
                     )
                 }
+
                 AnimatedContent(
                     targetState = isUpperHalf,
                     transitionSpec = {
@@ -203,7 +211,7 @@ fun CourseScreen(
                                 .shadow(8.dp, RoundedCornerShape(25.dp))
                                 .height(250.dp)
                                 .clip(RoundedCornerShape(25.dp)),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                            color = colorResource(id = color.bg).copy(alpha = 0.96f)
                         ) {
                             AnimatedContent(
                                 targetState = selectedCourse,
@@ -269,9 +277,23 @@ private fun CourseMap(
     hasLocationAccess: Boolean,
     onSelectMapItem: (MapItemDTO) -> Unit
 ) {
+    val context = LocalContext.current
+    val isDark = isSystemInDarkTheme()
+
     val uiSettings by remember {
         mutableStateOf(
             MapUiSettings(zoomControlsEnabled = false, myLocationButtonEnabled = false)
+        )
+    }
+
+    val mapProperties = remember(isDark, hasLocationAccess) {
+        MapProperties(
+            isMyLocationEnabled = hasLocationAccess,
+            mapStyleOptions = if (isDark) {
+                MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
+            } else {
+                null
+            }
         )
     }
 
@@ -305,7 +327,7 @@ private fun CourseMap(
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        properties = MapProperties(isMyLocationEnabled = hasLocationAccess),
+        properties = mapProperties,
         uiSettings = uiSettings
     ) {
         mapItems.forEach { item ->
@@ -355,7 +377,7 @@ private fun LocationButton(
             .size(42.dp)
             .shadow(8.dp, CircleShape)
             .background(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.bg),
                 shape = CircleShape
             )
             .clip(CircleShape)

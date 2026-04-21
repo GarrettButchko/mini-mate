@@ -368,22 +368,24 @@ private fun MainTabView(
                         NavigationBarItem(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                            label = { Text("Stats") },
+                            label = { Text("Stats" ,color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.QueryStats,
-                                    contentDescription = "Stats"
+                                    contentDescription = "Stats",
+                                    tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
                                 )
                             }
                         )
                         NavigationBarItem(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
-                            label = { Text("Home") },
+                            label = { Text("Home" ,color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.Home,
-                                    contentDescription = "Home"
+                                    contentDescription = "Home",
+                                    tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
                                 )
                             }
                         )
@@ -391,11 +393,12 @@ private fun MainTabView(
                             NavigationBarItem(
                                 selected = selectedTab == 2,
                                 onClick = { selectedTab = 2 },
-                                label = { Text("Courses") },
+                                label = { Text("Courses" ,color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)) },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Directions,
-                                        contentDescription = "Courses"
+                                        contentDescription = "Courses",
+                                        tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
                                     )
                                 }
                             )

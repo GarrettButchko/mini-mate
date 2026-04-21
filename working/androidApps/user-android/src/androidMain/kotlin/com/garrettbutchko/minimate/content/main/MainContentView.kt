@@ -67,7 +67,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,7 +82,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.onSizeChanged
 import coil.compose.AsyncImage
@@ -91,7 +89,7 @@ import com.garrettbutchko.minimate.content.ProfileView
 import com.garrettbutchko.minimate.content.TitleView
 import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.LogoDefault
-import com.garrettbutchko.minimate.content.helper.modifiers.BarChartView
+import com.garrettbutchko.minimate.content.helper.BarChartView
 import com.garrettbutchko.minimate.helper.IAPManager
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.logic.MainViewBusinessLogic
@@ -1018,9 +1016,13 @@ private fun LastGameCard(
             )
         }
     } else {
-        LogoDefault(topPadding = 0.dp)
+        Column(
+            modifier = Modifier.fillMaxSize(), // Makes the Column take up the whole screen
+            horizontalAlignment = Alignment.CenterHorizontally // Centers children horizontally
+        ) {
+            LogoDefault(topPadding = 0.dp)
+        }
     }
-
 }
 
 @Composable
