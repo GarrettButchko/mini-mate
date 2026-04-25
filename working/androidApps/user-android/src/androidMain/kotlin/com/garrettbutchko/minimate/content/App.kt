@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -359,6 +360,17 @@ private fun MainTabView(
         }
     }
 
+    val customNavColors = NavigationBarItemDefaults.colors(
+        // This is the highlight "pill" color
+        indicatorColor = colorResource(id = SharedR.color.mainOpp).copy(alpha = 0.2f),
+
+        // This manages the icon/text colors automatically based on state
+        selectedIconColor = colorResource(id = SharedR.color.mainOpp),
+        unselectedIconColor = colorResource(id = SharedR.color.mainOpp).copy(alpha = 0.6f),
+        selectedTextColor = colorResource(id = SharedR.color.mainOpp),
+        unselectedTextColor = colorResource(id = SharedR.color.mainOpp).copy(alpha = 0.6f)
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Scaffold(
@@ -375,7 +387,8 @@ private fun MainTabView(
                                     contentDescription = "Stats",
                                     tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
                                 )
-                            }
+                            },
+                            colors = customNavColors // Apply here
                         )
                         NavigationBarItem(
                             selected = selectedTab == 1,
@@ -387,7 +400,8 @@ private fun MainTabView(
                                     contentDescription = "Home",
                                     tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
                                 )
-                            }
+                            },
+                            colors = customNavColors
                         )
                         if (hasConnection) {
                             NavigationBarItem(
@@ -400,7 +414,8 @@ private fun MainTabView(
                                         contentDescription = "Courses",
                                         tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
                                     )
-                                }
+                                },
+                                colors = customNavColors
                             )
                         }
                     }
