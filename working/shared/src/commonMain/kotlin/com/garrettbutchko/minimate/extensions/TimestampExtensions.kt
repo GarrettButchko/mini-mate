@@ -1,3 +1,4 @@
+
 package com.garrettbutchko.minimate.extensions
 
 import dev.gitlive.firebase.firestore.Timestamp
@@ -31,7 +32,7 @@ fun LocalDate.toTimestamp(timeZone: TimeZone = TimeZone.currentSystemDefault()):
     atStartOfDayIn(timeZone).toTimestamp()
 
 /**
- * Formats the timestamp to a string equivalent to Swift's 
+ * Formats the timestamp to a string equivalent to Swift's
  * .formatted(date: .abbreviated, time: .shortened)
  * Example: "Oct 24, 2023, 2:30 PM"
  */
@@ -51,6 +52,6 @@ fun Timestamp.formatted(): String {
         hour > 12 -> hour - 12
         else -> hour
     }
-    
+
     return "$monthStr $day, $year, $hour12:$minute $amPm"
 }

@@ -12,19 +12,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,19 +43,25 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.BarChartView
-import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
+import com.garrettbutchko.minimate.content.helper.PhotoIconView
+import com.garrettbutchko.minimate.content.helper.modifiers.ButtonSkim
+import com.garrettbutchko.minimate.content.helper.modifiers.SwipeableRow
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.holeModels.Hole
-import com.garrettbutchko.minimate.dataModels.playerModels.Player
+import com.garrettbutchko.minimate.extensions.formatted
+import com.garrettbutchko.minimate.extensions.toInstant
 import com.garrettbutchko.minimate.managers.GameManager
 import com.garrettbutchko.minimate.managers.ViewManager
-import com.garrettbutchko.minimate.modelKotlinExtensions.scoreCardColor
+import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
 import com.garrettbutchko.minimate.shared.R
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
+import com.garrettbutchko.minimate.viewModels.StatsViewModel
 import java.util.Locale
+
 
 @Composable
 @Suppress("UNUSED_PARAMETER")
@@ -63,17 +70,19 @@ fun StatsView(
     isRefreshing: Boolean,
     authModel: AuthViewModel,
     viewManager: ViewManager,
-    gameManager: GameManager
+    gameManager: GameManager,
+    statsViewModel: StatsViewModel
 ) {
     val user by authModel.userModel.collectAsState()
     var pickedSection by rememberSaveable { mutableStateOf("Games") }
     var latestFirst by rememberSaveable { mutableStateOf(true) }
+    var editingGameID by rememberSaveable { mutableStateOf<String?>(null) }
 
     val sortedGames = remember(userGames, latestFirst) {
         if (latestFirst) {
-            userGames.reversed()
+            userGames.sortedByDescending { it.date.toInstant() }
         } else {
-            userGames
+            userGames.sortedBy { it.date.toInstant() }
         }
     }
 
@@ -141,7 +150,10 @@ fun StatsView(
                     "Games" -> GamesSection(
                         games = sortedGames,
                         isRefreshing = isRefreshing,
-                        user = user
+                        user = user,
+                        editingGameID = editingGameID,
+                        onEditingGameIDChange = { editingGameID = it },
+                        statsViewModel = statsViewModel
                     )
 
                     else -> OverviewSection(
@@ -167,12 +179,16 @@ private fun SectionPicker(
     selected: String,
     onSelected: (String) -> Unit
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
         sections.forEach { section ->
             val isSelected = section == selected
             Button(
                 onClick = { onSelected(section) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
                     .shadow(
                     elevation = 8.dp,
                     shape = RoundedCornerShape(25.dp)
@@ -193,17 +209,30 @@ private fun SectionPicker(
 private fun GamesSection(
     games: List<Game>,
     isRefreshing: Boolean,
-    user: com.garrettbutchko.minimate.dataModels.userModels.UserModel?
+    user: com.garrettbutchko.minimate.dataModels.userModels.UserModel?,
+    editingGameID: String?,
+    onEditingGameIDChange: (String?) -> Unit,
+    statsViewModel: StatsViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (isRefreshing) {
             LoadingState()
         } else if (games.isNotEmpty()) {
             games.forEach { game ->
-                GameSummaryCard(
-                    game = game,
-                    currentUserId = user?.googleId
-                )
+                SwipeableRow(
+                    editingID = editingGameID,
+                    onEditingIDChange = onEditingGameIDChange,
+                    id = game.id,
+                    buttonPressFunction = { },
+                    buttonOne = ButtonSkim(
+                        color = Color(0xFF1E88E5),
+                        icon = Icons.Filled.Share,
+                        string = makeShareableSummary(game)
+                    ),
+                    deleteFunction = { statsViewModel.deleteGame(game.id) }
+                ) {
+                    GameSummaryCard(game = game)
+                }
             }
         } else if (user?.gameIDs?.isNotEmpty() == true) {
             LoadingState()
@@ -345,39 +374,103 @@ private fun OverviewSection(
 
 @Composable
 private fun GameSummaryCard(
-    game: Game,
-    currentUserId: String?
+    game: Game
 ) {
-    val userPlayer = remember(game, currentUserId) {
-        findUserInGame(game, currentUserId)
+    val sortedPlayers = remember(game) {
+        game.players.sortedBy { it.totalStrokes }
     }
-    val title = game.locationName ?: "Game"
-    val subtitle = "${game.numberOfHoles} Holes"
-    val score = userPlayer?.totalStrokes?.toString() ?: "N/A"
+    val title = game.locationName ?: game.date.formatted()
+    val subtitle = if (game.locationName != null) {
+        "${game.startTime.formatted()} - ${game.numberOfHoles} Holes"
+    } else {
+        "${game.numberOfHoles} Holes"
+    }
 
-    SectionStatsCard(
-        title = title,
-        spacing = 10.dp
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(25.dp)
+            )
+            .background(colorResource(id = R.color.sub), RoundedCornerShape(25.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(id = R.color.mainOpp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCard(
-                title = "Players",
-                value = game.players.size.toString(),
-                infoText = "Number of players in this game.",
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                title = "Your Strokes",
-                value = score,
-                infoText = "Your total strokes in this game.",
-                modifier = Modifier.weight(1f)
-            )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorResource(id = R.color.mainOpp).copy(alpha = 0.7f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            if (sortedPlayers.isNotEmpty()) {
+                if (game.players.size > 1) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        game.players.forEachIndexed { index, player ->
+                            if (index > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .height(50.dp)
+                                        .padding(vertical = 8.dp)
+                                        .width(1.dp)
+                                        .background(MaterialTheme.colorScheme.outlineVariant)
+                                )
+                            }
+
+                            val winner = player.id == sortedPlayers.first().id
+                            PhotoIconView(
+                                photoURL = player.photoURL,
+                                name = if (winner) {
+                                    "${player.name}🥇"
+                                } else {
+                                    player.name
+                                },
+                                ballColor = player.ballColor,
+                                imageSize = 20.dp,
+                                backgroundColor = if (winner) {
+                                    colorResource(id = R.color.swiftYellow)
+                                } else {
+                                    colorResource(id = R.color.subTwo)
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    PhotoIconView(
+                        photoURL = sortedPlayers.first().photoURL,
+                        name = sortedPlayers.first().name,
+                        ballColor = sortedPlayers.first().ballColor,
+                        imageSize = 20.dp,
+                        backgroundColor = colorResource(id = R.color.subTwo)
+                    )
+                }
+            }
         }
 
         Box(
@@ -434,15 +527,6 @@ private fun EmptyState() {
     }
 }
 
-private fun findUserInGame(game: Game, currentUserId: String?): Player? {
-    if (currentUserId != null) {
-        game.players.firstOrNull { it.userId == currentUserId }?.let { return it }
-    }
-
-    game.players.firstOrNull { it.userId == game.hostUserId }?.let { return it }
-
-    return game.players.firstOrNull()
-}
 
 private fun averageStrokes(game: Game): List<Hole> {
     val holeCount = game.numberOfHoles
@@ -464,3 +548,22 @@ private fun averageStrokes(game: Game): List<Hole> {
         Hole(number = index + 1, strokes = average)
     }
 }
+
+private fun makeShareableSummary(game: Game): String {
+    val lines = mutableListOf(
+        "MiniMate Scorecard",
+        "Date: ${game.date.formatted()}",
+        ""
+    )
+
+    game.players.forEach { player ->
+        val holeLine = player.holes.joinToString(separator = "") { "|${it.strokes}" }
+        lines += "${player.name}: ${player.totalStrokes} strokes (${player.totalStrokes})"
+        lines += "Holes $holeLine"
+    }
+
+    lines += ""
+    lines += "Download MiniMate: https://apps.apple.com/app/id6745438125"
+    return lines.joinToString(separator = "\n")
+}
+

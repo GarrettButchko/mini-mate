@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -75,7 +76,7 @@ fun PhotoIconView(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(1.dp))
 
         val fontSizeSp = with(LocalDensity.current) { (imageSize.value * 0.3f).dp.toSp() }
 
@@ -84,7 +85,7 @@ fun PhotoIconView(
             fontSize = fontSizeSp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onSurface
+            color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
         )
     }
 }

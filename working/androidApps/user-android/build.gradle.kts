@@ -92,7 +92,11 @@ android {
 dependencies {
     implementation(projects.shared)
     implementation(projects.sharedUser)
+    implementation(libs.firebase.common)
+    implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.database)
     implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.compose.uiTooling)
     implementation(platform(libs.firebase.bom))

@@ -380,12 +380,12 @@ private fun MainTabView(
                         NavigationBarItem(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                            label = { Text("Stats" ,color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)) },
+                                label = { Text("Stats" ,color = colorResource(id = SharedR.color.mainOpp)) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.QueryStats,
                                     contentDescription = "Stats",
-                                    tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
+                                    tint = colorResource(id = SharedR.color.mainOpp)
                                 )
                             },
                             colors = customNavColors // Apply here
@@ -393,12 +393,12 @@ private fun MainTabView(
                         NavigationBarItem(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
-                            label = { Text("Home" ,color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)) },
+                                label = { Text("Home" ,color = colorResource(id = SharedR.color.mainOpp)) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.Home,
                                     contentDescription = "Home",
-                                    tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
+                                    tint = colorResource(id = SharedR.color.mainOpp)
                                 )
                             },
                             colors = customNavColors
@@ -407,12 +407,12 @@ private fun MainTabView(
                             NavigationBarItem(
                                 selected = selectedTab == 2,
                                 onClick = { selectedTab = 2 },
-                                label = { Text("Courses" ,color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)) },
+                                label = { Text("Courses" ,color = colorResource(id = SharedR.color.mainOpp)) },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Directions,
                                         contentDescription = "Courses",
-                                        tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
+                                            tint = colorResource(id = SharedR.color.mainOpp)
                                     )
                                 },
                                 colors = customNavColors
@@ -433,7 +433,8 @@ private fun MainTabView(
                                 isRefreshing = isRefreshing,
                                 authModel = authModel,
                                 viewManager = viewManager,
-                                gameManager = gameManager
+                                gameManager = gameManager,
+                                statsViewModel = statsViewModel
                             )
                         }
 

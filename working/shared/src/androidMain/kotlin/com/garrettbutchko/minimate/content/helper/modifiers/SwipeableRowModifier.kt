@@ -1,8 +1,11 @@
 package com.garrettbutchko.minimate.content.helper.modifiers
 
 import android.content.Intent
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -12,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -130,6 +132,30 @@ fun SwipeableRow(
     val resetPointPx = 0f
 
     val showNonDeleteButtons = offsetX.value > deletePointPx
+    val nonDeleteCount = (if (buttonOne != null) 1 else 0) + (if (buttonTwo != null) 1 else 0)
+    val minActionWeight = 0.01f
+
+    val nonDeleteVisibility by animateFloatAsState(
+        targetValue = if (showNonDeleteButtons) 1f else minActionWeight,
+        animationSpec = tween(durationMillis = 180),
+        label = "nonDeleteVisibility"
+    )
+
+    val actionSpacing by animateDpAsState(
+        targetValue = if (deleteFunction != null) (8f * nonDeleteVisibility).dp else 8.dp,
+        animationSpec = tween(durationMillis = 180),
+        label = "actionSpacing"
+    )
+
+    val deleteWeight by animateFloatAsState(
+        targetValue = if (deleteFunction != null) {
+            (1f + ((1f - nonDeleteVisibility) * nonDeleteCount)).coerceAtLeast(minActionWeight)
+        } else {
+            1f
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "deleteWeight"
+    )
 
     // Close row if another row is opened
     LaunchedEffect(editingID) {
@@ -141,40 +167,50 @@ fun SwipeableRow(
     Box(modifier = Modifier.fillMaxWidth()) {
         // Background Action Buttons
         if (editingID == id) {
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier
                     .matchParentSize()
                     .padding(start = 16.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
+                val maxRevealWidthPx = with(density) { maxWidth.toPx() }
                 val revealWidth = max(0f, -offsetX.value - with(density) { 10.dp.toPx() })
+                    .coerceAtMost(maxRevealWidthPx)
                 Box(
                     modifier = Modifier
                         .width(with(density) { revealWidth.toDp() })
                         .alpha(if (offsetX.value < with(density) { -10.dp.toPx() }) 1f else 0f)
                 ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(actionSpacing),
                         modifier = Modifier
                             .fillMaxHeight()
                             .padding(vertical = 4.dp)
                     ) {
                         if (deleteFunction != null) {
-                            if (showNonDeleteButtons) {
-                                buttonOne?.let {
-                                    if (it.isShared) SkimShareLinkView(it, offsetX.value, Modifier.weight(1f))
-                                    else SkimButtonView(it, offsetX.value, Modifier.weight(1f))
+                            if (buttonOne != null) {
+                                val buttonModifier = Modifier
+                                    .weight(nonDeleteVisibility)
+                                    .alpha(nonDeleteVisibility)
+                                buttonOne.let {
+                                    if (it.isShared) SkimShareLinkView(it, offsetX.value, buttonModifier)
+                                    else SkimButtonView(it, offsetX.value, buttonModifier)
                                 }
-                                buttonTwo?.let {
-                                    if (it.isShared) SkimShareLinkView(it, offsetX.value, Modifier.weight(1f))
-                                    else SkimButtonView(it, offsetX.value, Modifier.weight(1f))
+                            }
+                            if (buttonTwo != null) {
+                                val buttonModifier = Modifier
+                                    .weight(nonDeleteVisibility)
+                                    .alpha(nonDeleteVisibility)
+                                buttonTwo.let {
+                                    if (it.isShared) SkimShareLinkView(it, offsetX.value, buttonModifier)
+                                    else SkimButtonView(it, offsetX.value, buttonModifier)
                                 }
                             }
                             // Delete Button
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .weight(1f)
+                                    .weight(deleteWeight)
                                     .clip(RoundedCornerShape(25.dp))
                                     .background(Color.Red)
                                     .clickable { deleteFunction.invoke() },
