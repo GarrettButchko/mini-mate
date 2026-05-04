@@ -19,6 +19,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,7 +30,10 @@ import com.garrettbutchko.minimate.content.game.fix.GameInfoViewAndroid
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.BarChartView
 import com.garrettbutchko.minimate.content.helper.modifiers.SyncScrollStates
+import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
+import com.garrettbutchko.minimate.modelKotlinExtensions.scoreCardColor
 import com.garrettbutchko.minimate.viewModels.GameReviewViewModel
 
 fun parseColor(hex: String?): Color {
@@ -64,11 +70,17 @@ fun GameReviewView(
     // Synchronize horizontal scrolling for the scorecard grid
     SyncScrollStates(headerScrollState, rowsScrollState, totalScrollState)
 
+    var titleHeightPx by remember { mutableStateOf(0) }
+    var holesColumnHeightPx by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
+
+    // Compute a dp height for the hole rows column when available, otherwise fallback
+    val holeColumnHeightDp = if (holesColumnHeightPx > 0) with(density) { holesColumnHeightPx.toDp() } else (viewModel.holeCount * 60).dp
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp).padding(bottom = 16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -82,7 +94,13 @@ fun GameReviewView(
                     .padding(top = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                // Left column with title; capture its measured height so the course logo can match it
+                Column(modifier = Modifier
+                    .weight(1f)
+                    .onGloballyPositioned { coords ->
+                        titleHeightPx = coords.size.height
+                    }
+                ) {
                     Text(
                         text = "Scorecard",
                         fontSize = 24.sp,
@@ -98,11 +116,13 @@ fun GameReviewView(
 
                 course?.logo?.takeIf { it.isNotEmpty() }?.let { logoUrl ->
                     VerticalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                    // Match logo size to the title column height (converted to dp). Fall back to 50.dp.
+                    val logoSize = if (titleHeightPx > 0) with(density) { titleHeightPx.toDp() } else 50.dp
                     AsyncImage(
                         model = logoUrl,
                         contentDescription = "Course Logo",
                         modifier = Modifier
-                            .size(50.dp)
+                            .size(logoSize)
                             .clip(RoundedCornerShape(8.dp))
                     )
                 }
@@ -121,12 +141,12 @@ fun GameReviewView(
                         .fillMaxWidth()
                         .height(140.dp)
                         .shadow(8.dp, RoundedCornerShape(25.dp))
-                        .background(parseColor(course?.scoreCardColorDT).copy(alpha = 0.3f), RoundedCornerShape(25.dp))
+                        .background(Color.subVsColor(makeColor = course?.scoreCardColor), RoundedCornerShape(25.dp))
                 ) {
                     BarChartView(
                         data = viewModel.averageStrokes(),
                         title = "Average Strokes",
-                        // paddingReview = true
+                        paddingReview = true
                     )
                 }
             }
@@ -137,7 +157,7 @@ fun GameReviewView(
                     .fillMaxWidth()
                     .weight(1f) // Takes up remaining space
                     .shadow(8.dp, RoundedCornerShape(25.dp))
-                    .background(parseColor(course?.scoreCardColorDT).copy(alpha = 0.3f), RoundedCornerShape(25.dp))
+                    .background(Color.subVsColor(makeColor = course?.scoreCardColor), RoundedCornerShape(25.dp))
                     .clip(RoundedCornerShape(25.dp))
             ) {
                 // Player Header Row
@@ -147,18 +167,36 @@ fun GameReviewView(
                         .height(80.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Name",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp,
+                    Column(
                         modifier = Modifier
                             .width(100.dp)
-                            .padding(start = 16.dp)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Name",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        )
+                    }
+                    // Vertical divider between hole numbers and player columns. When inside a
+                    // vertically-scrollable parent the height constraint is unbounded, so give
+                    // the divider an explicit height based on hole count (each row = 60.dp).
+                    VerticalDivider(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(holeColumnHeightDp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                     )
-                    VerticalDivider()
                     Row(modifier = Modifier.horizontalScroll(headerScrollState)) {
                         game.players.forEachIndexed { index, player ->
-                            if (index > 0) VerticalDivider()
+                            if (index > 0) VerticalDivider(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .height(holeColumnHeightDp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                            )
                             Box(
                                 modifier = Modifier
                                     .width(100.dp)
@@ -168,7 +206,7 @@ fun GameReviewView(
                                 PhotoIconView(
                                     photoURL = player.photoURL,
                                     name = player.name,
-                                    ballColor = parseColor(player.ballColorDT),
+                                    ballColor = player.ballColor,
                                     imageSize = 30.dp,
                                     backgroundColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
@@ -187,7 +225,9 @@ fun GameReviewView(
                         .verticalScroll(rememberScrollState())
                 ) {
                     // Hole Numbers (Sticky Left Column)
-                    Column(modifier = Modifier.width(100.dp)) {
+                    Column(modifier = Modifier.width(100.dp).onGloballyPositioned { coords ->
+                        holesColumnHeightPx = coords.size.height
+                    }) {
                         for (i in 1..viewModel.holeCount) {
                             if (i > 1) HorizontalDivider()
                             Column(
@@ -205,12 +245,23 @@ fun GameReviewView(
                         }
                     }
 
-                    VerticalDivider()
+                    VerticalDivider(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(holeColumnHeightDp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                    )
+
 
                     // Player Score Columns (Scrollable Right Area)
                     Row(modifier = Modifier.horizontalScroll(rowsScrollState)) {
                         game.players.forEachIndexed { index, player ->
-                            if (index > 0) VerticalDivider()
+                            if (index > 0) VerticalDivider(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .height(holeColumnHeightDp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                            )
                             Column(modifier = Modifier.width(100.dp)) {
                                 val sortedHoles = player.holes.sortedBy { it.number }
                                 sortedHoles.forEachIndexed { hIndex, hole ->
@@ -241,8 +292,9 @@ fun GameReviewView(
                     Column(
                         modifier = Modifier
                             .width(100.dp)
-                            .padding(start = 16.dp),
-                        verticalArrangement = Arrangement.Center
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text("Total", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
                         if (course?.customPar == true && course?.pars?.isNotEmpty() == true) {
@@ -266,42 +318,48 @@ fun GameReviewView(
                 }
             }
 
-            // Footer View
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (!isInCourseSettings) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = if (showBackToStatsButton) Arrangement.SpaceBetween else Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (showBackToStatsButton) {
+            // Footer View - mimic SwiftUI VStack with overlayed dismiss button and share link
+            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    // Background row containing the share icon. Behavior mirrors SwiftUI:
+                    // if showBackToStatsButton is true we add a leading spacer so the share icon
+                    // ends up at the trailing edge; otherwise it sits at the leading edge.
+                    if (!isInCourseSettings) {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            if (showBackToStatsButton) Spacer(modifier = Modifier.weight(1f))
+                            if (com.garrettbutchko.minimate.utilities.NetworkChecker.shared.isConnected) {
+                                IconButton(onClick = {
+                                    val sendIntent = Intent().apply {
+                                        action = Intent.ACTION_SEND
+                                        putExtra(Intent.EXTRA_TEXT, viewModel.shareText)
+                                        type = "text/plain"
+                                    }
+                                    context.startActivity(Intent.createChooser(sendIntent, "Share Game"))
+                                }) {
+                                    Icon(Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(28.dp))
+                                }
+                            }
+                        }
+                    }
+
+                    // Centered dismiss button overlay (appears only when requested)
+                    if (showBackToStatsButton) {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             Button(
                                 onClick = onDismiss,
-                                modifier = Modifier.height(50.dp).width(150.dp),
+                                modifier = Modifier
+                                    .width(200.dp)
+                                    .height(60.dp),
                                 shape = RoundedCornerShape(25.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
+                                colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.swiftBlue))
                             ) {
                                 Text("Dismiss", fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
-                        
-                        IconButton(onClick = {
-                            val sendIntent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, viewModel.shareText)
-                                type = "text/plain"
-                            }
-                            context.startActivity(Intent.createChooser(sendIntent, "Share Game"))
-                        }) {
-                            Icon(Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(28.dp))
-                        }
                     }
                 }
 
-                // Custom Ad Logic
+                // Custom Ad Logic (below the overlayed area)
                 if (isInCourseSettings) {
                     val currentCourse = course
                     if (currentCourse?.customAdActive == true) {
@@ -357,17 +415,12 @@ fun GameReviewView(
         }
     }
 
+    // Use a modal bottom sheet to more closely mimic SwiftUI's sheet presentation
     if (showInfoView) {
-        AlertDialog(
-            onDismissRequest = { showInfoView = false },
-            confirmButton = {
-                TextButton(onClick = { showInfoView = false }) {
-                    Text("Close")
-                }
-            },
-            text = {
-                GameInfoViewAndroid(game = game)
-            }
-        )
+        ModalBottomSheet(
+            onDismissRequest = { showInfoView = false }
+        ) {
+            GameInfoViewAndroid(game = game)
+        }
     }
 }

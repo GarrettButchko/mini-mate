@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -61,16 +61,17 @@ fun PhotoIconView(
                         modifier = Modifier
                             .size(imageSize)
                             .clip(CircleShape)
-                            .background(Color.Gray.copy(alpha = 0.3f))
+                            .background(colorResource(id = com.garrettbutchko.minimate.shared.R.color.sub).copy(alpha = 0.1f))
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
+                        Image(
+                            painter = painterResource(id = com.garrettbutchko.minimate.shared.R.drawable.logo),
                             contentDescription = name,
-                            tint = ballColor ?: MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(imageSize * 0.6f)
+                            modifier = Modifier.size(imageSize),
+                            colorFilter = ColorFilter.tint(ballColor ?: MaterialTheme.colorScheme.onSurface)
                         )
                     }
                 } else {
+                    // Loaded image: respect aspect ratio (fit) and keep circular clipping
                     SubcomposeAsyncImageContent()
                 }
             }

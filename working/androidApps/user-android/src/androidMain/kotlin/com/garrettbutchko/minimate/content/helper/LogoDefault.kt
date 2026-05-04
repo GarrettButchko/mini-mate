@@ -12,18 +12,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.shared.R
 
-
 @Composable
 fun LogoDefault(
     modifier: Modifier = Modifier,
-    topPadding: Dp = 16.dp
+    filter: ColorFilter = ColorFilter.tint(Color.Gray),
+    topPadding: Dp = 16.dp,
+    bottomPadding: Dp = 16.dp
 ) {
     Image(
-        painter = painterResource(id = R.drawable.logo_image_opp),
+        painter = painterResource(id = R.drawable.logo_image),
         contentDescription = "Logo",
-        colorFilter = ColorFilter.tint(Color.Gray),
+        colorFilter = filter,
         modifier = modifier
-            .padding(top = topPadding, bottom = 16.dp)
+            .padding(top = topPadding, bottom = bottomPadding)
             .size(50.dp)
     )
 }

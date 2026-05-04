@@ -64,8 +64,8 @@ fun BarChartView(
     Column(
         modifier = modifier
             .padding(top = 26.dp)
-            .padding(bottom = if (paddingReview) 5.dp else 10.dp)
-            .padding(end = if (paddingReview) 12.dp else 15.dp)
+            .padding(bottom = if (paddingReview) 25.dp else 10.dp)
+            .padding(end = if (paddingReview) 15.dp else 15.dp)
             .fillMaxWidth()
     ) {
         val mainOppColor = colorResource(id = R.color.mainOpp)

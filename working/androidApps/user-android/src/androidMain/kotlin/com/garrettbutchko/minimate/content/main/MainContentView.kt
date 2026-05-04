@@ -961,7 +961,7 @@ private fun LastGameCard(
     if (latestGame != null) {
         val cardHeight = 130.dp
 
-        Box(modifier = Modifier.clickable(onClick = onOpenStats)) {
+        Box(modifier = Modifier.clickable(onClick = onOpenStats).padding(bottom = 14.dp)) {
             SectionStatsCard(
                 title = "Last Game",
                 spacing = 12.dp,

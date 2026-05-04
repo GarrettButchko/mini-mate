@@ -160,7 +160,6 @@ struct StatsView: View {
     }
     
     private var gamesSection: some View {
-        
             ScrollView {
                 VStack(spacing: 16){
                     if NetworkChecker.companion.shared.isConnected && !authModel.userModel!.isPro {
@@ -191,8 +190,6 @@ struct StatsView: View {
                     if statModel.isRefreshing {
                         ProgressView()
                     } else if !games.isEmpty {
-                        
-                        
                             ForEach(games, id: \.id) { game in // Explicitly use .id to help transitions
                                 GameRow(
                                     editOn: $statModel.editOn,

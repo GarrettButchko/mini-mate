@@ -302,15 +302,17 @@ fun SwipeableRow(
                     )
                 }
         ) {
-            // Press Overlay mask
-            if (isPressed) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.12f))
-                )
+            Box {
+                content()
+                if (isPressed) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(25.dp))
+                            .background(Color.Black.copy(alpha = 0.06f))
+                    )
+                }
             }
-            content()
         }
     }
 }

@@ -1,6 +1,16 @@
 package com.garrettbutchko.minimate.content.stats
 
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +38,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,14 +55,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.BarChartView
+import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.modifiers.ButtonSkim
 import com.garrettbutchko.minimate.content.helper.modifiers.SwipeableRow
+import com.garrettbutchko.minimate.content.game.GameReviewView
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.holeModels.Hole
 import com.garrettbutchko.minimate.extensions.formatted
@@ -60,6 +76,7 @@ import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
 import com.garrettbutchko.minimate.shared.R
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.StatsViewModel
+import com.garrettbutchko.minimate.utilities.NetworkChecker
 import java.util.Locale
 
 
@@ -145,7 +162,34 @@ fun StatsView(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            Crossfade(targetState = pickedSection, label = "stats-section") { section ->
+            @OptIn(ExperimentalAnimationApi::class)
+            AnimatedContent(
+                targetState = pickedSection,
+                transitionSpec = {
+                    // Games should slide in from the leading (left) edge, Overview from trailing (right)
+                    if (targetState == "Games") {
+
+                        (slideInHorizontally(
+                            initialOffsetX = { fullWidth -> -fullWidth }, // Enter from the left
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(150))) togetherWith
+                                (slideOutHorizontally(
+                                    targetOffsetX = { fullWidth -> fullWidth },  // Exit to the right
+                                    animationSpec = tween(300)
+                                ) + fadeOut(animationSpec = tween(150)))
+
+                    } else {
+                        (slideInHorizontally(
+                            initialOffsetX = { fullWidth -> fullWidth }, // Start from the right (positive)
+                            animationSpec = tween(300)
+                        ) + fadeIn(animationSpec = tween(150))) togetherWith
+                                (slideOutHorizontally(
+                                    targetOffsetX = { fullWidth -> -fullWidth }, // Exit to the left (negative)
+                                    animationSpec = tween(300)
+                                ) + fadeOut(animationSpec = tween(150)))
+                    }.using(SizeTransform(clip = false))
+                }
+            ) { section ->
                 when (section) {
                     "Games" -> GamesSection(
                         games = sortedGames,
@@ -156,13 +200,29 @@ fun StatsView(
                         statsViewModel = statsViewModel
                     )
 
-                    else -> OverviewSection(
-                        gameManager = gameManager,
-                        averagePerGame = averagePerGame,
-                        averagePerHole = averagePerHole,
-                        bestGame = bestGame,
-                        worstGame = worstGame
-                    )
+                    else -> {
+                        LaunchedEffect(section) {
+                            statsViewModel.setEditOn(false)
+                        }
+
+                        if (gameManager.hasGames()) {
+                            OverviewSection(
+                                gameManager = gameManager,
+                                averagePerGame = averagePerGame,
+                                averagePerHole = averagePerHole,
+                                bestGame = bestGame,
+                                worstGame = worstGame
+                            )
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                EmptyState(message = "Hit the course to see your stats appear.")
+                            }
+                        }
+                    }
                 }
             }
 
@@ -206,6 +266,7 @@ private fun SectionPicker(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun GamesSection(
     games: List<Game>,
     isRefreshing: Boolean,
@@ -214,7 +275,32 @@ private fun GamesSection(
     onEditingGameIDChange: (String?) -> Unit,
     statsViewModel: StatsViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    var reviewGame by remember { mutableStateOf<Game?>(null) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(vertical = 8.dp).padding(bottom = 14.dp)
+    ) {
+        if (NetworkChecker.shared.isConnected && user?.isPro == false) {
+            PromoCard {
+                BannerAdView(
+                    adUnitID = "ca-app-pub-8261962597301587/1525588861",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                )
+            }
+        }
+
+        if (user?.isPro == false && user.gameIDs.size >= 2) {
+            PromoCard {
+                Text(
+                    text = "You’ve reached the free limit. Upgrade to Pro to store more than 2 games.",
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorResource(id = R.color.mainOpp)
+                )
+            }
+        }
+
         if (isRefreshing) {
             LoadingState()
         } else if (games.isNotEmpty()) {
@@ -223,7 +309,7 @@ private fun GamesSection(
                     editingID = editingGameID,
                     onEditingIDChange = onEditingGameIDChange,
                     id = game.id,
-                    buttonPressFunction = { },
+                    buttonPressFunction = { reviewGame = game },
                     buttonOne = ButtonSkim(
                         color = Color(0xFF1E88E5),
                         icon = Icons.Filled.Share,
@@ -234,11 +320,53 @@ private fun GamesSection(
                     GameSummaryCard(game = game)
                 }
             }
+
+            Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                LogoDefault(topPadding = 0.dp)
+            }
+
         } else if (user?.gameIDs?.isNotEmpty() == true) {
             LoadingState()
         } else {
             EmptyState()
         }
+    }
+
+    reviewGame?.let { game ->
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        )
+
+        ModalBottomSheet(
+            onDismissRequest = { reviewGame = null },
+            sheetState = sheetState,
+            containerColor = colorResource(id = R.color.bg),
+        ) {
+            // 3. Ensure your content fills the max height
+            Box(modifier = Modifier.fillMaxSize()) {
+                GameReviewView(
+                    game = game,
+                    showBackToStatsButton = true,
+                    onDismiss = { reviewGame = null }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PromoCard(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(25.dp)
+            )
+            .background(colorResource(id = R.color.sub), RoundedCornerShape(25.dp))
+            .padding(14.dp)
+    ) {
+        content()
     }
 }
 
@@ -252,7 +380,7 @@ private fun OverviewSection(
 ) {
     val spacing = 10.dp
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(vertical = 8.dp).padding(bottom = 14.dp)) {
         SectionStatsCard(
             title = "Basic Stats",
             spacing = spacing
@@ -506,7 +634,7 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun EmptyState() {
+private fun EmptyState(message: String = "Play a game to get started.") {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -514,16 +642,26 @@ private fun EmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "No Games Yet",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+        Image(
+            painter = painterResource(id = R.drawable.logo_image),
+            contentDescription = "Logo",
+            modifier = Modifier
+                .size(50.dp)
         )
+
         Text(
-            text = "Play a game to get started.",
+            text = "No Games Yet!",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            color = colorResource(id = R.color.mainOpp)
+        )
+
+        Text(
+            text = message,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = colorResource(id = R.color.mainOpp).copy(alpha = 0.7f)
         )
+
     }
 }
 
