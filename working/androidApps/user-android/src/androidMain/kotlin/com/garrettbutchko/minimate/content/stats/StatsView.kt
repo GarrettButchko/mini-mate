@@ -8,10 +8,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -336,18 +342,28 @@ private fun GamesSection(
         val sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true
         )
+        val scope = rememberCoroutineScope()
 
         ModalBottomSheet(
-            onDismissRequest = { reviewGame = null },
+            onDismissRequest = {
+                scope.launch {
+                    sheetState.hide()
+                    reviewGame = null
+                }
+            },
             sheetState = sheetState,
             containerColor = colorResource(id = R.color.bg),
         ) {
-            // 3. Ensure your content fills the max height
             Box(modifier = Modifier.fillMaxSize()) {
                 GameReviewView(
                     game = game,
                     showBackToStatsButton = true,
-                    onDismiss = { reviewGame = null }
+                    onDismiss = {
+                        scope.launch {
+                            sheetState.hide()
+                            reviewGame = null
+                        }
+                    }
                 )
             }
         }
@@ -445,6 +461,7 @@ private fun OverviewSection(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(colorResource(id = R.color.subTwo))
+                    .height(150.dp)
             ) {
                 BarChartView(
                     data = gameManager.averageHoles18(),
@@ -490,6 +507,7 @@ private fun OverviewSection(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(colorResource(id = R.color.subTwo))
+                    .height(150.dp)
             ) {
                 BarChartView(
                     data = gameManager.averageHoles9(),
@@ -535,11 +553,12 @@ private fun GameSummaryCard(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = colorResource(id = R.color.mainOpp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .basicMarquee(),
+                    maxLines = 1
                 )
 
                 Text(
@@ -556,18 +575,20 @@ private fun GameSummaryCard(
             if (sortedPlayers.isNotEmpty()) {
                 if (game.players.size > 1) {
                     Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        modifier = Modifier
+                            .widthIn(max = 150.dp)
+                            .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    ){
                         game.players.forEachIndexed { index, player ->
                             if (index > 0) {
                                 Box(
                                     modifier = Modifier
-                                        .height(50.dp)
+                                        .height(60.dp)
                                         .padding(vertical = 8.dp)
                                         .width(1.dp)
-                                        .background(MaterialTheme.colorScheme.outlineVariant)
+                                        .background(colorResource(id = R.color.mainOpp).copy(alpha = 0.1f))
                                 )
                             }
 
@@ -584,7 +605,7 @@ private fun GameSummaryCard(
                                 backgroundColor = if (winner) {
                                     colorResource(id = R.color.swiftYellow)
                                 } else {
-                                    colorResource(id = R.color.subTwo)
+                                   null
                                 }
                             )
                         }
@@ -594,8 +615,7 @@ private fun GameSummaryCard(
                         photoURL = sortedPlayers.first().photoURL,
                         name = sortedPlayers.first().name,
                         ballColor = sortedPlayers.first().ballColor,
-                        imageSize = 20.dp,
-                        backgroundColor = colorResource(id = R.color.subTwo)
+                        imageSize = 20.dp
                     )
                 }
             }
@@ -606,6 +626,7 @@ private fun GameSummaryCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
                 .background(colorResource(id = R.color.subTwo))
+                .height(130.dp)
         ) {
             BarChartView(
                 data = averageStrokes(game),
@@ -614,6 +635,7 @@ private fun GameSummaryCard(
         }
     }
 }
+
 
 @Composable
 private fun LoadingState() {

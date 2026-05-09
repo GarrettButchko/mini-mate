@@ -25,8 +25,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -75,6 +77,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import com.garrettbutchko.minimate.user.BuildConfig
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
@@ -84,9 +87,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.ProfileView
 import com.garrettbutchko.minimate.content.TitleView
+import com.garrettbutchko.minimate.content.game.GameReviewView
 import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.BarChartView
@@ -100,6 +105,7 @@ import com.garrettbutchko.minimate.modelKotlinExtensions.scoreCardColor
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
+import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.shared.R
@@ -108,6 +114,7 @@ import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import com.garrettbutchko.minimate.content.stats.SectionStatsCard
 import com.garrettbutchko.minimate.content.stats.StatCard
+import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
 
 
@@ -123,6 +130,8 @@ fun MainContentView(
     locationHandler: LocationFinding
 ) {
     val logic = remember { MainViewBusinessLogic() }
+    val context = LocalContext.current
+    val defaultWebClientId = stringResource(com.garrettbutchko.minimate.user.R.string.default_web_client_id)
     val bgColor = colorResource(id = R.color.bg)
     val user by authModel.userModel.collectAsState()
     val course by gameModel.course.collectAsState()
@@ -138,6 +147,8 @@ fun MainContentView(
     var isRotating by remember { mutableStateOf(false) }
     var profileBotMessage by remember { mutableStateOf("") }
     var isProfileBotError by remember { mutableStateOf(false) }
+
+    var reviewGame by remember { mutableStateOf<Game?>(null) }
 
     val scope = rememberCoroutineScope()
 
@@ -272,8 +283,39 @@ fun MainContentView(
                     LastGameCard(
                         gameManager = gameManager,
                         tintColor = course?.scoreCardColor,
-                        onOpenStats = { viewManager.navigateToMain(0) }
+                        onOpenStats = { reviewGame = gameManager.latestGame() }
                     )
+                }
+            }
+
+            reviewGame?.let { game ->
+                val sheetState = rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true
+                )
+                val scope = rememberCoroutineScope()
+
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        scope.launch {
+                            sheetState.hide()
+                            reviewGame = null
+                        }
+                    },
+                    sheetState = sheetState,
+                    containerColor = colorResource(id = R.color.bg)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        GameReviewView(
+                            game = game,
+                            showBackToStatsButton = true,
+                            onDismiss = {
+                                scope.launch {
+                                    sheetState.hide()
+                                    reviewGame = null
+                                }
+                            }
+                        )
+                    }
                 }
             }
 
@@ -352,7 +394,8 @@ fun MainContentView(
     if (showProfileSheetState.value) {
         ModalBottomSheet(
             onDismissRequest = { showProfileSheetState.value = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = colorResource(id = R.color.bg)
         ) {
             ProfileView(
                 userProfileImage = user?.photoURL,
@@ -361,6 +404,7 @@ fun MainContentView(
                 userGoogleId = user?.googleId ?: "",
                 userIsPro = user?.isPro ?: false,
                 userAccountType = user?.accountType?.joinToString(",") ?: "",
+                isDebug = BuildConfig.DEBUG,
                 botMessage = profileBotMessage,
                 isBotMessageError = isProfileBotError,
                 onPhotoChange = {
@@ -417,24 +461,28 @@ fun MainContentView(
                 },
                 onDeleteAccountGoogle = {
                     scope.launch {
-                        authModel.reauthenticateWithGoogle().fold(
-                            onSuccess = { credential ->
-                                authModel.deleteAccount(credential).fold(
-                                    onSuccess = {
-                                        showProfileSheetState.value = false
-                                        viewManager.navigateToWelcome()
-                                    },
-                                    onFailure = {
-                                        profileBotMessage = it.message ?: "Unable to delete account."
-                                        isProfileBotError = true
+                        authModel.reauthenticateWithGoogle(context, defaultWebClientId) { res ->
+                            res.fold(
+                                onSuccess = { credential ->
+                                    scope.launch {
+                                        authModel.deleteAccount(credential).fold(
+                                            onSuccess = {
+                                                showProfileSheetState.value = false
+                                                viewManager.navigateToWelcome()
+                                            },
+                                            onFailure = {
+                                                profileBotMessage = it.message ?: "Unable to delete account."
+                                                isProfileBotError = true
+                                            }
+                                        )
                                     }
-                                )
-                            },
-                            onFailure = {
-                                profileBotMessage = it.message ?: "Google re-authentication failed."
-                                isProfileBotError = true
-                            }
-                        )
+                                },
+                                onFailure = {
+                                    profileBotMessage = it.message ?: "Google re-authentication failed."
+                                    isProfileBotError = true
+                                }
+                            )
+                        }
                     }
                 },
                 onDeleteAccountApple = {
@@ -469,9 +517,6 @@ fun MainContentView(
                             }
                         )
                     }
-                },
-                onDismiss = {
-                    showProfileSheetState.value = false
                 }
             )
         }
@@ -959,7 +1004,6 @@ private fun LastGameCard(
     val strokes = remember(gameState) { gameManager.usersScoreOfLatestGame() }
 
     if (latestGame != null) {
-        val cardHeight = 130.dp
 
         Box(modifier = Modifier.clickable(onClick = onOpenStats).padding(bottom = 14.dp)) {
             SectionStatsCard(
@@ -968,17 +1012,19 @@ private fun LastGameCard(
                 makeColor = tintColor,
                 content = {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (latestGame.players.size > 1 && winner != null) {
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(cardHeight)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.subVsColor(tintColor))
-                                    .padding(8.dp),
+                                    .background(Color.subTwoVsColor(tintColor))
+                                    .padding(8.dp)
+                                    .fillMaxHeight(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 PhotoIconView(
@@ -986,7 +1032,8 @@ private fun LastGameCard(
                                     name = logic.formatWinnerName(winner.name),
                                     ballColor = winner.ballColor,
                                     imageSize = 30.dp,
-                                    backgroundColor = Color.Yellow
+                                    backgroundColor = colorResource(id = R.color.swiftYellow),
+                                    showName = true
                                 )
                             }
                         }
@@ -1006,6 +1053,7 @@ private fun LastGameCard(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color.subTwoVsColor(tintColor))
+                            .height(150.dp)
                     ) {
                         BarChartView(
                             data = holes,

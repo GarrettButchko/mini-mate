@@ -4,12 +4,13 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.VectorConverter
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,8 +21,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.colorResource
 import coil.compose.AsyncImage
-import com.garrettbutchko.minimate.shared.BuildConfig
+import com.garrettbutchko.minimate.shared.R
+import com.garrettbutchko.minimate.content.helper.UserInfoRow
 
 enum class DeleteAlertType {
     GOOGLE, APPLE, EMAIL
@@ -37,6 +40,7 @@ fun ProfileView(
     userIsPro: Boolean,
     userAccountType: String,
     buildTypeLabel: String? = null,
+    isDebug: Boolean = false,
     botMessage: String = "",
     isBotMessageError: Boolean = false,
     onPhotoChange: (Uri) -> Unit,
@@ -46,8 +50,7 @@ fun ProfileView(
     onLogout: () -> Unit,
     onDeleteAccountGoogle: () -> Unit,
     onDeleteAccountApple: () -> Unit,
-    onDeleteAccountEmail: (password: String) -> Unit,
-    onDismiss: () -> Unit
+    onDeleteAccountEmail: (password: String) -> Unit
 ) {
     var showEditName by remember { mutableStateOf(false) }
     var editNameInput by remember { mutableStateOf(userName) }
@@ -56,6 +59,15 @@ fun ProfileView(
     var showEmailDeleteOverlay by remember { mutableStateOf(false) }
     var deletePasswordInput by remember { mutableStateOf("") }
     var deleteConfirmPasswordInput by remember { mutableStateOf("") }
+
+    val bgColor = colorResource(id = R.color.bg)
+    val mainOppColor = colorResource(id = R.color.mainOpp)
+    val subColor = colorResource(id = R.color.sub)
+    val subOppColor = colorResource(id = R.color.subOpp)
+    val subThreeOppColor = colorResource(id = R.color.subThreeOpp)
+    val successColor = colorResource(id = R.color.swiftBlue)
+    val warningColor = colorResource(id = R.color.swiftOrange)
+    val dangerColor = colorResource(id = R.color.swiftRed)
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -66,6 +78,7 @@ fun ProfileView(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(bgColor)
     ) {
         // Header
         Row(
@@ -78,18 +91,18 @@ fun ProfileView(
                 text = "Profile",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = mainOppColor
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Tap to change photo", fontSize = 12.sp)
+                Text("Tap to change photo", fontSize = 12.sp, color = mainOppColor)
                 Spacer(modifier = Modifier.width(6.dp))
-                
+
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.LightGray)
+                        .background(subColor)
                         .clickable {
                             photoPickerLauncher.launch(
                                 PickVisualMediaRequest(
@@ -108,7 +121,7 @@ fun ProfileView(
                         )
                     } else {
                         // Placeholder LogoOpp equivalent
-                        Text("", fontSize = 10.sp, color = Color.White)
+                        Text("", fontSize = 10.sp, color = mainOppColor)
                     }
                 }
             }
@@ -121,49 +134,42 @@ fun ProfileView(
         ) {
             // User Details Section
             item {
-                Text("User Details", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                Text("User Details", fontWeight = FontWeight.Bold, color = mainOppColor)
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = subColor)
+                ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row {
-                            Text("Name: ", fontWeight = FontWeight.SemiBold)
-                            Text(userName)
-                        }
+                        UserInfoRow(label = "Name", value = userName, mainOppColor = mainOppColor, subOppColor = subOppColor)
                         HorizontalDivider()
-                        Row {
-                            Text("Email: ", fontWeight = FontWeight.SemiBold)
-                            Text(userEmail ?: "N/A")
-                        }
+                        UserInfoRow(label = "Email", value = userEmail ?: "N/A", mainOppColor = mainOppColor, subOppColor = subOppColor)
                         HorizontalDivider()
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Pro: ", fontWeight = FontWeight.SemiBold)
-                            Text(if (userIsPro) "Yes" else "Not Yet!")
+                            Text("Pro:", style = MaterialTheme.typography.bodyMedium, color = mainOppColor, fontWeight = FontWeight.SemiBold)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(if (userIsPro) "Yes" else "Not Yet!", style = MaterialTheme.typography.bodyMedium, color = subOppColor, fontWeight = FontWeight.Medium)
                             if (isMiniMateApp && !userIsPro) {
-                                Spacer(modifier = Modifier.weight(1f))
-                                TextButton(onClick = onGetPro) {
-                                    Text("Get Pro Now!")
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = onGetPro,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colorResource(id = R.color.swiftBlue),
+                                        contentColor = Color.White
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    modifier = Modifier.heightIn(min = 32.dp)
+                                ) {
+                                    Text("Get Pro Now!", fontSize = 12.sp)
                                 }
                             }
                         }
-                        if (BuildConfig.DEBUG) {
+                        if (isDebug) {
                             HorizontalDivider()
-                            Row {
-                                Text("Build: ", fontWeight = FontWeight.SemiBold)
-                                Text(buildTypeLabel ?: BuildConfig.BUILD_TYPE)
-                            }
+                            UserInfoRow(label = "Build", value = buildTypeLabel ?: "debug", mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
                             HorizontalDivider()
-                            Row {
-                                Text("UID: ", fontWeight = FontWeight.SemiBold)
-                                Text(userGoogleId)
-                            }
+                            UserInfoRow(label = "UID", value = userGoogleId, mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
                             HorizontalDivider()
-                            Row {
-                                Text("PhotoURL: ", fontWeight = FontWeight.SemiBold)
-                                if (userProfileImage != null) {
-                                    Text(userProfileImage)
-                                } else {
-                                    Text("N/A")
-                                }
-                            }
+                            UserInfoRow(label = "PhotoURL", value = userProfileImage ?: "N/A", mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
                         }
                     }
                 }
@@ -171,66 +177,90 @@ fun ProfileView(
 
             // Account Management Section
             item {
-                Text("Account Management", fontWeight = FontWeight.Bold)
-                Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                Text("Account Management", fontWeight = FontWeight.Bold, color = mainOppColor)
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = subColor)
+                ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
                         Button(
                             onClick = { showEditName = true },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White)
                         ) {
-                            Text("Edit Name", color = Color.White)
+                            Text("Edit Name")
                         }
 
                         if (userAccountType.contains("email", ignoreCase = true) && !userAccountType.contains("google", ignoreCase = true)) {
-
                             Button(
                                 onClick = onPasswordReset,
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White)
                             ) {
-                                Text("Password Reset", color = Color.White)
+                                Text("Password Reset")
                             }
                         }
 
                         Button(
                             onClick = onLogout,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
+                            colors = ButtonDefaults.buttonColors(containerColor = warningColor, contentColor = Color.White)
                         ) {
-                            Text("Logout", color = Color.White)
+                            Text("Logout")
                         }
-
 
                         Button(
                             onClick = {
-                                if (userAccountType.contains("google", ignoreCase = true)) {
-                                    activeDeleteAlert = DeleteAlertType.GOOGLE
-                                } else if (userAccountType.contains("apple", ignoreCase = true)) {
-                                    activeDeleteAlert = DeleteAlertType.APPLE
-                                } else {
-                                    activeDeleteAlert = DeleteAlertType.EMAIL
-                                }
+                                activeDeleteAlert =
+                                    if (userAccountType.contains("google", ignoreCase = true)) {
+                                        DeleteAlertType.GOOGLE
+                                    } else if (userAccountType.contains("apple", ignoreCase = true)) {
+                                        DeleteAlertType.APPLE
+                                    } else {
+                                        DeleteAlertType.EMAIL
+                                    }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                            colors = ButtonDefaults.buttonColors(containerColor = dangerColor, contentColor = Color.White)
                         ) {
-                            Text("Delete Account", color = Color.White)
+                            Text("Delete Account")
                         }
+
                     }
                 }
             }
 
             // Bot Message Section
-            if (botMessage.isNotEmpty()) {
-                item {
-                    Text("Message", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Card(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                        Text(
-                            text = botMessage,
-                            color = if (isBotMessageError) Color.Red else Color.Green,
-                            modifier = Modifier.padding(16.dp)
-                        )
+            item {
+                AnimatedVisibility(
+                    visible = botMessage.isNotEmpty(),
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Message", fontWeight = FontWeight.Bold, color = mainOppColor)
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = (if (isBotMessageError) dangerColor else successColor).copy(alpha = 0.1f)
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                (if (isBotMessageError) dangerColor else successColor).copy(alpha = 0.5f)
+                            )
+                        ) {
+                            Text(
+                                text = botMessage,
+                                color = if (isBotMessageError) dangerColor else successColor,
+                                modifier = Modifier.padding(16.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
@@ -246,7 +276,18 @@ fun ProfileView(
                 OutlinedTextField(
                     value = editNameInput,
                     onValueChange = { if (it.length <= 18) editNameInput = it },
-                    label = { Text("New Name") }
+                    label = { Text("New Name") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = subColor,
+                        unfocusedContainerColor = subColor,
+                        focusedTextColor = mainOppColor,
+                        unfocusedTextColor = mainOppColor,
+                        focusedLabelColor = mainOppColor,
+                        unfocusedLabelColor = subThreeOppColor,
+                        cursorColor = successColor,
+                        focusedBorderColor = successColor,
+                        unfocusedBorderColor = subThreeOppColor
+                    )
                 )
             },
             confirmButton = {
@@ -255,13 +296,17 @@ fun ProfileView(
                         onEditName(editNameInput)
                         showEditName = false
                     },
-                    enabled = editNameInput.isNotBlank() // Add profanity filter logic externally
+                    enabled = editNameInput.isNotBlank(), // Add profanity filter logic externally
+                    colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White)
                 ) {
                     Text("Change")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showEditName = false }) {
+                TextButton(
+                    onClick = { showEditName = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = mainOppColor)
+                ) {
                     Text("Cancel")
                 }
             }
@@ -273,7 +318,7 @@ fun ProfileView(
         AlertDialog(
             onDismissRequest = { activeDeleteAlert = null },
             title = { Text("Confirm Deletion") },
-            text = { Text("This will permanently delete your account.") },
+            text = { Text("This will permanently delete your account.", color = mainOppColor) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -284,13 +329,16 @@ fun ProfileView(
                         }
                         activeDeleteAlert = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = dangerColor, contentColor = Color.White)
                 ) {
                     Text("Delete")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { activeDeleteAlert = null }) {
+                TextButton(
+                    onClick = { activeDeleteAlert = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = mainOppColor)
+                ) {
                     Text("Cancel")
                 }
             }
@@ -311,17 +359,38 @@ fun ProfileView(
             title = { Text("Confirm Deletion") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("This will permanently delete your account.")
+                    Text("This will permanently delete your account.", color = mainOppColor)
                     OutlinedTextField(
                         value = deletePasswordInput,
                         onValueChange = { deletePasswordInput = it },
                         label = { Text("Password") },
-                        // password visual transformation usually done here
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = subColor,
+                            unfocusedContainerColor = subColor,
+                            focusedTextColor = mainOppColor,
+                            unfocusedTextColor = mainOppColor,
+                            focusedLabelColor = mainOppColor,
+                            unfocusedLabelColor = subThreeOppColor,
+                            cursorColor = dangerColor,
+                            focusedBorderColor = dangerColor,
+                            unfocusedBorderColor = subThreeOppColor
+                        )
                     )
                     OutlinedTextField(
                         value = deleteConfirmPasswordInput,
                         onValueChange = { deleteConfirmPasswordInput = it },
-                        label = { Text("Confirm Password") }
+                        label = { Text("Confirm Password") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = subColor,
+                            unfocusedContainerColor = subColor,
+                            focusedTextColor = mainOppColor,
+                            unfocusedTextColor = mainOppColor,
+                            focusedLabelColor = mainOppColor,
+                            unfocusedLabelColor = subThreeOppColor,
+                            cursorColor = dangerColor,
+                            focusedBorderColor = dangerColor,
+                            unfocusedBorderColor = subThreeOppColor
+                        )
                     )
                 }
             },
@@ -333,17 +402,20 @@ fun ProfileView(
                         showEmailDeleteOverlay = false
                     },
                     enabled = valid,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = dangerColor, contentColor = Color.White)
                 ) {
                     Text("Delete")
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    showEmailDeleteOverlay = false
-                    deletePasswordInput = ""
-                    deleteConfirmPasswordInput = ""
-                }) {
+                TextButton(
+                    onClick = {
+                        showEmailDeleteOverlay = false
+                        deletePasswordInput = ""
+                        deleteConfirmPasswordInput = ""
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = mainOppColor)
+                ) {
                     Text("Cancel")
                 }
             }

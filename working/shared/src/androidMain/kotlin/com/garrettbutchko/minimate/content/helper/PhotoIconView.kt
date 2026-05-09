@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
@@ -15,11 +17,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -29,13 +33,19 @@ import coil.compose.SubcomposeAsyncImageContent
 
 @Composable
 fun PhotoIconView(
+    modifier: Modifier = Modifier,
     photoURL: String?,
     name: String,
     ballColor: Color?,
     imageSize: Dp,
-    backgroundColor: Color,
-    modifier: Modifier = Modifier
+    backgroundColor: Color? = colorResource(id = com.garrettbutchko.minimate.shared.R.color.subTwo),
+    // When false the label under the image will be hidden. Useful when the icon is
+    // displayed in a fixed-height header where the name would push the image off-center.
+    showName: Boolean = true
 ) {
+
+    val newBackground = backgroundColor ?: colorResource(id = com.garrettbutchko.minimate.shared.R.color.subTwo)
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -44,7 +54,7 @@ fun PhotoIconView(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(imageSize + 10.dp)
-                .background(color = backgroundColor, shape = CircleShape)
+                .background(color = newBackground, shape = CircleShape)
         ) {
             SubcomposeAsyncImage(
                 model = photoURL,
@@ -61,7 +71,6 @@ fun PhotoIconView(
                         modifier = Modifier
                             .size(imageSize)
                             .clip(CircleShape)
-                            .background(colorResource(id = com.garrettbutchko.minimate.shared.R.color.sub).copy(alpha = 0.1f))
                     ) {
                         Image(
                             painter = painterResource(id = com.garrettbutchko.minimate.shared.R.drawable.logo),
@@ -77,16 +86,21 @@ fun PhotoIconView(
             }
         }
 
-        Spacer(modifier = Modifier.height(1.dp))
+        if (showName) {
+            Spacer(modifier = Modifier.height(1.dp))
 
-        val fontSizeSp = with(LocalDensity.current) { (imageSize.value * 0.3f).dp.toSp() }
+            val fontSizeSp = with(LocalDensity.current) { (imageSize.value * 0.3f).dp.toSp() }
 
-        Text(
-            text = name,
-            fontSize = fontSizeSp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
-        )
+            Text(
+                text = name,
+                style = LocalTextStyle.current.copy(
+                    fontSize = fontSizeSp,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
+            )
+        }
     }
 }

@@ -8,6 +8,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 
@@ -71,7 +72,8 @@ fun AuthViewModel.signInWithGoogle(
  * @param serverClientId The Web Client ID.
  * @param completion Callback with the tokens result.
  */
-fun AuthViewModel.reauthenticateWithGoogle(
+
+fun AuthViewModel.reauthenticateWithGooglePair(
     context: Context,
     serverClientId: String,
     completion: (Result<Pair<String, String?>>) -> Unit
@@ -95,4 +97,31 @@ fun AuthViewModel.reauthenticateWithGoogle(
             completion(Result.failure(e))
         }
     }
+}
+
+/**
+ * Reauthenticate a Google user and hand back the KMP `AuthCredential`.
+ *
+ * @param context The Android context.
+ * @param serverClientId The Web Client ID.
+ * @param completion Callback with the Result<AuthCredential>.
+ */
+fun AuthViewModel.reauthenticateWithGoogle(
+    context: Context,
+    serverClientId: String,
+    completion: (Result<AuthCredential>) -> Unit
+) {
+    val completionPair: (Result<Pair<String, String?>>) -> Unit = { res ->
+        res.fold(
+            onSuccess = { tokens ->
+                getGoogleCredential(tokens.first, tokens.second) { credRes ->
+                    completion(credRes)
+                }
+            },
+            onFailure = {
+                completion(Result.failure(it))
+            }
+        )
+    }
+    reauthenticateWithGooglePair(context, serverClientId, completionPair)
 }

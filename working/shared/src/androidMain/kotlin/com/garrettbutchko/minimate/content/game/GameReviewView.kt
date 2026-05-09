@@ -1,8 +1,10 @@
 package com.garrettbutchko.minimate.content.game
 
+import android.R
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -76,6 +78,9 @@ fun GameReviewView(
 
     // Compute a dp height for the hole rows column when available, otherwise fallback
     val holeColumnHeightDp = if (holesColumnHeightPx > 0) with(density) { holesColumnHeightPx.toDp() } else (viewModel.holeCount * 60).dp
+    val scoreGridDividerColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp).copy(alpha = 0.1f)
+    val primaryTextColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp)
+    val secondaryTextColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.subTwoOpp)
 
     Box(
         modifier = Modifier
@@ -103,13 +108,17 @@ fun GameReviewView(
                 ) {
                     Text(
                         text = "Scorecard",
+                        style = MaterialTheme.typography.headlineSmall,
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = primaryTextColor
                     )
                     game.locationName?.let {
                         Text(
                             text = it,
-                            fontSize = 14.sp
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 14.sp,
+                            color = secondaryTextColor
                         )
                     }
                 }
@@ -130,7 +139,7 @@ fun GameReviewView(
                 Spacer(modifier = Modifier.width(16.dp))
 
                 IconButton(onClick = { showInfoView = true }) {
-                    Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Info, contentDescription = "Info", modifier = Modifier.size(24.dp), tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.swiftBlue))
                 }
             }
 
@@ -139,14 +148,14 @@ fun GameReviewView(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(140.dp)
+                        .weight(0.3f)
                         .shadow(8.dp, RoundedCornerShape(25.dp))
                         .background(Color.subVsColor(makeColor = course?.scoreCardColor), RoundedCornerShape(25.dp))
                 ) {
                     BarChartView(
                         data = viewModel.averageStrokes(),
                         title = "Average Strokes",
-                        paddingReview = true
+                        modifier = Modifier.fillMaxHeight()
                     )
                 }
             }
@@ -176,8 +185,10 @@ fun GameReviewView(
                     ) {
                         Text(
                             text = "Name",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 18.sp
+                            fontSize = 18.sp,
+                            color = primaryTextColor
                         )
                     }
                     // Vertical divider between hole numbers and player columns. When inside a
@@ -187,7 +198,7 @@ fun GameReviewView(
                         modifier = Modifier
                             .width(1.dp)
                             .height(holeColumnHeightDp),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                        color = scoreGridDividerColor
                     )
                     Row(modifier = Modifier.horizontalScroll(headerScrollState)) {
                         game.players.forEachIndexed { index, player ->
@@ -195,7 +206,7 @@ fun GameReviewView(
                                 modifier = Modifier
                                     .width(1.dp)
                                     .height(holeColumnHeightDp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                                color = scoreGridDividerColor
                             )
                             Box(
                                 modifier = Modifier
@@ -207,15 +218,14 @@ fun GameReviewView(
                                     photoURL = player.photoURL,
                                     name = player.name,
                                     ballColor = player.ballColor,
-                                    imageSize = 30.dp,
-                                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+                                    imageSize = 30.dp
                                 )
                             }
                         }
                     }
                 }
                 
-                HorizontalDivider()
+                HorizontalDivider(color = scoreGridDividerColor)
 
                 // Scrollable Score Rows
                 Row(
@@ -229,7 +239,7 @@ fun GameReviewView(
                         holesColumnHeightPx = coords.size.height
                     }) {
                         for (i in 1..viewModel.holeCount) {
-                            if (i > 1) HorizontalDivider()
+                            if (i > 1) HorizontalDivider(color = scoreGridDividerColor)
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -237,9 +247,19 @@ fun GameReviewView(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Text("Hole $i", fontWeight = FontWeight.Medium)
+                                Text(
+                                    text = "Hole $i",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = primaryTextColor
+                                )
                                 if (course?.customPar == true && course?.pars != null && course!!.pars.size >= i) {
-                                    Text("Par: ${course!!.pars[i - 1]}", fontSize = 12.sp)
+                                    Text(
+                                        text = "Par: ${course!!.pars[i - 1]}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 12.sp,
+                                        color = secondaryTextColor
+                                    )
                                 }
                             }
                         }
@@ -249,7 +269,7 @@ fun GameReviewView(
                         modifier = Modifier
                             .width(1.dp)
                             .height(holeColumnHeightDp),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                        color = scoreGridDividerColor
                     )
 
 
@@ -260,19 +280,24 @@ fun GameReviewView(
                                 modifier = Modifier
                                     .width(1.dp)
                                     .height(holeColumnHeightDp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                                color = scoreGridDividerColor
                             )
                             Column(modifier = Modifier.width(100.dp)) {
                                 val sortedHoles = player.holes.sortedBy { it.number }
                                 sortedHoles.forEachIndexed { hIndex, hole ->
-                                    if (hIndex > 0) HorizontalDivider()
+                                    if (hIndex > 0) HorizontalDivider(color = scoreGridDividerColor)
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(60.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text("${hole.strokes}")
+                                        Text(
+                                            text = "${hole.strokes}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = primaryTextColor
+                                        )
                                     }
                                 }
                             }
@@ -280,7 +305,7 @@ fun GameReviewView(
                     }
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(color = scoreGridDividerColor)
 
                 // Total Row
                 Row(
@@ -296,22 +321,38 @@ fun GameReviewView(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Total", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                        Text(
+                            text = "Total",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp,
+                            color = primaryTextColor
+                        )
                         if (course?.customPar == true && course?.pars?.isNotEmpty() == true) {
-                            Text("Par: ${course!!.pars.sum()}", fontSize = 12.sp)
+                            Text(
+                                text = "Par: ${course!!.pars.sum()}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 12.sp,
+                                color = secondaryTextColor
+                            )
                         }
                     }
-                    VerticalDivider()
+                    VerticalDivider(color = scoreGridDividerColor)
                     Row(modifier = Modifier.horizontalScroll(totalScrollState)) {
                         game.players.forEachIndexed { index, player ->
-                            if (index > 0) VerticalDivider()
+                            if (index > 0) VerticalDivider(color = scoreGridDividerColor)
                             Box(
                                 modifier = Modifier
                                     .width(100.dp)
                                     .fillMaxHeight(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("Total: ${player.totalStrokes}")
+                                Text(
+                                    text = "Total: ${player.totalStrokes}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = primaryTextColor
+                                )
                             }
                         }
                     }
@@ -321,11 +362,8 @@ fun GameReviewView(
             // Footer View - mimic SwiftUI VStack with overlayed dismiss button and share link
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    // Background row containing the share icon. Behavior mirrors SwiftUI:
-                    // if showBackToStatsButton is true we add a leading spacer so the share icon
-                    // ends up at the trailing edge; otherwise it sits at the leading edge.
                     if (!isInCourseSettings) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
+                        Row(modifier = Modifier.fillMaxWidth().height(60.dp), verticalAlignment = Alignment.CenterVertically) {
                             if (showBackToStatsButton) Spacer(modifier = Modifier.weight(1f))
                             if (com.garrettbutchko.minimate.utilities.NetworkChecker.shared.isConnected) {
                                 IconButton(onClick = {
@@ -336,7 +374,7 @@ fun GameReviewView(
                                     }
                                     context.startActivity(Intent.createChooser(sendIntent, "Share Game"))
                                 }) {
-                                    Icon(Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(28.dp))
+                                    Icon(Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(28.dp), tint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.swiftBlue))
                                 }
                             }
                         }
@@ -353,7 +391,7 @@ fun GameReviewView(
                                 shape = RoundedCornerShape(25.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.swiftBlue))
                             ) {
-                                Text("Dismiss", fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("Dismiss", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                     }
@@ -407,7 +445,12 @@ fun GameReviewView(
                                 .background(Color.LightGray.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Google Ad Here (If Not Pro User)", fontSize = 12.sp, color = Color.Gray)
+                                Text(
+                                    "Google Ad Here (If Not Pro User)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 12.sp,
+                                    color = secondaryTextColor
+                                )
                         }
                     }
                 }
@@ -418,7 +461,8 @@ fun GameReviewView(
     // Use a modal bottom sheet to more closely mimic SwiftUI's sheet presentation
     if (showInfoView) {
         ModalBottomSheet(
-            onDismissRequest = { showInfoView = false }
+            onDismissRequest = { showInfoView = false },
+            containerColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.bg)
         ) {
             GameInfoViewAndroid(game = game)
         }

@@ -3,6 +3,7 @@ package com.garrettbutchko.minimate.content.helper
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,7 +42,6 @@ fun BarChartView(
     data: List<Hole>,
     title: String,
     modifier: Modifier = Modifier,
-    paddingReview: Boolean = false
 ) {
     val maxStrokes = data.maxOfOrNull { it.strokes }?.toFloat() ?: 5f
     val chartData = BarChartData(
@@ -64,9 +65,10 @@ fun BarChartView(
     Column(
         modifier = modifier
             .padding(top = 26.dp)
-            .padding(bottom = if (paddingReview) 25.dp else 10.dp)
-            .padding(end = if (paddingReview) 15.dp else 15.dp)
+            .padding(bottom = 10.dp)
+            .padding(end = 15.dp)
             .fillMaxWidth()
+            .fillMaxHeight()
     ) {
         val mainOppColor = colorResource(id = R.color.mainOpp)
         val axisColor = mainOppColor.copy(alpha = 0.8f)
@@ -76,7 +78,7 @@ fun BarChartView(
             barChartData = chartData,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp)
+                .weight(1f)
                 .padding(start = 8.dp),
             xAxisDrawer = SimpleXAxisDrawer(axisLineColor = gridColor),
             yAxisDrawer = IntegerYAxisDrawer(
@@ -93,7 +95,7 @@ fun BarChartView(
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = title,
-            style = MaterialTheme.typography.bodySmall.copy(color = colorResource(id = R.color.subThreeOpp)),
+            style = MaterialTheme.typography.bodySmall.copy(color = colorResource(id = R.color.subTwoOpp)),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(top = 8.dp)

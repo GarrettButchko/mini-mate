@@ -219,7 +219,7 @@ private fun PlayerStandingCard(
         null -> MaterialTheme.colorScheme.surfaceVariant
     }
 
-    val iconBackground = if (place != null && !onlyPlayer) medalColor else MaterialTheme.colorScheme.surfaceVariant
+    val iconBackground = if (place != null && !onlyPlayer) medalColor else null
 
     Card(
         modifier = modifier.fillMaxWidth(),

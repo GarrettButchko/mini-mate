@@ -40,6 +40,7 @@ qrcodeKotlin = "4.5.0"
 foundationLayout = "1.10.6"
 composeCharts = "0.2.1"
 uiGraphics = "1.10.6"
+ui = "1.11.1"
 
 [libraries]
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
@@ -102,6 +103,7 @@ qrcode-kotlin = { module = "io.github.g0dkar:qrcode-kotlin", version.ref = "qrco
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 bytebeats-compose-charts = { module = "io.github.bytebeats:compose-charts", version.ref = "composeCharts" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -32,7 +32,6 @@ fun HostPlayerIconView(
         name = player.name,
         ballColor = player.ballColor,
         imageSize = imageSize,
-        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
         modifier = iconModifier
     )
 }
