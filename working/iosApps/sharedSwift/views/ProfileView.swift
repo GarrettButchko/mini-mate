@@ -14,8 +14,6 @@ import shared_user
 import shared_admin
 #endif
 
-
-
 struct ProfileView: View {
     @EnvironmentObject var viewManager: ViewManagerSwift
     @EnvironmentObject var authModel: AuthViewModelSwift

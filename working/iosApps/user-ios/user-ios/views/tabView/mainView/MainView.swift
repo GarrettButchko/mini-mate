@@ -662,7 +662,6 @@ struct MainView: View {
                             value: "\(gameManager.kotlin.usersScoreOfLatestGame())",
                             makeColor: gameModel.course?.scoreCardColor,
                             cornerRadius: 12,
-                            cardHeight: cardHeight,
                             infoText: "The number of strokes you had last game."
                         )
                     }

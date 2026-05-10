@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.interfaces.AppNavigationManaging
+import com.garrettbutchko.minimate.extensions.safePhotoURL
 import dev.gitlive.firebase.auth.EmailAuthProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -29,7 +30,7 @@ data class FirebaseUserSmallData (
 )
 
 open class AuthViewModel(
-    val authRepository: FirebaseAuthRepository = FirebaseAuthRepository(),
+    val authRepository: FirebaseAuthRepository,
     val viewManager: AppNavigationManaging,
     val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) : KoinComponent {
@@ -249,7 +250,7 @@ open class AuthViewModel(
                     uid = firebaseUser.uid,
                     email = firebaseUser.email,
                     displayName = firebaseUser.displayName,
-                    photoURL = firebaseUser.photoURL
+                    photoURL = firebaseUser.safePhotoURL()
                 )
 
                 createOrSignInUserAndNavigateToHome(
@@ -290,7 +291,7 @@ open class AuthViewModel(
                         uid = firebaseUser.uid,
                         email = firebaseUser.email,
                         displayName = firebaseUser.displayName,
-                        photoURL = firebaseUser.photoURL
+                        photoURL = firebaseUser.safePhotoURL()
                     )
                     createOrSignInUserAndNavigateToHome(
                         user = userData,
@@ -324,7 +325,7 @@ open class AuthViewModel(
                         uid = firebaseUser.uid,
                         email = firebaseUser.email,
                         displayName = firebaseUser.displayName,
-                        photoURL = firebaseUser.photoURL
+                        photoURL = firebaseUser.safePhotoURL()
                     )
                     createOrSignInUserAndNavigateToHome(
                         user = userData,
@@ -364,6 +365,7 @@ open class AuthViewModel(
             }
             
             val firebaseUser = result.getOrNull()
+
             if (firebaseUser != null) {
                 if (firebaseUser.isEmailVerified) {
 
@@ -371,7 +373,7 @@ open class AuthViewModel(
                         uid = firebaseUser.uid,
                         email = firebaseUser.email,
                         displayName = firebaseUser.displayName,
-                        photoURL = firebaseUser.photoURL
+                        photoURL = firebaseUser.safePhotoURL()
                     )
 
                     createOrSignInUserAndNavigateToHome(
@@ -381,6 +383,7 @@ open class AuthViewModel(
                         onErrorMessage = onErrorMessage,
                         onClearGuestGame = onClearGuestGame
                     ){}
+
                 } else {
 
                     val verificationResult = authRepository.sendEmailVerification()

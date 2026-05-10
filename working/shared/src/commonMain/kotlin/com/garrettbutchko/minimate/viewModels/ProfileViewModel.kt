@@ -116,8 +116,6 @@ class ProfileViewModel(
     }
 
     fun logOut() {
-        // You might want to wrap this in an animation on the UI side in Compose,
-        // but here we just call the navigation function.
         viewManager.navigateToWelcome()
         authModel.logout()
     }

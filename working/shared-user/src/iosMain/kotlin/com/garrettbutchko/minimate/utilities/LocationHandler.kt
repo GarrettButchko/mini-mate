@@ -63,7 +63,6 @@ class LocationHandler : LocationFinding {
             updatePermissionStatus(manager.authorizationStatus)
         }
 
-        @Suppress("CONFLICTING_OVERLOADS")
         override fun locationManager(manager: CLLocationManager, didChangeAuthorizationStatus: CLAuthorizationStatus) {
             updatePermissionStatus(didChangeAuthorizationStatus)
         }

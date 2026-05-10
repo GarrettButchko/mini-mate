@@ -187,9 +187,15 @@ class AuthViewModelSwift: ObservableObject {
                     completion(nil)
                     return
                 }
-                
-                self.kotlinVM.signInWithGoogleTokens(idToken: idToken, accessToken: user.accessToken.tokenString) { result in
+
+                do {
+                    let result = try await self.kotlinVM.signInWithGoogleTokens(
+                        idToken: idToken,
+                        accessToken: user.accessToken.tokenString
+                    )
                     completion(result)
+                } catch {
+                    completion(nil)
                 }
             }
         }

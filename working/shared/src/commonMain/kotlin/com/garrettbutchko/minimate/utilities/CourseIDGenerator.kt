@@ -10,7 +10,12 @@ object CourseIDGenerator {
     fun generateCourseID(item: MapItemDTO): String {
         val namePart = slugify(item.name ?: "unknown")
 
-        val hashInput = "${item.coordinate.latitude}-${item.coordinate.longitude}-${item.name ?: ""}"
+        // Round coordinates to ~1.1 meters of precision (5 decimal places)
+        // to handle floating point differences between platforms.
+        val lat = (item.coordinate.latitude * 100000.0).toLong() / 100000.0
+        val lon = (item.coordinate.longitude * 100000.0).toLong() / 100000.0
+
+        val hashInput = "$lat-$lon-${item.name ?: ""}"
         val hash = shortHash(hashInput)
 
         return "$namePart-$hash"
@@ -27,6 +32,4 @@ object CourseIDGenerator {
             .filter { it.isNotEmpty() }
             .joinToString("-")
     }
-
-
 }

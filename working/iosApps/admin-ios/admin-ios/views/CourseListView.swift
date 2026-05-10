@@ -10,7 +10,6 @@ import FirebaseAuth
 import shared_admin
 
 struct CourseListView: View {
-    @Environment(\.modelContext) private var context
     @EnvironmentObject var authModel: AuthViewModelSwift
     @EnvironmentObject var viewManager: ViewManagerSwift
     @EnvironmentObject var viewModel: CourseListViewModelSwift

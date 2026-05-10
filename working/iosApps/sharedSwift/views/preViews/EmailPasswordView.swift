@@ -12,6 +12,7 @@ import shared_user
 #elseif MANAGER
 import shared_admin
 #endif
+
 /// View for new users to sign up and create an account
 struct EmailPasswordView: View {
     @EnvironmentObject var viewManager: ViewManagerSwift

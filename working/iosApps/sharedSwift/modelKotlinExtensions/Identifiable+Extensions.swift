@@ -92,7 +92,10 @@ extension DeleteAlertType: @retroactive Identifiable {
     }
 }
 
+
 #if MANAGER
+
+
 extension PlayerActivity: @retroactive Identifiable {
     public var newId: String {
         return self.id
@@ -148,4 +151,5 @@ extension HourData: @retroactive Identifiable {
         return self.id
     }
 }
+
 #endif

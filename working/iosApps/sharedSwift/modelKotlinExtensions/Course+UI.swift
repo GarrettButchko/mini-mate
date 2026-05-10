@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+
 #if MINIMATE
 import shared_user
 #elseif MANAGER

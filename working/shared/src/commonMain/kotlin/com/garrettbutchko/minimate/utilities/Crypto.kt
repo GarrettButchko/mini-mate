@@ -6,9 +6,7 @@ package com.garrettbutchko.minimate.utilities
  * 'Kotlin Crypto' or expect/actual for Platform-specific SHA256.
  */
 fun shortHash(text: String): String {
-    // Use a simple hash for commonMain to avoid JVM-specific MessageDigest
-    val hash = text.fold(0L) { acc, c -> acc * 31 + c.code.toLong() }
-    return hash.toString(16).lowercase().take(8)
+    return sha256(text).take(8)
 }
 
 /**

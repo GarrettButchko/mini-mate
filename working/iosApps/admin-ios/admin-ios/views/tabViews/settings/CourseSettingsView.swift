@@ -431,7 +431,7 @@ struct SocialLinkRow: View {
                     }
                 } label: {
                     HStack {
-                        Text(currentPlatform.displayName.capitalized)
+                        Text(currentPlatform.name.capitalized)
                             .font(.subheadline)
                             .foregroundStyle(.blue)
                             .lineLimit(1)
