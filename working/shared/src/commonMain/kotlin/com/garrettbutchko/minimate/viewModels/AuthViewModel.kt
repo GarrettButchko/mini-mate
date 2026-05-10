@@ -279,8 +279,10 @@ open class AuthViewModel(
         }
     }
 
+    @DefaultArgumentInterop.Enabled
     fun handleSignInResult(
         result: Result<FirebaseUser?>,
+        photoUrl: String? = null,
         onErrorMessage: (String?, Boolean) -> Unit,
         onClearGuestGame: (Game?) -> Unit
     ) {
@@ -291,7 +293,7 @@ open class AuthViewModel(
                         uid = firebaseUser.uid,
                         email = firebaseUser.email,
                         displayName = firebaseUser.displayName,
-                        photoURL = firebaseUser.safePhotoURL()
+                        photoURL = photoUrl ?: firebaseUser.safePhotoURL()
                     )
                     createOrSignInUserAndNavigateToHome(
                         user = userData,

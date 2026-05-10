@@ -264,8 +264,8 @@ struct StartButtons: View {
             .frame(height: 50)
 
             Button {
-                authModel.signInWithGoogle() { result in
-                    authModel.kotlinVM.handleSignInResult(result: result) { message, type in
+                authModel.signInWithGoogle() { result, photoURL in
+                    authModel.kotlinVM.handleSignInResult(result: result, photoUrl: photoURL) { message, type in
                         errorMessage = (message: message, type: type.boolValue)
                     } onClearGuestGame: { game in
                         guestGame = game

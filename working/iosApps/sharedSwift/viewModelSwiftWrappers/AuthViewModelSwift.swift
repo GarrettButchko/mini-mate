@@ -162,9 +162,9 @@ class AuthViewModelSwift: ObservableObject {
     
     
     /// Signs in the user using Google Sign-In and Firebase via KMP
-    func signInWithGoogle(completion: @escaping (Any?) -> Void) {
+    func signInWithGoogle(completion: @escaping (Any?, String?) -> Void) {
         guard let clientID = FirebaseApp.app()?.options.clientID else {
-            completion(nil)
+            completion(nil, nil)
             return
         }
         let config = GIDConfiguration(clientID: clientID)
@@ -173,29 +173,31 @@ class AuthViewModelSwift: ObservableObject {
         guard let rootVC = UIApplication.shared.connectedScenes
             .compactMap({ ($0 as? UIWindowScene)?.windows.first?.rootViewController })
             .first else {
-            completion(nil)
+            completion(nil, nil)
             return
         }
         
         GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { signInResult, error in
             Task { @MainActor in
                 if error != nil {
-                    completion(nil); return
+                    completion(nil, nil); return
                 }
                 guard let user = signInResult?.user,
                       let idToken = user.idToken?.tokenString else {
-                    completion(nil)
+                    completion(nil, nil)
                     return
                 }
+
+                let profileURL = user.profile?.imageURL(withDimension: 320)?.absoluteString
 
                 do {
                     let result = try await self.kotlinVM.signInWithGoogleTokens(
                         idToken: idToken,
                         accessToken: user.accessToken.tokenString
                     )
-                    completion(result)
+                    completion(result, profileURL)
                 } catch {
-                    completion(nil)
+                    completion(nil, nil)
                 }
             }
         }
