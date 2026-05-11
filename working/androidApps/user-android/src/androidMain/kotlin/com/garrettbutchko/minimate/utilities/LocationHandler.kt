@@ -15,18 +15,13 @@ import com.garrettbutchko.minimate.dataModels.mapModels.CoordinateDTO
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.modelKotlinExtensions.toDTO
-import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.CircularBounds
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.net.PlacesClient
-import com.google.android.libraries.places.api.net.SearchByTextRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.launch
 import kotlin.invoke
 import kotlin.text.toDouble
 
@@ -35,6 +30,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var updatesRegistered = false
+    private val mapboxSearchService = MapboxSearchService()
 
     private val locationListener = LocationListener { location ->
         val coordinate = CoordinateDTO(
@@ -43,37 +39,6 @@ class LocationHandler(private val context: Context) : LocationFinding {
         )
         _userLocation.value = coordinate
         println("[LocationHandler] location update lat=${coordinate.latitude} lng=${coordinate.longitude}")
-    }
-
-    // It's assumed Places.initialize() has been called in the Application class
-    private val placesClient: PlacesClient by lazy {
-        ensurePlacesInitialized()
-        Places.createClient(context)
-    }
-
-    private fun ensurePlacesInitialized() {
-        if (Places.isInitialized()) return
-
-        val keyFromManifest = runCatching {
-            val appInfo = context.packageManager.getApplicationInfo(
-                context.packageName,
-                PackageManager.GET_META_DATA
-            )
-            appInfo.metaData?.getString("com.google.android.geo.API_KEY")
-        }.getOrNull()
-
-        val keyFromResources = runCatching {
-            val keyResId = context.resources.getIdentifier("google_api_key", "string", context.packageName)
-            if (keyResId != 0) context.getString(keyResId) else null
-        }.getOrNull()
-
-        val apiKey = (keyFromManifest ?: keyFromResources).orEmpty().trim()
-        if (apiKey.isBlank()) {
-            throw IllegalStateException("Missing Google Places API key. Set com.google.android.geo.API_KEY in AndroidManifest or provide string/google_api_key.")
-        }
-
-        Places.initialize(context.applicationContext, apiKey)
-        println("[LocationHandler] Places initialized")
     }
 
     private val _mapItems = MutableStateFlow<List<MapItemDTO>>(emptyList())
@@ -249,63 +214,14 @@ class LocationHandler(private val context: Context) : LocationFinding {
             return
         }
 
-        val placeFields = listOf(
-            Place.Field.ID, 
-            Place.Field.DISPLAY_NAME, 
-            Place.Field.LOCATION, 
-            Place.Field.FORMATTED_ADDRESS,
-            Place.Field.SHORT_FORMATTED_ADDRESS,
-            Place.Field.NATIONAL_PHONE_NUMBER,
-            Place.Field.WEBSITE_URI
-        )
-
-        // Using SearchByTextRequest to search for "mini golf" around the user
-        val request = SearchByTextRequest.builder("mini golf", placeFields)
-            .setLocationBias(
-                CircularBounds.newInstance(
-                    LatLng(userLoc.latitude + upwardOffset, userLoc.longitude),
-                    50000.0 // 50km radius
-                )
+        scope.launch {
+            val dtos = mapboxSearchService.searchMiniGolf(
+                center = CoordinateDTO(userLoc.latitude + upwardOffset, userLoc.longitude)
             )
-            .build()
 
-        val client = runCatching { placesClient }
-            .onFailure { error ->
-                println("[LocationHandler] Places client init failure: ${error.message}")
-            }
-            .getOrNull()
-
-        if (client == null) {
-            completion(false, null)
-            return
+            _mapItems.value = dtos
+            completion(dtos.isNotEmpty(), updateCameraRegion())
         }
-
-        client.searchByText(request)
-            .addOnSuccessListener { response ->
-                val places = response.places
-                println("[LocationHandler] Places success count=${places.size}")
-                val userLocationObj = Location("").apply {
-                    latitude = userLoc.latitude
-                    longitude = userLoc.longitude
-                }
-
-                val dtos = places.sortedBy { place ->
-                    val placeLoc = Location("").apply {
-                        latitude = place.location?.latitude ?: 0.0
-                        longitude = place.location?.longitude ?: 0.0
-                    }
-                    userLocationObj.distanceTo(placeLoc)
-                }.map { it.toDTO() }
-
-                _mapItems.value = dtos
-                println("[LocationHandler] mapped dto count=${dtos.size}")
-                completion(true, updateCameraRegion())
-            }
-            .addOnFailureListener { error ->
-                println("[LocationHandler] Places failure: ${error.message}")
-                error.printStackTrace()
-                completion(false, null)
-            }
     }
 
     override fun findClosestMiniGolf(completion: (MapItemDTO?) -> Unit) {
@@ -316,63 +232,9 @@ class LocationHandler(private val context: Context) : LocationFinding {
             return
         }
 
-        val placeFields = listOf(
-            Place.Field.ID, 
-            Place.Field.DISPLAY_NAME, 
-            Place.Field.LOCATION, 
-            Place.Field.FORMATTED_ADDRESS,
-            Place.Field.SHORT_FORMATTED_ADDRESS,
-            Place.Field.NATIONAL_PHONE_NUMBER,
-            Place.Field.WEBSITE_URI
-        )
-
-        val request = SearchByTextRequest.builder("mini golf", placeFields)
-            .setLocationBias(
-                CircularBounds.newInstance(
-                    LatLng(userLoc.latitude, userLoc.longitude),
-                    8046.72 // 5 miles in meters
-                )
-            )
-            .setMaxResultCount(10)
-            .build()
-
-        val client = runCatching { placesClient }
-            .onFailure { error ->
-                println("[LocationHandler] Places client init failure: ${error.message}")
-            }
-            .getOrNull()
-
-        if (client == null) {
-            completion(null)
-            return
+        scope.launch {
+            val dtos = mapboxSearchService.searchMiniGolf(center = userLoc, limit = 1)
+            completion(dtos.firstOrNull())
         }
-
-        client.searchByText(request)
-            .addOnSuccessListener { response ->
-                val places = response.places
-                if (places.isEmpty()) {
-                    completion(null)
-                    return@addOnSuccessListener
-                }
-                
-                val userLocationObj = Location("").apply {
-                    latitude = userLoc.latitude
-                    longitude = userLoc.longitude
-                }
-
-                val closest = places.minByOrNull { place ->
-                    val placeLoc = Location("").apply {
-                        latitude = place.location?.latitude ?: 0.0
-                        longitude = place.location?.longitude ?: 0.0
-                    }
-                    userLocationObj.distanceTo(placeLoc)
-                }
-
-                completion(closest?.toDTO())
-            }
-            .addOnFailureListener {
-                it.printStackTrace()
-                completion(null)
-            }
     }
 }

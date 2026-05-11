@@ -289,11 +289,24 @@ open class AuthViewModel(
         result.fold(
             onSuccess = { firebaseUser ->
                 if (firebaseUser != null) {
+
+                    var newPhotoURL: String?
+
+                    if (photoUrl != null) {
+                        newPhotoURL = photoUrl
+                    } else {
+                        if (firebaseUser.photoURL != null) {
+                            newPhotoURL = firebaseUser.photoURL
+                        } else {
+                            newPhotoURL = null
+                        }
+                    }
+
                     val userData = FirebaseUserSmallData(
                         uid = firebaseUser.uid,
                         email = firebaseUser.email,
                         displayName = firebaseUser.displayName,
-                        photoURL = photoUrl ?: firebaseUser.safePhotoURL()
+                        photoURL = newPhotoURL
                     )
                     createOrSignInUserAndNavigateToHome(
                         user = userData,

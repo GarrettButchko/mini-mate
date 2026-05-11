@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -8,6 +10,25 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     id("co.touchlab.skie") version "0.10.10"
     alias(libs.plugins.ksp)
+    alias(libs.plugins.buildkonfig)
+}
+
+val localProperties = Properties()
+val localPropFile = project.rootProject.file("local.properties")
+if (localPropFile.exists()) {
+    localProperties.load(FileInputStream(localPropFile))
+}
+val mapboxTokenStr = localProperties.getProperty("MAPBOX_ACCESS_TOKEN", "YOUR_MAPBOX_ACCESS_TOKEN")
+
+buildkonfig {
+    packageName = "com.garrettbutchko.minimate"
+    defaultConfigs {
+        buildConfigField(
+            com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING,
+            "MAPBOX_ACCESS_TOKEN",
+            mapboxTokenStr
+        )
+    }
 }
 
 kotlin {
@@ -42,6 +63,11 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
 
+            // Ktor Client
+            implementation("io.ktor:ktor-client-core:3.4.1")
+            implementation("io.ktor:ktor-client-content-negotiation:3.4.1")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.1")
+
             // Room SQLite
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
@@ -67,6 +93,7 @@ kotlin {
         }
 
         androidMain.dependencies {
+            implementation("io.ktor:ktor-client-okhttp:3.4.1")
             implementation(libs.places)
             implementation(libs.maps.compose)
             implementation(libs.compose.ui)
@@ -75,6 +102,10 @@ kotlin {
             implementation(libs.androidx.appcompat)
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
+        }
+
+        iosMain.dependencies {
+            implementation("io.ktor:ktor-client-darwin:3.4.1")
         }
 
         commonTest.dependencies {

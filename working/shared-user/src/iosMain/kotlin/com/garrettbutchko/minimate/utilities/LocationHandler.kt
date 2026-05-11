@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.launch
 import platform.CoreLocation.*
 import platform.Foundation.*
 import platform.MapKit.*
@@ -34,9 +35,9 @@ import platform.darwin.NSObject
 @OptIn(ExperimentalForeignApi::class)
 class LocationHandler : LocationFinding {
     private val locationManager = CLLocationManager()
-    private var currentSearch: MKLocalSearch? = null
-    
+
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val mapboxSearchService = MapboxSearchService()
 
     private val _mapItems = MutableStateFlow<List<MapItemDTO>>(emptyList())
     override val mapItems: StateFlow<List<MapItemDTO>> = _mapItems.asStateFlow()
@@ -106,64 +107,6 @@ class LocationHandler : LocationFinding {
         }
     }
 
-    fun performSearch(
-        region: CValue<MKCoordinateRegion>,
-        completion: (Boolean) -> Unit
-    ) {
-        currentSearch?.cancel()
-
-        val request = MKLocalSearchRequest()
-        request.naturalLanguageQuery = "mini golf"
-        request.region = region
-        request.pointOfInterestFilter = MKPointOfInterestFilter(includingCategories = listOf("MKPOICategoryMiniGolf"))
-
-        val search = MKLocalSearch(request = request)
-        currentSearch = search
-
-        search.startWithCompletionHandler { response, error ->
-            if (error != null) {
-                println("Error during search: ${error.localizedDescription}")
-                completion(false)
-                return@startWithCompletionHandler
-            }
-
-            val items = response?.mapItems
-            if (items == null) {
-                println("No response or no mapItems.")
-                completion(false)
-                return@startWithCompletionHandler
-            }
-
-            val userLoc = _userLocation.value
-            val sorted = if (userLoc != null) {
-                items.mapNotNull { it as? MKMapItem }.sortedBy { mapItem ->
-
-                    val mapLoc: CLLocation = if (majorVersion >= 18) {
-                        CLLocation(
-                            latitude = mapItem.location.coordinate.useContents { latitude },
-                            longitude = mapItem.location.coordinate.useContents { longitude }
-                        )
-                    } else {
-                        CLLocation(
-                            latitude = mapItem.placemark.coordinate.useContents { latitude },
-                            longitude = mapItem.placemark.coordinate.useContents { longitude }
-                        )
-                    }
-
-
-
-                    mapLoc.distanceFromLocation(userLoc.toCLLocation())
-                }
-            } else {
-                items.mapNotNull { it as? MKMapItem }
-            }
-
-            _mapItems.value = sorted.map { it.toDTO() }
-            completion(true)
-            currentSearch = null
-        }
-    }
-
     override fun searchNearbyCourses(
         upwardOffset: Double,
         latitudeDelta: Double,
@@ -183,16 +126,14 @@ class LocationHandler : LocationFinding {
             return
         }
 
-        val region = cValue<MKCoordinateRegion> {
-            this.center.latitude = userLoc.latitude + upwardOffset
-            this.center.longitude = userLoc.longitude
-            this.span.latitudeDelta = latitudeDelta
-            this.span.longitudeDelta = longitudeDelta
-        }
+        scope.launch {
+            val dtos = mapboxSearchService.searchMiniGolf(
+                center = CoordinateDTO(userLoc.latitude + upwardOffset, userLoc.longitude)
+            )
 
-        performSearch(region) { success ->
-            val newPosition = if (success) updateCameraRegion() else null
-            completion(success, newPosition)
+            _mapItems.value = dtos
+            val newPosition = if (dtos.isNotEmpty()) updateCameraRegion() else null
+            completion(dtos.isNotEmpty(), newPosition)
         }
     }
 
@@ -204,32 +145,9 @@ class LocationHandler : LocationFinding {
             return
         }
 
-        val region = makeRegion(userLoc, 8046.72) // 5 miles in meters
-
-        val request = MKLocalSearchRequest()
-        request.naturalLanguageQuery = "mini golf"
-        request.region = region
-        request.pointOfInterestFilter = MKPointOfInterestFilter(includingCategories = listOf("MKPOICategoryMiniGolf"))
-
-        val search = MKLocalSearch(request = request)
-        search.startWithCompletionHandler { response, error ->
-            val items = response?.mapItems
-            if (error != null || items.isNullOrEmpty()) {
-                completion(null)
-                return@startWithCompletionHandler
-            }
-
-            val sorted = items.mapNotNull { (it as? MKMapItem)?.toDTO() }.sortedBy { mapItem ->
-
-                var mapLoc: CLLocation =  CLLocation(
-                        latitude = mapItem.coordinate.latitude,
-                        longitude = mapItem.coordinate.longitude
-                    )
-
-                mapLoc.distanceFromLocation(userLoc.toCLLocation())
-            }
-
-            completion(sorted.firstOrNull())
+        scope.launch {
+            val dtos = mapboxSearchService.searchMiniGolf(center = userLoc, limit = 1)
+            completion(dtos.firstOrNull())
         }
     }
 
