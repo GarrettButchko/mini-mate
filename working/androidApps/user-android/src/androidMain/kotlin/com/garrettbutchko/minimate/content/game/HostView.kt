@@ -1,13 +1,18 @@
 package com.garrettbutchko.minimate.content.game
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,21 +22,26 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,38 +50,46 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.helper.AddLocalPlayerView
 import com.garrettbutchko.minimate.content.helper.NumberPickerView
+import com.garrettbutchko.minimate.content.helper.UserInfoRow
+import com.garrettbutchko.minimate.di.KoinHelper
+import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.interfaces.LocationFinding
+import com.garrettbutchko.minimate.logic.HostViewBusinessLogic
 import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 import com.garrettbutchko.minimate.viewModels.HostViewModel
 import com.garrettbutchko.minimate.viewModels.toImageBitmap
-
 import kotlinx.coroutines.launch
 
 @Composable
 fun HostGameView(
-    showHost: Boolean,
-    onShowHostChange: (Boolean) -> Unit,
-    hostVM: HostViewModel,
+    hostVM: HostViewModel = KoinHelper.getHostViewModel(),
     gameModel: GameViewModel,
     locationHandler: LocationFinding,
-    localGameRepo: LocalGameRepository,
-    isGuest: Boolean = false,
-    onBack: () -> Unit = {}
+    onDismiss: () -> Unit,
+    isGuest: Boolean = false
 ) {
+    val localGameRepo: LocalGameRepository = KoinHelperParent.getLocalGameRepo()
+
+    val logic = remember { HostViewBusinessLogic() }
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()
     val onlineGame by gameModel.onlineGame.collectAsState()
@@ -87,12 +105,13 @@ fun HostGameView(
     hostVM.timeRemaining.collectAsState() // keep timer-driven recomposition active
 
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
+    val verticalScrollState = rememberScrollState()
+
 
     LaunchedEffect(Unit) {
         hostVM.resetTimer()
         hostVM.setUp()
-        hostVM.startTimer { hostVisible -> onShowHostChange(hostVisible) }
+        hostVM.startTimer { hostVisible -> if (!hostVisible) onDismiss() }
     }
 
     DisposableEffect(Unit) {
@@ -100,10 +119,10 @@ fun HostGameView(
             hostVM.stopTimer()
             hostVM.resetTimer()
 
-            if (hostVM.shouldDismissGameOnDisappear(
+            if (logic.shouldDismissGameOnDisappear(
                     isStarted = game.started,
                     isDismissed = game.dismissed,
-                    showHost = showHost
+                    showHost = false
                 )
             ) {
                 gameModel.dismissGame()
@@ -111,38 +130,41 @@ fun HostGameView(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .clickable { hostVM.resetTimer() }
+    ) {
+        // Main scrollable content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 92.dp, bottom = 92.dp)
+                .padding(top = 100.dp, bottom = 80.dp)
                 .padding(horizontal = 16.dp)
-                .horizontalScroll(scrollState)
+                .verticalScroll(verticalScrollState),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .width(680.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                PlayersSection(
-                    hostVM = hostVM,
-                    gameModel = gameModel,
-                    onlineGame = onlineGame
-                )
+            PlayersSection(
+                hostVM = hostVM,
+                gameModel = gameModel,
+                onlineGame = onlineGame,
+                logic = logic
+            )
 
-                GameInfoSection(
-                    hostVM = hostVM,
-                    gameModel = gameModel,
-                    hasLocationAccess = hasLocationAccess,
-                    showLocationButton = showLocationButton,
-                    isConnected = NetworkChecker.shared.isConnected,
-                    isRotating = isRotating,
-                    qrCodeBytes = qrCodeBytes
-                )
-            }
+            GameInfoSection(
+                hostVM = hostVM,
+                gameModel = gameModel,
+                hasLocationAccess = hasLocationAccess,
+                showLocationButton = showLocationButton,
+                isConnected = NetworkChecker.shared.isConnected,
+                isRotating = isRotating,
+                qrCodeBytes = qrCodeBytes,
+                mainOppColor = MaterialTheme.colorScheme.onSurface
+            )
         }
 
+        // Top header with gradient
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -150,39 +172,54 @@ fun HostGameView(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.background.copy(alpha = 0f)
                         )
                     )
                 )
-                .padding(top = 16.dp, start = 8.dp, end = 8.dp, bottom = 24.dp)
+                .padding(top = if (isGuest) 12.dp else 28.dp)
+                .padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 if (isGuest) {
-                    IconButton(onClick = {
-                        hostVM.handleGuestBackAction(
-                            dismissGame = { gameModel.dismissGame() },
-                            navigateToSignIn = { hostVM.viewManager.navigateToSignIn() }
+                    IconButton(
+                        onClick = {
+                            logic.handleGuestBackAction(
+                                dismissGame = { gameModel.dismissGame() },
+                                navigateToSignIn = { hostVM.viewManager.navigateToSignIn() }
+                            )
+                            onDismiss()
+                        },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
                         )
-                        onBack()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.Blue)
                     }
                 } else {
-                    Spacer(modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.width(40.dp))
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = hostVM.getHeaderTitle(isOnline = onlineGame),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    text = logic.getHeaderTitle(isOnline = onlineGame),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.size(48.dp))
+                Spacer(modifier = Modifier.width(40.dp))
             }
         }
 
+        // Bottom section with Start Game button and gradient
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -190,16 +227,17 @@ fun HostGameView(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                            MaterialTheme.colorScheme.surface
+                            MaterialTheme.colorScheme.background.copy(alpha = 0f),
+                            MaterialTheme.colorScheme.background
                         )
                     )
                 )
                 .padding(16.dp)
+                .padding(bottom = if (isGuest) 40.dp else 0.dp)
         ) {
             Button(
                 onClick = {
-                    hostVM.handleStartGame(
+                    logic.handleStartGame(
                         isGuest = isGuest,
                         deleteGuestGame = {
                             scope.launch {
@@ -208,7 +246,7 @@ fun HostGameView(
                         },
                         performStart = {
                             hostVM.startGame(
-                                onHostHidden = { onShowHostChange(false) },
+                                onHostHidden = { onDismiss() },
                                 isGuest = isGuest
                             )
                         }
@@ -217,8 +255,18 @@ fun HostGameView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
-                shape = RoundedCornerShape(27.dp)
+                shape = RoundedCornerShape(27.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White
+                )
             ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text("Start Game", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             }
         }
@@ -238,10 +286,11 @@ fun HostGameView(
     if (showDeleteAlert) {
         AlertDialog(
             onDismissRequest = { hostVM.setShowDeleteAlert(false) },
-            title = { Text("Delete Player?") },
+            title = { Text("Delete Player?", color = MaterialTheme.colorScheme.onSurface) },
+            text = { Text("Are you sure?", color = MaterialTheme.colorScheme.onSurface) },
             confirmButton = {
                 TextButton(onClick = {
-                    hostVM.handleDeletePlayer(playerToDelete) { id ->
+                    logic.handleDeletePlayer(playerToDelete) { id ->
                         gameModel.removePlayer(id)
                     }
                     hostVM.setShowDeleteAlert(false)
@@ -252,9 +301,10 @@ fun HostGameView(
             },
             dismissButton = {
                 TextButton(onClick = { hostVM.setShowDeleteAlert(false) }) {
-                    Text("Cancel")
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
                 }
-            }
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     }
 }
@@ -263,27 +313,30 @@ fun HostGameView(
 private fun PlayersSection(
     hostVM: HostViewModel,
     gameModel: GameViewModel,
-    onlineGame: Boolean
+    onlineGame: Boolean,
+    logic: HostViewBusinessLogic
 ) {
     val game by gameModel.game.collectAsState()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = hostVM.getPlayersHeaderText(playerCount = game.players.size),
+                text = logic.getPlayersHeaderText(playerCount = game.players.size),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 game.players.forEach { player ->
                     HostPlayerIconView(
@@ -297,25 +350,68 @@ private fun PlayersSection(
                     )
                 }
 
-                IconButton(
-                    onClick = {
-                        hostVM.setShowAddLocalPlayer(true)
-                        hostVM.resetTimer()
-                    },
+                Column(
                     modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                        .padding(horizontal = 16.dp)
+                        .clickable {
+                            hostVM.setShowAddLocalPlayer(true)
+                            hostVM.resetTimer()
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Player")
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(MaterialTheme.colorScheme.secondary, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Player",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(0.5.dp))
+                    Text(
+                        text = "Add Player",
+                        style = LocalTextStyle.current.copy(
+                            fontSize = with(LocalDensity.current) { 9.dp.toSp() },
+                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        ),
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 if (onlineGame) {
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.5.dp)
-                        Text("Searching...", style = MaterialTheme.typography.labelSmall)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(30.dp),
+                                strokeWidth = 2.5.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(1.dp))
+                        Text(
+                            text = "Searching...",
+                            style = LocalTextStyle.current.copy(
+                                fontSize = with(LocalDensity.current) { 9.dp.toSp() },
+                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -331,7 +427,8 @@ private fun GameInfoSection(
     showLocationButton: Boolean,
     isConnected: Boolean,
     isRotating: Boolean,
-    qrCodeBytes: ByteArray?
+    qrCodeBytes: ByteArray?,
+    mainOppColor: Color
 ) {
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()
@@ -339,36 +436,73 @@ private fun GameInfoSection(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.25f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Game Info", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Game Info",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = mainOppColor
+            )
 
             if (onlineGame) {
-                InfoRow(label = "Game Code", value = game.id)
+                UserInfoRow(
+                    label = "Game Code",
+                    value = game.id,
+                    mainOppColor = mainOppColor,
+                    subOppColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.QrCode,
+                            contentDescription = null,
+                            tint = mainOppColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                )
+
+                HorizontalDivider()
 
                 qrCodeBytes?.toImageBitmap()?.let { imageBitmap ->
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
-                            .padding(12.dp),
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.White.copy(alpha = 0.1f)) // Placeholder for ultraThinMaterial
+                            .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             bitmap = imageBitmap,
                             contentDescription = "Game QR Code",
-                            modifier = Modifier.size(180.dp)
+                            modifier = Modifier.fillMaxHeight()
                         )
                     }
                 }
 
-                InfoRow(label = "Expires in", value = hostVM.timeString(), trailingIcon = {
-                    Icon(Icons.Default.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                })
+                HorizontalDivider()
+
+                UserInfoRow(
+                    label = "Expires in",
+                    value = hostVM.timeString(),
+                    mainOppColor = mainOppColor,
+                    subOppColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.Timer,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
+
+                HorizontalDivider()
             }
 
             if (hasLocationAccess) {
@@ -377,25 +511,47 @@ private fun GameInfoSection(
                     gameModel = gameModel,
                     showLocationButton = showLocationButton,
                     isConnected = isConnected,
-                    isRotating = isRotating
+                    isRotating = isRotating,
+                    mainOppColor = mainOppColor
                 )
+
+
             }
 
-            if (course?.customPar == true) {
-                InfoRow(label = "Holes", value = course?.numHoles?.toString() ?: "18")
+            val currentCourse = course
+            if (currentCourse != null) {
+                if (currentCourse.customPar) {
+                    UserInfoRow(label = "Holes", value = currentCourse.numHoles.toString(), mainOppColor = mainOppColor, subOppColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    HolesPickerRow(gameModel, hostVM, game.numberOfHoles, mainOppColor)
+                }
             } else {
-                Text("Holes", style = MaterialTheme.typography.labelLarge)
-                NumberPickerView(
-                    selectedNumber = game.numberOfHoles,
-                    onSelectedNumberChange = {
-                        gameModel.setNumberOfHole(it)
-                        hostVM.resetTimer()
-                    },
-                    minNumber = 9,
-                    maxNumber = 21
-                )
+                HolesPickerRow(gameModel, hostVM, game.numberOfHoles, mainOppColor)
             }
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.Q)
+@Composable
+private fun HolesPickerRow(
+    gameModel: GameViewModel,
+    hostVM: HostViewModel,
+    selectedNumber: Int,
+    mainOppColor: Color
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("Holes:", style = MaterialTheme.typography.labelLarge, color = mainOppColor)
+        Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+        NumberPickerView(
+            selectedNumber = selectedNumber,
+            onSelectedNumberChange = {
+                gameModel.setNumberOfHole(it)
+                hostVM.resetTimer()
+            },
+            minNumber = 9,
+            maxNumber = 21
+        )
     }
 }
 
@@ -405,7 +561,8 @@ private fun LocationButtons(
     gameModel: GameViewModel,
     showLocationButton: Boolean,
     isConnected: Boolean,
-    isRotating: Boolean
+    isRotating: Boolean,
+    mainOppColor: Color
 ) {
     val selectedCourse by gameModel.course.collectAsState()
     val locationName = selectedCourse?.name
@@ -413,58 +570,78 @@ private fun LocationButtons(
     if (!isConnected) return
 
     if (showLocationButton) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            InfoRow(label = "Location", value = locationName ?: "No Location")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Location:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = mainOppColor,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = locationName ?: "No Location",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = 8.dp).basicMarquee(),
+                    maxLines = 1
+                )
+            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (locationName == null) {
-                    Button(onClick = { hostVM.searchNearby() }) {
-                        Icon(Icons.Default.Search, contentDescription = null)
+                    Button(
+                        onClick = { hostVM.searchNearby() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.height(50.dp).width(180.dp)
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Search Nearby")
                     }
                 } else {
-                    IconButton(onClick = { hostVM.retry() }) {
+                    IconButton(
+                        onClick = { hostVM.retry() },
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .size(50.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Retry",
-                            modifier = Modifier.rotate(if (isRotating) 360f else 0f)
+                            modifier = Modifier
+                                .rotate(if (isRotating) 360f else 0f)
+                                .size(24.dp),
+                            tint = Color.White
                         )
                     }
-                    IconButton(onClick = { hostVM.exit() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Clear Location")
+                    IconButton(
+                        onClick = { hostVM.exit() },
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.error, CircleShape)
+                            .size(50.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Clear Location",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White
+                        )
                     }
                 }
             }
         }
+        HorizontalDivider()
     } else if (locationName != null) {
-        InfoRow(label = "Location", value = locationName)
+        UserInfoRow(label = "Location", value = locationName, mainOppColor = mainOppColor, subOppColor = MaterialTheme.colorScheme.onSurfaceVariant)
+        HorizontalDivider()
     }
 }
-
-@Composable
-private fun InfoRow(
-    label: String,
-    value: String,
-    trailingIcon: @Composable (() -> Unit)? = null
-) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = label, style = MaterialTheme.typography.labelLarge)
-            Spacer(modifier = Modifier.weight(1f))
-            if (trailingIcon != null) {
-                trailingIcon()
-                Spacer(modifier = Modifier.width(6.dp))
-            }
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
-    }
-}
-

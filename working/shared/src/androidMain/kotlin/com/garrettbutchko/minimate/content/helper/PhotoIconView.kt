@@ -8,16 +8,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -36,11 +33,9 @@ fun PhotoIconView(
     modifier: Modifier = Modifier,
     photoURL: String?,
     name: String,
-    ballColor: Color?,
+    ballColor: Color? = null,
     imageSize: Dp,
     backgroundColor: Color? = colorResource(id = com.garrettbutchko.minimate.shared.R.color.subTwo),
-    // When false the label under the image will be hidden. Useful when the icon is
-    // displayed in a fixed-height header where the name would push the image off-center.
     showName: Boolean = true
 ) {
 
@@ -76,7 +71,7 @@ fun PhotoIconView(
                             painter = painterResource(id = com.garrettbutchko.minimate.shared.R.drawable.logo),
                             contentDescription = name,
                             modifier = Modifier.size(imageSize),
-                            colorFilter = ColorFilter.tint(ballColor ?: MaterialTheme.colorScheme.onSurface)
+                            colorFilter = ColorFilter.tint(ballColor ?: colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp))
                         )
                     }
                 } else {

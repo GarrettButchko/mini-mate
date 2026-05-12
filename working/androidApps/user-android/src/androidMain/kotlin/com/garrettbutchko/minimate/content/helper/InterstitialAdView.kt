@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.content.helper
 
+import co.touchlab.kermit.Logger
+
 import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +30,7 @@ fun InterstitialAdView(
 
     LaunchedEffect(adUnitID) {
         if (activity == null) {
-            println("Error: InterstitialAdView requires an Activity context.")
+            Logger.i("Error: InterstitialAdView requires an Activity context.")
             onDismiss()
             return@LaunchedEffect
         }
@@ -41,7 +43,7 @@ fun InterstitialAdView(
             adRequest,
             object : InterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    println("Failed to load interstitial ad: ${adError.message}")
+                    Logger.i("Failed to load interstitial ad: ${adError.message}")
                     onDismiss()
                 }
 
@@ -52,7 +54,7 @@ fun InterstitialAdView(
                         }
 
                         override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            println("Ad failed to present with error: ${adError.message}")
+                            Logger.i("Ad failed to present with error: ${adError.message}")
                             onDismiss()
                         }
 

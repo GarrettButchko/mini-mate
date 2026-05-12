@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.viewModels
 
+import co.touchlab.kermit.Logger
+
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
@@ -253,17 +255,17 @@ class GameViewModel(
                             }
                             "started" -> {
                                 val value = rawValue as? Boolean ?: ((rawValue as? Number)?.toInt() == 1)
-                                println("GameViewModel: Metadata update - started: $value")
+                                Logger.i("GameViewModel: Metadata update - started: $value")
                                 currentGame.copy(started = value)
                             }
                             "dismissed" -> {
                                 val value = rawValue as? Boolean ?: ((rawValue as? Number)?.toInt() == 1)
-                                println("GameViewModel: Metadata update - dismissed: $value")
+                                Logger.i("GameViewModel: Metadata update - dismissed: $value")
                                 currentGame.copy(dismissed = value)
                             }
                             "completed" -> {
                                 val value = rawValue as? Boolean ?: ((rawValue as? Number)?.toInt() == 1)
-                                println("GameViewModel: Metadata update - completed: $value")
+                                Logger.i("GameViewModel: Metadata update - completed: $value")
                                 currentGame.copy(completed = value)
                             }
                             else -> currentGame
@@ -469,7 +471,7 @@ class GameViewModel(
             stopListening()
             liveGameRepo.deleteGame(_game.value.id) { result ->
                 if (result) {
-                    println("Deleted Game id: \$gameIdToDelete From Firebase")
+                    Logger.i("Deleted Game id: \$gameIdToDelete From Firebase")
                 }
             }
         }
@@ -484,31 +486,43 @@ class GameViewModel(
         isDismissing = true
         val gameIdToDelete = _game.value.id
         
-        // Update state and PUSH to Firebase so guests see 'dismissed = true'
+        // Update state to dismissed locally
         _game.value = _game.value.copy(dismissed = true)
-        if (_onlineGame.value && gameIdToDelete.isNotEmpty()) {
-            pushUpdate()
-        }
 
-        hasLoaded = false
-        
-        coroutineScope.launch {
-            // Wait for propagation before deleting node
-            if (_onlineGame.value && gameIdToDelete.isNotEmpty()) {
-                delay(1000)
-            }
-            stopListening()
-            resetGame()
-            
-            if (gameIdToDelete.isNotEmpty() && _onlineGame.value) {
-                liveGameRepo.deleteGame(gameIdToDelete) { result ->
-                    if (result) {
-                        println("Deleted Game id: $gameIdToDelete From Firebase")
+        if (_onlineGame.value && gameIdToDelete.isNotEmpty()) {
+            // Push dismissed state to Firebase first
+            liveGameRepo.addOrUpdateGame(_game.value) { success ->
+                if (success) {
+                    coroutineScope.launch {
+                        hasLoaded = false
+                        stopListening()
+                        resetGame()
+
+                        Logger.d("GameViewModel: Attempting to delete game after dismissal propagation. isOnlineGame: ${_onlineGame.value}, gameIdToDelete: $gameIdToDelete")
+
+                        // Then delete the game from Firebase
+                        liveGameRepo.deleteGame(gameIdToDelete) { result ->
+                            if (result) {
+                                Logger.i("Deleted Game id: $gameIdToDelete From Firebase")
+                            } else {
+                                Logger.e("FAILED to delete Game id: $gameIdToDelete From Firebase")
+                            }
+                            isDismissing = false
+                        }
                     }
+                } else {
+                    Logger.e("GameViewModel: Failed to push dismissed state to Firebase. Not deleting game.")
                     isDismissing = false
                 }
-            } else {
+            }
+        } else {
+            // If not online, or gameId is empty, no need to push to Firebase for guests
+            hasLoaded = false
+            coroutineScope.launch {
+                stopListening()
+                resetGame()
                 isDismissing = false
+                Logger.d("GameViewModel: Game dismissed locally (not online or ID empty).")
             }
         }
     }
@@ -538,25 +552,25 @@ class GameViewModel(
                         continuation.resume(Pair(l, r))
                     }
                 }
-                println("✅ Saved Game: local=$localOK, remote=$remoteOK")
+                Logger.i("✅ Saved Game: local=$localOK, remote=$remoteOK")
                 saveSuccess = localOK || remoteOK
             } else {
                 val success = localGameRepository.save(finished)
-                println(if (success) "✅ Saved Guest Game" else "❌ Failed to save guest game")
+                Logger.i(if (success) "✅ Saved Guest Game" else "❌ Failed to save guest game")
                 saveSuccess = success
             }
 
             if (!saveSuccess) {
-                println("⚠️ Skipping user save - game save failed")
+                Logger.i("⚠️ Skipping user save - game save failed")
                 resetGameState()
                 return@launch
             }
 
             val currentUserId = authModel.userModel.value?.googleId
             if (currentUserId != null && (currentUserId == finished.hostUserId || isGuest)) {
-                println("running analytics")
+                Logger.i("running analytics")
                 val success = processAnalytics(finished)
-                println(if (success) "✅ Analytics processed" else "❌ Analytics failed")
+                Logger.i(if (success) "✅ Analytics processed" else "❌ Analytics failed")
                 analyticsSuccess = success
             }
 
@@ -568,12 +582,12 @@ class GameViewModel(
                 val (localUserOK, remoteUserOK) = authModel.userRepository.saveUnified(updatedUserModel.googleId, updatedUserModel)
                 authModel.setUserModel(updatedUserModel)
                 val userSaveSuccess = localUserOK || remoteUserOK
-                println(if (userSaveSuccess) "✅ Updated user model with new game ID" else "❌ Failed to update user model")
+                Logger.i(if (userSaveSuccess) "✅ Updated user model with new game ID" else "❌ Failed to update user model")
                 if (!analyticsSuccess) {
-                    println("⚠️ Analytics encountered issues, but game was saved")
+                    Logger.i("⚠️ Analytics encountered issues, but game was saved")
                 }
             } else {
-                println("❌ Unable to save user model - missing userModel or currentUserIdentifier")
+                Logger.i("❌ Unable to save user model - missing userModel or currentUserIdentifier")
             }
             
             if (finished.id.isNotEmpty() && _onlineGame.value) {
@@ -583,7 +597,7 @@ class GameViewModel(
                     }
                 }
                 if (result) {
-                    println("Deleted Game id: ${finished.id} From Firebase Live DB")
+                    Logger.i("Deleted Game id: ${finished.id} From Firebase Live DB")
                 }
             }
 
@@ -600,7 +614,7 @@ class GameViewModel(
     suspend fun processAnalytics(finishedGame: Game): Boolean {
         val courseID = finishedGame.courseID
         if (courseID == null) {
-            println("No Course Id No Analytics")
+            Logger.i("No Course Id No Analytics")
             return false
         }
 

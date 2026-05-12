@@ -42,7 +42,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -109,7 +108,7 @@ fun CourseResultView(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter),
-            color = colorResource(id = R.color.bg).copy(alpha = 0.96f)
+            color = MaterialTheme.colorScheme.background.copy(alpha = 0.96f)
         ) {
             CourseResultViewHeader(courseName = selectedMapItem?.name ?: selectedCourse.name) {
                 onBackToResults()
@@ -151,7 +150,7 @@ fun CourseResultViewHeader(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
-            color = colorResource(id = R.color.mainOpp)
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.width(40.dp))
@@ -197,7 +196,7 @@ fun CourseSupportedLocationCard(locationName: String?) {
     Row(modifier = Modifier
         .fillMaxWidth()
         .shadow(4.dp, RoundedCornerShape(12.dp))
-        .background(colorResource(id = R.color.sub), RoundedCornerShape(12.dp))
+        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
         .padding(14.dp), verticalAlignment = Alignment.Top) {
         Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFEEE5FF))) {
             Image(
@@ -212,9 +211,9 @@ fun CourseSupportedLocationCard(locationName: String?) {
         Spacer(Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text("Supported Location", style = MaterialTheme.typography.bodyLarge, color = colorResource(id = R.color.mainOpp))
+            Text("Supported Location", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             if (locationName != null) {
-                Text("$locationName has official MiniMate data (par + more).", style = MaterialTheme.typography.bodySmall, color = colorResource(id = R.color.mainOpp))
+                Text("$locationName has official MiniMate data (par + more).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
@@ -229,7 +228,7 @@ fun CourseSocialMediaCard(course: Course) {
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
-        color = colorResource(id = R.color.bg),
+        color = MaterialTheme.colorScheme.background,
         shadowElevation = 4.dp
     ) {
         Column(
@@ -249,7 +248,7 @@ fun CourseSocialMediaCard(course: Course) {
                     text = "Social Media",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -267,7 +266,7 @@ fun CourseSocialMediaCard(course: Course) {
                                 context.startActivity(intent)
                             },
                             shape = RoundedCornerShape(8.dp),
-                            color = colorResource(id = R.color.subTwo).copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -278,7 +277,7 @@ fun CourseSocialMediaCard(course: Course) {
                                     text = link.platform.name.lowercase().replaceFirstChar { it.uppercase() },
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = colorResource(id = R.color.mainOpp)
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
 
                                 // Platform Icon
@@ -306,7 +305,7 @@ fun CourseContactInfoCard(mapItem: MapItemDTO?) {
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
-        color = colorResource(id = R.color.sub),
+        color = MaterialTheme.colorScheme.surfaceVariant,
         shadowElevation = 4.dp
     ) {
         Column(
@@ -326,7 +325,7 @@ fun CourseContactInfoCard(mapItem: MapItemDTO?) {
                     text = "Contact",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -378,7 +377,7 @@ fun CourseContactInfoCard(mapItem: MapItemDTO?) {
                 Text(
                     text = "No contact info available",
                     style = MaterialTheme.typography.bodySmall,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -392,7 +391,7 @@ fun CourseLocationInfoCard(mapItem: MapItemDTO?) {
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
-        color = colorResource(id = R.color.sub),
+        color = MaterialTheme.colorScheme.surfaceVariant,
         shadowElevation = 4.dp
     ) {
         Column(
@@ -411,7 +410,7 @@ fun CourseLocationInfoCard(mapItem: MapItemDTO?) {
                     text = "Location",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -421,13 +420,13 @@ fun CourseLocationInfoCard(mapItem: MapItemDTO?) {
                 text = mapItem?.name ?: "Unknown",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = colorResource(id = R.color.mainOpp)
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Text(
                 text = mapItem?.address?.shortAddress ?: mapItem?.address?.fullAddress ?: "Address unknown",
                 style = MaterialTheme.typography.bodyMedium,
-                color = colorResource(id = R.color.mainOpp)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -442,7 +441,7 @@ fun CourseClaimButton(
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
-        color = colorResource(id = R.color.sub),
+        color = MaterialTheme.colorScheme.surfaceVariant,
         shadowElevation = 4.dp
     ) {
         Row(
@@ -462,7 +461,7 @@ fun CourseClaimButton(
             Text(
                 text = "Is this your course? Click to Claim!",
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = colorResource(id = R.color.mainOpp)
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(Modifier.weight(1f))
@@ -471,7 +470,7 @@ fun CourseClaimButton(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = colorResource(id = R.color.mainOpp).copy(alpha = 0.6f)
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
     }

@@ -74,13 +74,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import com.garrettbutchko.minimate.user.BuildConfig
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -92,6 +93,8 @@ import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.ProfileView
 import com.garrettbutchko.minimate.content.TitleView
 import com.garrettbutchko.minimate.content.game.GameReviewView
+import com.garrettbutchko.minimate.content.game.HostGameView
+import com.garrettbutchko.minimate.content.game.JoinGameView
 import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.BarChartView
@@ -108,7 +111,6 @@ import com.garrettbutchko.minimate.viewModels.GameViewModel
 import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.garrettbutchko.minimate.shared.R
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
@@ -132,7 +134,6 @@ fun MainContentView(
     val logic = remember { MainViewBusinessLogic() }
     val context = LocalContext.current
     val defaultWebClientId = stringResource(com.garrettbutchko.minimate.user.R.string.default_web_client_id)
-    val bgColor = colorResource(id = R.color.bg)
     val user by authModel.userModel.collectAsState()
     val course by gameModel.course.collectAsState()
     val userGames by gameManager.userGames.collectAsState()
@@ -149,6 +150,12 @@ fun MainContentView(
     var isProfileBotError by remember { mutableStateOf(false) }
 
     var reviewGame by remember { mutableStateOf<Game?>(null) }
+
+    val hostSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showHostSheet by remember { mutableStateOf(false) }
+
+    val joinSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showJoinSheet by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
@@ -183,7 +190,7 @@ fun MainContentView(
 
     Column(modifier = Modifier
         .fillMaxSize()
-        .background(bgColor)
+        .background(MaterialTheme.colorScheme.background)
     ) {
         MainTopBar(
             greetingName = logic.getGreetingName(user?.name),
@@ -203,13 +210,13 @@ fun MainContentView(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(bgColor)
+                .background(MaterialTheme.colorScheme.background)
         ) {
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(bgColor)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(horizontal = 16.dp),
                 contentPadding = PaddingValues(top = 132.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -302,7 +309,7 @@ fun MainContentView(
                         }
                     },
                     sheetState = sheetState,
-                    containerColor = colorResource(id = R.color.bg)
+                    containerColor = MaterialTheme.colorScheme.background
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         GameReviewView(
@@ -316,6 +323,37 @@ fun MainContentView(
                             }
                         )
                     }
+                }
+            }
+
+            if (showHostSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showHostSheet = false },
+                    sheetState = hostSheetState,
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
+                    HostGameView(
+                        onDismiss = { showHostSheet = false },
+                        isGuest = false,
+                        gameModel = gameModel,
+                        locationHandler = locationHandler
+                    )
+                }
+            }
+
+            if (showJoinSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showJoinSheet = false },
+                    sheetState = joinSheetState,
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
+                    JoinGameView(
+                        showJoin = showJoinSheet,
+                        onShowJoinChange = { showJoinSheet = it },
+                        viewManager = viewManager,
+                        gameModel = gameModel,
+                        onBack = { showJoinSheet = false }
+                    )
                 }
             }
 
@@ -334,7 +372,7 @@ fun MainContentView(
                         showProSheetState.value = true
                     } else {
                         gameModel.createGame(online = false, guestData = null)
-                        viewManager.navigateToHost()
+                        showHostSheet = true
                     }
                 },
                 onConnect = {
@@ -346,11 +384,11 @@ fun MainContentView(
                 },
                 onHost = {
                     gameModel.createGame(online = true, guestData = null)
-                    viewManager.navigateToHost()
+                    showHostSheet = true
                 },
                 onJoin = {
                     gameModel.resetGame()
-                    viewManager.navigateToJoin()
+                    showJoinSheet = true
                 },
                 makeColor = course?.scoreCardColor
             )
@@ -395,7 +433,7 @@ fun MainContentView(
         ModalBottomSheet(
             onDismissRequest = { showProfileSheetState.value = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = colorResource(id = R.color.bg)
+            containerColor = MaterialTheme.colorScheme.background
         ) {
             ProfileView(
                 userProfileImage = user?.photoURL,
@@ -525,10 +563,9 @@ fun MainContentView(
     if (showProSheetState.value) {
         ModalBottomSheet(onDismissRequest = { showProSheetState.value = false }) {
             ProView(
+                iapManager = iapManager,
                 showSheet = showProSheetState.value,
                 onShowSheetChange = { showProSheetState.value = it },
-                authModel = authModel,
-                iapManager = iapManager,
                 activity = contextAsActivityOrNull()
             )
         }
@@ -552,7 +589,7 @@ private fun MainTopBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colorResource(id = R.color.bg))
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -564,8 +601,8 @@ private fun MainTopBar(
                     modifier = Modifier.onSizeChanged { titleSize = it },
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    Text("Welcome back,", style = MaterialTheme.typography.bodySmall, color = colorResource(id = R.color.subTwoOpp))
-                    Text(greetingName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = colorResource(id = R.color.mainOpp))
+                    Text("Welcome back,", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondary)
+                    Text(greetingName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 }
 
                 if (!courseLogoUrl.isNullOrBlank()) {
@@ -573,7 +610,7 @@ private fun MainTopBar(
                         modifier = Modifier
                             .width(1.dp)
                             .height(if (titleHeight > 0.dp) titleHeight else 44.dp)
-                            .background(colorResource(id = R.color.subTwoOpp).copy(alpha = 0.4f))
+                            .background(MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.4f))
                     )
                     AsyncImage(
                         model = courseLogoUrl,
@@ -639,7 +676,7 @@ private fun MainActionCard(
     Column(
         modifier = myModifier
             .background(
-                color = colorResource(id = R.color.bg).copy(alpha = 0.9f),
+                color = MaterialTheme.colorScheme.background.copy(alpha = 0.9f),
                 shape = RoundedCornerShape(25.dp)
             )
             .background(
@@ -651,20 +688,34 @@ private fun MainActionCard(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(30.dp), contentAlignment = Alignment.Center) {
-                androidx.compose.animation.AnimatedVisibility(
-                    visible = isOnlineMode,
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut()
-                ) {
-                    Surface(shape = CircleShape, color = colorResource(id = R.color.mainOpp)) {
-                        IconButton(onClick = onBackToOffline, modifier = Modifier.size(30.dp)) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = colorResource(id = R.color.bg),
-                                modifier = Modifier.size(18.dp)
-                            )
+            Box(modifier = Modifier.size(30.dp)) {
+                Box(modifier = Modifier.size(30.dp), contentAlignment = Alignment.Center) {
+                    val alpha: Float by animateFloatAsState(
+                        targetValue = if (isOnlineMode) 1f else 0f,
+                        animationSpec = tween(durationMillis = 300), label = "backButtonAlpha"
+                    )
+                    val scale: Float by animateFloatAsState(
+                        targetValue = if (isOnlineMode) 1f else 0f,
+                        animationSpec = tween(durationMillis = 300), label = "backButtonScale"
+                    )
+
+                    if (isOnlineMode || alpha > 0.01f) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .alpha(alpha)
+                                .scale(scale)
+                        ) {
+                            IconButton(onClick = onBackToOffline, modifier = Modifier.size(30.dp)) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = MaterialTheme.colorScheme.background,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -687,7 +738,7 @@ private fun MainActionCard(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        color = colorResource(id = R.color.mainOpp),
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1
                     )
                 }
@@ -696,7 +747,7 @@ private fun MainActionCard(
             Spacer(modifier = Modifier.width(12.dp))
 
             IconButton(onClick = onInfo, modifier = Modifier.size(30.dp)) {
-                Icon(Icons.Default.Info, contentDescription = infoText, tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Info, contentDescription = infoText, tint = MaterialTheme.colorScheme.onSurface)
             }
         }
 
@@ -843,7 +894,7 @@ private fun LocationCard(
                             "Location:",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = colorResource(id = R.color.mainOpp)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         AnimatedContent(
@@ -857,7 +908,7 @@ private fun LocationCard(
                         ) { currentCourseName ->
                             Text(
                                 text = currentCourseName,
-                                color = colorResource(id = R.color.subTwoOpp),
+                                color = MaterialTheme.colorScheme.onSecondary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -954,19 +1005,19 @@ private fun LocationCard(
                     Icon(
                         imageVector = Icons.Default.LocationOff,
                         contentDescription = "Location access required",
-                        tint = colorResource(id = R.color.subTwoOpp),
+                        tint = MaterialTheme.colorScheme.onSecondary,
                         modifier = Modifier.size(50.dp)
                     )
                     Text(
                         "Location Access Required",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = colorResource(id = R.color.mainOpp)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "Mini Mate needs your location to find nearby courses and update your position.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = colorResource(id = R.color.subTwoOpp),
+                        color = MaterialTheme.colorScheme.onSecondary,
                         textAlign = TextAlign.Center
                     )
                     Button(
@@ -1032,7 +1083,7 @@ private fun LastGameCard(
                                     name = logic.formatWinnerName(winner.name),
                                     ballColor = winner.ballColor,
                                     imageSize = 30.dp,
-                                    backgroundColor = colorResource(id = R.color.swiftYellow),
+                                    backgroundColor = Color(0xFFFFCC00),
                                     showName = true
                                 )
                             }

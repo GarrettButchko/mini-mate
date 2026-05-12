@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.viewModels
 
+import co.touchlab.kermit.Logger
+
 import com.garrettbutchko.minimate.dataModels.MapRegionData
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
@@ -16,11 +18,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 interface CourseMapActions {
     fun getDirections(mapItem: MapItemDTO)
@@ -135,12 +132,12 @@ class CourseViewModel(
 
         activeSearchToken += 1
         val requestToken = activeSearchToken
-        println("[CourseViewModel] searchNearby() start userLocation=${locationHandler.userLocation.value}")
+        Logger.i("[CourseViewModel] searchNearby() start userLocation=${locationHandler.userLocation.value}")
         _isLoadingCourses.value = true
         _isUpperHalf.value = true
 
         locationHandler.searchNearbyCourses(0.03, 0.1, 0.1) { success, newPosition ->
-            println("[CourseViewModel] searchNearby() completion success=$success items=${locationHandler.mapItems.value.size} newPosition=$newPosition")
+            Logger.i("[CourseViewModel] searchNearby() completion success=$success items=${locationHandler.mapItems.value.size} newPosition=$newPosition")
             scope.launch {
                 if (requestToken != activeSearchToken) {
                     return@launch
@@ -185,7 +182,7 @@ class CourseViewModel(
 
     fun distanceInMeters(mapItem: MapItemDTO): Double? {
         val userLocation = locationHandler.userLocation.value ?: return null
-        return haversineMeters(
+        return searchLogic.distanceInMeters(
             userLocation.latitude,
             userLocation.longitude,
             mapItem.coordinate.latitude,
@@ -197,22 +194,5 @@ class CourseViewModel(
         val distanceMeters = distanceInMeters(mapItem) ?: return getPostalAddress(mapItem)
         val distanceMiles = searchLogic.metersToMiles(distanceMeters)
         return searchLogic.buildSubtitle(distanceMiles, getPostalAddress(mapItem))
-    }
-
-    private fun haversineMeters(
-        startLatitude: Double,
-        startLongitude: Double,
-        endLatitude: Double,
-        endLongitude: Double
-    ): Double {
-        val earthRadiusMeters = 6_371_000.0
-        val deltaLat = (endLatitude - startLatitude) * PI / 180.0
-        val deltaLng = (endLongitude - startLongitude) * PI / 180.0
-        val a = sin(deltaLat / 2) * sin(deltaLat / 2) +
-            cos(startLatitude * PI / 180.0) *
-            cos(endLatitude * PI / 180.0) *
-            sin(deltaLng / 2) * sin(deltaLng / 2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return earthRadiusMeters * c
     }
 }

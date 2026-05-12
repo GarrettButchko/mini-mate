@@ -2,7 +2,7 @@ package com.garrettbutchko.minimate.modelKotlinExtensions
 
 import androidx.compose.ui.graphics.Color
 
-fun String?.toColor(): Color {
+fun String?.toColor(): Color? {
     return when (this?.lowercase()) {
         "red" -> Color(0xFFFF383C)
         "orange" -> Color(0xFFFF8D28)
@@ -16,6 +16,6 @@ fun String?.toColor(): Color {
         "purple" -> Color(0xFFCB30E0)
         "pink" -> Color(0xFFFF2D55)
         "brown" -> Color(0xFFAC7F5E)
-        else -> Color.Gray // Fallback for unspecified or unknown colors
+        else -> null // Fallback for unspecified or unknown colors
     }
 }

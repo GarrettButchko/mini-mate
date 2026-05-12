@@ -1,6 +1,5 @@
-package com.garrettbutchko.minimate.datamodels
+package com.garrettbutchko.minimate.dataModels.userModels
 
-import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.serialization.Serializable
 

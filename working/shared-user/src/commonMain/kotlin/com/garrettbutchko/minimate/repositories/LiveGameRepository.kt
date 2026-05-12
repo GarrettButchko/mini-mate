@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.repositories
 
+import co.touchlab.kermit.Logger
+
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.playerModels.PlayerDTO
 import dev.gitlive.firebase.Firebase
@@ -88,7 +90,7 @@ class LiveGameRepository {
                     completion(true)
                 }
             } catch (e: Exception) {
-                println("❌ Encoding game error: ${e.message}")
+                Logger.i("❌ Encoding game error: ${e.message}")
                 withContext(Dispatchers.Main) {
                     completion(false)
                 }
@@ -113,7 +115,7 @@ class LiveGameRepository {
                     }
                 }
             } catch (e: Exception) {
-                println("❌ Decoding game error: ${e.message}")
+                Logger.i("❌ Decoding game error: ${e.message}")
                 withContext(Dispatchers.Main) {
                     completion(null)
                 }
@@ -130,7 +132,7 @@ class LiveGameRepository {
                     completion(true)
                 }
             } catch (e: Exception) {
-                println("❌ Deleting game error: ${e.message}")
+                Logger.i("❌ Deleting game error: ${e.message}")
                 withContext(Dispatchers.Main) {
                     completion(false)
                 }

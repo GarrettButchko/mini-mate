@@ -20,6 +20,26 @@ struct CourseSearchResultsView: View {
     
     // Platform-agnostic business logic isolated for KMP
     private let logic = SearchResultBusinessLogic()
+
+    private var sortedMapItems: [MKMapItem] {
+        guard let userCoord = locHand.userLocation?.coordinate else {
+            return courseSearch.mapItems
+        }
+
+        return courseSearch.mapItems.sorted {
+            distanceInMeters(for: $0, userLocation: userCoord) < distanceInMeters(for: $1, userLocation: userCoord)
+        }
+    }
+
+    private func distanceInMeters(for item: MKMapItem, userLocation: CLLocationCoordinate2D) -> Double {
+        let dto = item.toDTO()
+        return logic.distanceInMeters(
+            startLatitude: userLocation.latitude,
+            startLongitude: userLocation.longitude,
+            endLatitude: dto.coordinate.latitude,
+            endLongitude: dto.coordinate.longitude
+        )
+    }
     
     var body: some View {
         ZStack {
@@ -57,8 +77,8 @@ struct CourseSearchResultsView: View {
                 ScrollView {
                     VStack(alignment: .leading) {
                         if let userCoord = locHand.userLocation?.coordinate {
-                            ForEach(courseSearch.mapItems, id: \.self) { mapItem in
-                                if courseSearch.mapItems.count > 0 && mapItem != courseSearch.mapItems[0]{
+                            ForEach(sortedMapItems, id: \.self) { mapItem in
+                                if let firstItem = sortedMapItems.first, mapItem != firstItem {
                                     Divider()
                                 }
                                 SearchResultRow(item: mapItem, userLocation: userCoord)
@@ -225,20 +245,12 @@ struct SearchResultRow: View {
     }
     
     func distanceInMeters() -> Double {
-        let offsetLat = logic.getOffsetLatitude(baseLatitude: userLocation.latitude)
-        
-        var distanceInMeters: Double
-        
-        
-        if #available(iOS 26.0, *) {
-            distanceInMeters = CLLocation(latitude: offsetLat, longitude: userLocation.longitude)
-                .distance(from: CLLocation(latitude: item.location.coordinate.latitude,
-                                           longitude: item.location.coordinate.longitude))
-        } else {
-            distanceInMeters = CLLocation(latitude: offsetLat, longitude: userLocation.longitude)
-                .distance(from: CLLocation(latitude: item.placemark.coordinate.latitude,
-                                           longitude: item.placemark.coordinate.longitude))
-        }
-        return distanceInMeters
+        let dto = item.toDTO()
+        return logic.distanceInMeters(
+            startLatitude: userLocation.latitude,
+            startLongitude: userLocation.longitude,
+            endLatitude: dto.coordinate.latitude,
+            endLongitude: dto.coordinate.longitude
+        )
     }
 }

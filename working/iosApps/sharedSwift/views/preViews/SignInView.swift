@@ -213,7 +213,7 @@ struct StartButtons: View {
                 
                 Button("Play") {
                     gameModel.kotlin.createGame(online: false, guestData: GuestData(id: "guest-\(UUID().uuidString.prefix(6))", email: guestEmail == "" ? nil : guestEmail, name: guestName, ballColorDT: nil))
-                    viewManager.kotlinVM.navigateToHost()
+                    viewManager.kotlinVM.navigateToHost(isGuest: true)
                 }
                 .disabled(
                     guestName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||

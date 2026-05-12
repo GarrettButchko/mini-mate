@@ -26,13 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
-import com.garrettbutchko.minimate.shared.R
 
 @Composable
 fun StatCard(
@@ -54,7 +52,7 @@ fun StatCard(
     } else {
         MaterialTheme.typography.headlineSmall.copy(
             fontWeight = FontWeight.Bold,
-            brush = Brush.verticalGradient(colors = listOf(colorResource(id = R.color.swiftBlue), colorResource(id = R.color.swiftGreen)))
+            brush = Brush.verticalGradient(colors = listOf(MaterialTheme.colorScheme.primary, Color(0xFF34C759)))
             )
     }
 
@@ -72,7 +70,7 @@ fun StatCard(
                     text = title,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = colorResource(id = R.color.mainOpp),
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)

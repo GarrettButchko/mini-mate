@@ -19,6 +19,7 @@ if (localPropFile.exists()) {
     localProperties.load(FileInputStream(localPropFile))
 }
 val mapboxTokenStr = localProperties.getProperty("MAPBOX_ACCESS_TOKEN", "YOUR_MAPBOX_ACCESS_TOKEN")
+val foursquareKeyStr = localProperties.getProperty("FOURSQUARE_API_KEY", "")
 
 buildkonfig {
     packageName = "com.garrettbutchko.minimate"
@@ -28,6 +29,11 @@ buildkonfig {
             "MAPBOX_ACCESS_TOKEN",
             mapboxTokenStr
         )
+            buildConfigField(
+                com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING,
+                "FOURSQUARE_API_KEY",
+                foursquareKeyStr
+            )
     }
 }
 

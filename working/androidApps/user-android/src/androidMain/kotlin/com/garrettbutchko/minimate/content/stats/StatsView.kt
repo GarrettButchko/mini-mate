@@ -60,7 +60,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -129,7 +128,7 @@ fun StatsView(
                 text = if (pickedSection == "Games") "Game Stats" else "Overview",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.mainOpp)
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -143,7 +142,7 @@ fun StatsView(
                             shape = RoundedCornerShape(25.dp)
                         )
                         .clip(CircleShape)
-                        .background(colorResource(id = R.color.sub))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable { latestFirst = !latestFirst },
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
@@ -151,7 +150,7 @@ fun StatsView(
                     Icon(
                         imageVector = if (latestFirst) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward,
                         contentDescription = "Toggle game sort order",
-                        tint = colorResource(id = R.color.mainOpp)
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -261,8 +260,8 @@ private fun SectionPicker(
                 ),
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary else colorResource(id = R.color.sub),
-                    contentColor = if (isSelected) Color.White else colorResource(id = R.color.mainOpp)
+                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
                 )
             ) {
                 Text(section)
@@ -302,7 +301,7 @@ private fun GamesSection(
                     text = "You’ve reached the free limit. Upgrade to Pro to store more than 2 games.",
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -352,7 +351,7 @@ private fun GamesSection(
                 }
             },
             sheetState = sheetState,
-            containerColor = colorResource(id = R.color.bg),
+            containerColor = MaterialTheme.colorScheme.background,
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 GameReviewView(
@@ -379,7 +378,7 @@ private fun PromoCard(content: @Composable () -> Unit) {
                 elevation = 8.dp,
                 shape = RoundedCornerShape(25.dp)
             )
-            .background(colorResource(id = R.color.sub), RoundedCornerShape(25.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(25.dp))
             .padding(14.dp)
     ) {
         content()
@@ -447,7 +446,7 @@ private fun OverviewSection(
                 )
                 .height(80.dp)
                 .background(
-                    color = colorResource(id = R.color.sub),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(25.dp)
                 )
                 .padding(14.dp))
@@ -460,7 +459,7 @@ private fun OverviewSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(colorResource(id = R.color.subTwo))
+                    .background(MaterialTheme.colorScheme.secondary)
                     .height(150.dp)
             ) {
                 BarChartView(
@@ -506,7 +505,7 @@ private fun OverviewSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(colorResource(id = R.color.subTwo))
+                    .background(MaterialTheme.colorScheme.secondary)
                     .height(150.dp)
             ) {
                 BarChartView(
@@ -539,7 +538,7 @@ private fun GameSummaryCard(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(25.dp)
             )
-            .background(colorResource(id = R.color.sub), RoundedCornerShape(25.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(25.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -554,7 +553,7 @@ private fun GameSummaryCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = colorResource(id = R.color.mainOpp),
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .fillMaxWidth()
                         .basicMarquee(),
@@ -564,7 +563,7 @@ private fun GameSummaryCard(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = colorResource(id = R.color.mainOpp).copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -588,7 +587,7 @@ private fun GameSummaryCard(
                                         .height(60.dp)
                                         .padding(vertical = 8.dp)
                                         .width(1.dp)
-                                        .background(colorResource(id = R.color.mainOpp).copy(alpha = 0.1f))
+                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
                                 )
                             }
 
@@ -603,7 +602,7 @@ private fun GameSummaryCard(
                                 ballColor = player.ballColor,
                                 imageSize = 20.dp,
                                 backgroundColor = if (winner) {
-                                    colorResource(id = R.color.swiftYellow)
+                                    Color(0xFFFFCC00)
                                 } else {
                                    null
                                 }
@@ -625,7 +624,7 @@ private fun GameSummaryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(colorResource(id = R.color.subTwo))
+                .background(MaterialTheme.colorScheme.secondary)
                 .height(130.dp)
         ) {
             BarChartView(
@@ -675,13 +674,13 @@ private fun EmptyState(message: String = "Play a game to get started.") {
             text = "No Games Yet!",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = colorResource(id = R.color.mainOpp)
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
-            color = colorResource(id = R.color.mainOpp).copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
 
     }

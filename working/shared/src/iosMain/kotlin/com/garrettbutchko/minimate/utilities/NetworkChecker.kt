@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.utilities
 
+import co.touchlab.kermit.Logger
+
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Network.nw_path_get_status
 import platform.Network.nw_path_monitor_create
@@ -26,9 +28,9 @@ actual class NetworkChecker private constructor() {
             isConnected = (status == nw_path_status_satisfied)
 
             if (isConnected) {
-                println("✅ Internet is available")
+                Logger.i("✅ Internet is available")
             } else {
-                println("❌ No internet")
+                Logger.i("❌ No internet")
             }
         }
 

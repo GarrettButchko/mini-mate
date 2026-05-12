@@ -30,6 +30,7 @@ import platform.MapKit.*
 import platform.UIKit.UIDevice
 import platform.UIKit.UIScreen
 import platform.darwin.NSObject
+import com.garrettbutchko.minimate.utilities.FoursquareSearchService
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -37,7 +38,7 @@ class LocationHandler : LocationFinding {
     private val locationManager = CLLocationManager()
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val mapboxSearchService = MapboxSearchService()
+    private val placesSearchService = FoursquareSearchService()
 
     private val _mapItems = MutableStateFlow<List<MapItemDTO>>(emptyList())
     override val mapItems: StateFlow<List<MapItemDTO>> = _mapItems.asStateFlow()
@@ -127,7 +128,7 @@ class LocationHandler : LocationFinding {
         }
 
         scope.launch {
-            val dtos = mapboxSearchService.searchMiniGolf(
+            val dtos = placesSearchService.searchMiniGolf(
                 center = CoordinateDTO(userLoc.latitude + upwardOffset, userLoc.longitude)
             )
 
@@ -146,7 +147,7 @@ class LocationHandler : LocationFinding {
         }
 
         scope.launch {
-            val dtos = mapboxSearchService.searchMiniGolf(center = userLoc, limit = 1)
+            val dtos = placesSearchService.searchMiniGolf(center = userLoc, limit = 1)
             completion(dtos.firstOrNull())
         }
     }

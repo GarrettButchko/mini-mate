@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.content.main
 
+import co.touchlab.kermit.Logger
+
 import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -37,20 +39,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.android.billingclient.api.Purchase
+import com.garrettbutchko.minimate.di.KoinHelper
+import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.helper.IAPManager
+import com.garrettbutchko.minimate.interfaces.LocationFinding
+import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
+import com.garrettbutchko.minimate.utilities.LocationHandler
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
+import com.garrettbutchko.minimate.viewModels.GameViewModel
+import com.garrettbutchko.minimate.viewModels.HostViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProView(
+    iapManager: IAPManager,
     showSheet: Boolean,
     onShowSheetChange: (Boolean) -> Unit,
-    authModel: AuthViewModel,
-    iapManager: IAPManager,
     activity: Activity?
 ) {
     val benefits = remember {
@@ -61,6 +70,9 @@ fun ProView(
             "More coming soon..."
         )
     }
+
+    val authModel: AuthViewModel = KoinHelperParent.getAuthViewModel()
+
 
     val products by iapManager.products.collectAsState()
     val isPurchasing by iapManager.isPurchasing.collectAsState()
@@ -81,7 +93,7 @@ fun ProView(
             val upgraded = currentUser.copy(isPro = true)
             authModel.setUserModel(upgraded)
             authModel.userRepository.saveUnified(upgraded.googleId, upgraded)
-            println("✅ Pro purchase persisted for user ${upgraded.googleId}. Purchase token=${purchase?.purchaseToken}")
+            Logger.i("✅ Pro purchase persisted for user ${upgraded.googleId}. Purchase token=${purchase?.purchaseToken}")
             thankYou = true
             onShowSheetChange(false)
         }

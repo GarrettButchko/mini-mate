@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.content
 
+import co.touchlab.kermit.Logger
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +32,9 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -42,7 +48,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -78,7 +83,6 @@ import com.garrettbutchko.minimate.content.stats.StatsView
 import com.garrettbutchko.minimate.generateUUID
 import com.garrettbutchko.minimate.viewModels.GuestData
 import com.garrettbutchko.minimate.helper.IAPManager
-import com.garrettbutchko.minimate.shared.R as SharedR
 
 private data class AppDependencies(
     val viewManager: ViewManager,
@@ -112,6 +116,7 @@ private fun rememberAppDependencies(): AppDependencies {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
     val context = LocalContext.current
@@ -122,9 +127,6 @@ fun App() {
     val currentView by deps.viewManager.currentView.collectAsState()
     var guestGameDate by remember { mutableStateOf<String?>(null) }
     val guestGame = remember { mutableStateOf<Game?>(null) }
-
-    var showHost by remember { mutableStateOf(true) }
-    var showJoin by remember { mutableStateOf(true) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -155,10 +157,11 @@ fun App() {
         }
     }
 
-    MaterialTheme {
+    val colorScheme = if (isSystemInDarkTheme()) MiniMateDarkColorScheme else MiniMateLightColorScheme
+    MaterialTheme(colorScheme = colorScheme) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = colorResource(id = SharedR.color.bg)
+            color = MaterialTheme.colorScheme.background
         ) {
             AnimatedContent(
                 targetState = currentView,
@@ -215,12 +218,12 @@ fun App() {
                         onSignInWithGoogle = {
                             val clientId = defaultWebClientId
                             if (clientId.isBlank()) {
-                                println("Missing default_web_client_id string; Google sign-in not configured.")
+                                Logger.i("Missing default_web_client_id string; Google sign-in not configured.")
                             } else {
                                 deps.authModel.signInWithGoogle(context, clientId) { result ->
                                     deps.authModel.handleSignInResult(
                                         result = result,
-                                        onErrorMessage = { msg, _ -> println("Google sign-in error: ${msg ?: "Unknown error"}") },
+                                        onErrorMessage = { msg, _ -> Logger.i("Google sign-in error: ${msg ?: "Unknown error"}") },
                                         onClearGuestGame = {
                                             appScope.launch {
                                                 deps.localGameRepo.deleteGuestGame()
@@ -239,29 +242,21 @@ fun App() {
                                     name = name
                                 )
                             )
-                            deps.viewManager.navigateToHost()
+                            deps.viewManager.navigateToHost(isGuest = true)
                         },
                         guestGameDate = guestGameDate,
                         guestGame = guestGame.value
                     )
 
-                    ViewType.Host -> HostGameView(
-                        showHost = showHost,
-                        onShowHostChange = { showHost = it },
-                        hostVM = deps.hostVM,
+                    is ViewType.Host -> HostGameView(
                         gameModel = deps.gameModel,
                         locationHandler = deps.locationHandler,
-                        localGameRepo = deps.localGameRepo,
-                        onBack = { deps.viewManager.navigateToWelcome() }
-                    )
-
-                    ViewType.Join -> JoinGameView(
-                        showJoin = showJoin,
-                        onShowJoinChange = { showJoin = it },
-                        joinVM = deps.joinVM,
-                        viewManager = deps.viewManager,
-                        gameModel = deps.gameModel,
-                        onBack = { deps.viewManager.navigateToMain(1) }
+                        onDismiss = {
+                            appScope.launch {
+                                deps.viewManager.navigateToSignIn() // Navigate back to main tab
+                            }
+                        },
+                        isGuest = true
                     )
                 }
             }
@@ -343,7 +338,7 @@ private fun MainTabView(
             gameManager.onAppear()
             localGameRepo.deleteAllUnusedGames()
         } catch (e: Exception) {
-            println("Failed to bootstrap user data on Android: ${e.message}")
+            Logger.i("Failed to bootstrap user data on Android: ${e.message}")
             authModel.setUserModel(currentUserModel)
         } finally {
             initialLoadComplete = true
@@ -362,30 +357,30 @@ private fun MainTabView(
 
     val customNavColors = NavigationBarItemDefaults.colors(
         // This is the highlight "pill" color
-        indicatorColor = colorResource(id = SharedR.color.mainOpp).copy(alpha = 0.2f),
+        indicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
 
         // This manages the icon/text colors automatically based on state
-        selectedIconColor = colorResource(id = SharedR.color.mainOpp),
-        unselectedIconColor = colorResource(id = SharedR.color.mainOpp).copy(alpha = 0.6f),
-        selectedTextColor = colorResource(id = SharedR.color.mainOpp),
-        unselectedTextColor = colorResource(id = SharedR.color.mainOpp).copy(alpha = 0.6f)
+        selectedIconColor = MaterialTheme.colorScheme.onSurface,
+        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Scaffold(
-                containerColor = colorResource(id = SharedR.color.bg),
+                containerColor = MaterialTheme.colorScheme.background,
                 bottomBar = {
-                    NavigationBar(containerColor = colorResource(id = SharedR.color.bg)) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.background) {
                         NavigationBarItem(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                                label = { Text("Stats" ,color = colorResource(id = SharedR.color.mainOpp)) },
+                                label = { Text("Stats" ,color = MaterialTheme.colorScheme.onSurface) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.QueryStats,
                                     contentDescription = "Stats",
-                                    tint = colorResource(id = SharedR.color.mainOpp)
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             },
                             colors = customNavColors // Apply here
@@ -393,12 +388,12 @@ private fun MainTabView(
                         NavigationBarItem(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
-                                label = { Text("Home" ,color = colorResource(id = SharedR.color.mainOpp)) },
+                                label = { Text("Home" ,color = MaterialTheme.colorScheme.onSurface) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.Home,
                                     contentDescription = "Home",
-                                    tint = colorResource(id = SharedR.color.mainOpp)
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                             },
                             colors = customNavColors
@@ -407,12 +402,12 @@ private fun MainTabView(
                             NavigationBarItem(
                                 selected = selectedTab == 2,
                                 onClick = { selectedTab = 2 },
-                                label = { Text("Courses" ,color = colorResource(id = SharedR.color.mainOpp)) },
+                                label = { Text("Courses" ,color = MaterialTheme.colorScheme.onSurface) },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Directions,
                                         contentDescription = "Courses",
-                                            tint = colorResource(id = SharedR.color.mainOpp)
+                                            tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 },
                                 colors = customNavColors

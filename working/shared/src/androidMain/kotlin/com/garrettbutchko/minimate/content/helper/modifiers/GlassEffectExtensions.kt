@@ -17,13 +17,13 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Color.Companion.subVsColor(makeColor: Color?): Color {
-    return makeColor?.copy(alpha = 0.50f) ?: colorResource(id = com.garrettbutchko.minimate.shared.R.color.sub)
+    return makeColor?.copy(alpha = 0.40f) ?: colorResource(id = com.garrettbutchko.minimate.shared.R.color.sub)
 }
 
 @Composable
 fun Color.Companion.subTwoVsColor(makeColor: Color?): Color {
     val subTwo = colorResource(id = com.garrettbutchko.minimate.shared.R.color.subTwo)
-    return makeColor?.copy(alpha = 0.50f)?.mix(with = subTwo, by = 0.7f) ?: subTwo
+    return makeColor?.copy(alpha = 0.40f)?.mix(with = subTwo, by = 0.7f) ?: subTwo
 }
 
 fun Color.mix(with: Color, by: Float): Color {

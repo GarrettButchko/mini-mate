@@ -17,6 +17,7 @@ import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Clock
 import kotlin.time.Instant
+import co.touchlab.kermit.Logger
 
 open class CourseListViewModel(
     private val courseRepo: CourseRepository,
@@ -25,6 +26,8 @@ open class CourseListViewModel(
     private val authModel: AuthViewModel,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
+    private val log = Logger.withTag("CourseListViewModel")
+
     // MARK: - Published Properties
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
@@ -179,9 +182,9 @@ open class CourseListViewModel(
                     if (email != null) {
                         val success = courseRepo.addAdminIDtoCourse(email, courseID)
                         if (success) {
-                            println("✅ Course claimed and email added to adminIDs")
+                            log.i("✅ Course claimed and email added to adminIDs")
                         } else {
-                            println("❌ Failed to add email to course adminIDs")
+                            log.i("❌ Failed to add email to course adminIDs")
                         }
                     }
                     

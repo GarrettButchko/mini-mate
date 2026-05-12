@@ -43,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -54,7 +53,6 @@ import com.garrettbutchko.minimate.content.helper.modifiers.SyncScrollStates
 import com.garrettbutchko.minimate.logic.ScoreCardBusinessLogic
 import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
-import com.garrettbutchko.minimate.shared.R
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
@@ -316,7 +314,7 @@ fun ScoreCardGameView(
     if (showInfoSheet) {
         ModalBottomSheet(
             onDismissRequest = { showInfoSheet = false },
-            containerColor = colorResource(id = R.color.bg)
+            containerColor = MaterialTheme.colorScheme.background
         ) {
             GameInfoViewAndroid(game = game)
         }

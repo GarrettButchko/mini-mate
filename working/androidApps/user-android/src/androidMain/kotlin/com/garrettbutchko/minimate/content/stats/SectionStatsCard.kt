@@ -13,12 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
-import com.garrettbutchko.minimate.shared.R
 
 @Composable
 fun SectionStatsCard(
@@ -50,7 +48,7 @@ fun SectionStatsCard(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = colorResource(id = R.color.mainOpp)
+                color = MaterialTheme.colorScheme.onSurface
             )
             content()
         }

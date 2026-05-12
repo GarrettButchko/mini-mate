@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import co.touchlab.kermit.Logger
 
 /**
  * Equivalent of the iOS IAPManager using Google Play Billing Library.
@@ -28,6 +29,8 @@ class IAPManager(
     private val context: Context,
     private val coroutineScope: CoroutineScope
 ) : PurchasesUpdatedListener {
+
+    private val log = Logger.withTag("IAPManager")
 
     private val _products = MutableStateFlow<List<ProductDetails>>(emptyList())
     val products: StateFlow<List<ProductDetails>> = _products.asStateFlow()
@@ -83,9 +86,9 @@ class IAPManager(
         val result = billingClient.queryProductDetails(params)
         if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
             _products.value = result.productDetailsList ?: emptyList()
-            println("Products retrieved: ${_products.value.map { it.name }}")
+            log.i("Products retrieved: ${_products.value.map { it.name }}")
         } else {
-            println("Failed to fetch products: ${result.billingResult.debugMessage}")
+            log.e("Failed to fetch products: ${result.billingResult.debugMessage}")
         }
     }
 
@@ -93,7 +96,7 @@ class IAPManager(
      * Pass the Activity from Jetpack Compose using `LocalContext.current as Activity`
      */
     fun purchase(activity: Activity, productDetails: ProductDetails) {
-        println("🛒 Purchase started for product: ${productDetails.productId}")
+        log.i("🛒 Purchase started for product: ${productDetails.productId}")
         _isPurchasing.value = true
 
         val productDetailsParamsList = listOf(
@@ -121,17 +124,17 @@ class IAPManager(
                 }
             }
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            println("🛑 Purchase: User cancelled the payment sheet.")
+            log.i("🛑 Purchase: User cancelled the payment sheet.")
             _isPurchasing.value = false
         } else {
-            println("🚨 Purchase: System error: ${billingResult.debugMessage}")
+            log.e("🚨 Purchase: System error: ${billingResult.debugMessage}")
             _isPurchasing.value = false
         }
     }
 
     private suspend fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            println("✅ Google Play: Purchase call successful. Verifying...")
+            log.i("✅ Google Play: Purchase call successful. Verifying...")
 
             // Android requires acknowledging within 3 days or it refunds automatically!
             if (!purchase.isAcknowledged) {
@@ -141,11 +144,11 @@ class IAPManager(
                 
                 val ackResult = billingClient.acknowledgePurchase(acknowledgePurchaseParams)
                 if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    println("🏁 Transaction finished with Google.")
+                    log.i("🏁 Transaction finished with Google.")
                     onPurchaseSuccess(purchase)
                     _isPurchasing.value = false
                 } else {
-                    println("❌ Verification: Failed to acknowledge purchase.")
+                    log.e("❌ Verification: Failed to acknowledge purchase.")
                     _isPurchasing.value = false
                 }
             } else {

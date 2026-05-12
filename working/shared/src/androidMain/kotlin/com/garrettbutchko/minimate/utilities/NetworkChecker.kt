@@ -5,7 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.util.Log
+import co.touchlab.kermit.Logger
 
 actual class NetworkChecker private constructor(context: Context) {
 
@@ -22,12 +22,12 @@ actual class NetworkChecker private constructor(context: Context) {
         connectivityManager.registerNetworkCallback(networkRequest, object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 isConnected = true
-                Log.d("NetworkChecker", "✅ Internet is available")
+                Logger.d("✅ Internet is available")
             }
 
             override fun onLost(network: Network) {
                 isConnected = false
-                Log.d("NetworkChecker", "❌ No internet")
+                Logger.d("❌ No internet")
             }
 
             override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {

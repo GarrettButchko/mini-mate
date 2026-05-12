@@ -15,6 +15,7 @@ import com.garrettbutchko.minimate.dataModels.mapModels.CoordinateDTO
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.modelKotlinExtensions.toDTO
+import com.garrettbutchko.minimate.utilities.FoursquareSearchService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,13 +25,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.invoke
 import kotlin.text.toDouble
+import co.touchlab.kermit.Logger
 
 class LocationHandler(private val context: Context) : LocationFinding {
+
+    private val log = Logger.withTag("LocationHandler")
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var updatesRegistered = false
-    private val mapboxSearchService = MapboxSearchService()
+    private val placesSearchService = FoursquareSearchService()
 
     private val locationListener = LocationListener { location ->
         val coordinate = CoordinateDTO(
@@ -38,7 +42,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
             longitude = location.longitude
         )
         _userLocation.value = coordinate
-        println("[LocationHandler] location update lat=${coordinate.latitude} lng=${coordinate.longitude}")
+        log.i("[LocationHandler] location update lat=${coordinate.latitude} lng=${coordinate.longitude}")
     }
 
     private val _mapItems = MutableStateFlow<List<MapItemDTO>>(emptyList())
@@ -82,7 +86,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
         val hasAccess = fineGranted || coarseGranted
 
         _hasLocationAccess.value = hasAccess
-        println("[LocationHandler] requestLocationAccess hasAccess=$hasAccess")
+        log.i("[LocationHandler] requestLocationAccess hasAccess=$hasAccess")
         if (!hasAccess) {
             return
         }
@@ -97,7 +101,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
 
         if (bestLastKnown != null) {
             _userLocation.value = CoordinateDTO(bestLastKnown.latitude, bestLastKnown.longitude)
-            println("[LocationHandler] lastKnown location lat=${bestLastKnown.latitude} lng=${bestLastKnown.longitude}")
+            log.i("[LocationHandler] lastKnown location lat=${bestLastKnown.latitude} lng=${bestLastKnown.longitude}")
         }
 
         if (!updatesRegistered) {
@@ -206,16 +210,16 @@ class LocationHandler(private val context: Context) : LocationFinding {
         completion: (Boolean, MapRegionData?) -> Unit
     ) {
         val userLoc = _userLocation.value
-        println("[LocationHandler] searchNearbyCourses start userLocation=$userLoc mapItems=${_mapItems.value.size}")
+        log.i("[LocationHandler] searchNearbyCourses start userLocation=$userLoc mapItems=${_mapItems.value.size}")
         if (userLoc == null) {
-            println("[LocationHandler] searchNearbyCourses aborted: user location is null")
+            log.i("[LocationHandler] searchNearbyCourses aborted: user location is null")
             requestLocationAccess()
             completion(false, null)
             return
         }
 
         scope.launch {
-            val dtos = mapboxSearchService.searchMiniGolf(
+            val dtos = placesSearchService.searchMiniGolf(
                 center = CoordinateDTO(userLoc.latitude + upwardOffset, userLoc.longitude)
             )
 
@@ -233,7 +237,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
         }
 
         scope.launch {
-            val dtos = mapboxSearchService.searchMiniGolf(center = userLoc, limit = 1)
+            val dtos = placesSearchService.searchMiniGolf(center = userLoc, limit = 1)
             completion(dtos.firstOrNull())
         }
     }

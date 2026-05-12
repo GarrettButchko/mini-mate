@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.content.courseScreen
 
+import co.touchlab.kermit.Logger
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,7 +43,6 @@ import com.garrettbutchko.minimate.utilities.PasswordGenerator
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.Image
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import com.garrettbutchko.minimate.shared.R
 
@@ -59,6 +60,9 @@ fun CourseSearchResultsView(
     val logic = remember { SearchResultBusinessLogic() }
     var showRetryButton by remember { mutableStateOf(false) }
     val shouldShowLoadingState = isLoading || mapItems.isEmpty()
+    val sortedMapItems = mapItems.sortedBy { mapItem ->
+        courseVM.distanceInMeters(mapItem)?.let(logic::metersToMiles) ?: Double.MAX_VALUE
+    }
 
     LaunchedEffect(shouldShowLoadingState, logic.retryButtonDelay) {
         showRetryButton = false
@@ -69,7 +73,7 @@ fun CourseSearchResultsView(
     }
 
     LaunchedEffect(isLoading, mapItems.size, nameExists.size) {
-        println("[CourseSearchResultsView] loading=$isLoading mapItems=${mapItems.size} nameExists=${nameExists.size}")
+        Logger.i("[CourseSearchResultsView] loading=$isLoading mapItems=${mapItems.size} nameExists=${nameExists.size}")
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -85,7 +89,7 @@ fun CourseSearchResultsView(
                     Text(
                         text = "Trying to find nearby courses...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = colorResource(id = R.color.mainOpp),
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(top = 12.dp)
                     )
                     if (showRetryButton) {
@@ -98,7 +102,7 @@ fun CourseSearchResultsView(
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                             )
                         ) {
-                            Text("Try Again", color = colorResource(id = R.color.mainOpp))
+                            Text("Try Again", color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
             }
@@ -112,9 +116,9 @@ fun CourseSearchResultsView(
                     bottom = 16.dp
                 )
             ) {
-                itemsIndexed(mapItems) { index, item ->
+                itemsIndexed(sortedMapItems) { index, item ->
                     if (index > 0) {
-                        HorizontalDivider(color = colorResource(id = R.color.mainOpp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface)
                     }
                     SearchResultRow(
                         mapItem = item,
@@ -132,7 +136,7 @@ fun CourseSearchResultsView(
                 .align(Alignment.TopCenter)
 
             ,
-            color = colorResource(id = R.color.bg).copy(alpha = 0.96f)
+            color = MaterialTheme.colorScheme.background.copy(alpha = 0.96f)
         ) {
             Row(
                 modifier = Modifier
@@ -145,7 +149,7 @@ fun CourseSearchResultsView(
                     "Nearby Courses",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Button(
@@ -186,12 +190,12 @@ fun SearchResultRow(
                     mapItem.name ?: "Unknown",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = colorResource(id = R.color.mainOpp)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 

@@ -106,7 +106,7 @@ class CourseRepository {
                 mapItem?.let { createCourseWithMapItem(id, it) }
             }
         } catch (e: Exception) {
-            println("❌ Failed to fetch course: ${e.message}")
+            Logger.i("❌ Failed to fetch course: ${e.message}")
             null
         }
     }

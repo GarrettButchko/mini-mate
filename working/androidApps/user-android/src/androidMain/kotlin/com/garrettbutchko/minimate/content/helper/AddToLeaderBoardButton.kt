@@ -1,5 +1,7 @@
 package com.garrettbutchko.minimate.content.helper
 
+import co.touchlab.kermit.Logger
+
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -86,12 +88,12 @@ fun AddToLeaderBoardButton(
                                     val result = courseLeaderBoardRepo.submitScore(courseId, player)
                                     if (result.isSuccess) {
                                         added = true
-                                        println("Score submitted successfully!")
+                                        Logger.i("Score submitted successfully!")
                                     } else {
-                                        println("Submission failed: ${result.exceptionOrNull()?.message}")
+                                        Logger.i("Submission failed: ${result.exceptionOrNull()?.message}")
                                     }
                                 } catch (e: Exception) {
-                                    println("Network or System Error: ${e.localizedMessage}")
+                                    Logger.i("Network or System Error: ${e.localizedMessage}")
                                 } finally {
                                     isSubmitting = false
                                 }

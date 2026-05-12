@@ -21,6 +21,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlin.collections.iterator
 import kotlin.math.abs
 import kotlin.math.max
+import co.touchlab.kermit.Logger
 
 // MARK: - Enums & Models
 enum class AnalyticsSection(val rawValue: String) {
@@ -132,6 +133,7 @@ open class AnalyticsViewModel(
     val analyticsRepo: AnalyticsRepository = AnalyticsRepository(),
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
+    private val log = Logger.withTag("AnalyticsViewModel")
 
     private val _range = MutableStateFlow<AnalyticsRange>(AnalyticsRange.Last30)
     val range: StateFlow<AnalyticsRange> = _range.asStateFlow()
@@ -242,7 +244,7 @@ open class AnalyticsViewModel(
     fun loadHealthData(course: Course? = null) {
         _currentCourse.value = course
         if (course == null) {
-            println("No course to load health data for")
+            log.i("No course to load health data for")
             _healthReport.value = null
             return
         }

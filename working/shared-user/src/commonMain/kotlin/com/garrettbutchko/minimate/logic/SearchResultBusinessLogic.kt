@@ -1,5 +1,10 @@
 package com.garrettbutchko.minimate.logic
 
+import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.math.round
 
 /**
@@ -18,12 +23,25 @@ class SearchResultBusinessLogic {
     // MARK: - Location Calculations
     
     /**
-     * Calculates an adjusted latitude for centering/distance calculations.
+     * Calculates the distance between two coordinates in meters using the same haversine formula on every platform.
      */
-    fun getOffsetLatitude(baseLatitude: Double): Double {
-        return baseLatitude - 0.015
+    fun distanceInMeters(
+        startLatitude: Double,
+        startLongitude: Double,
+        endLatitude: Double,
+        endLongitude: Double
+    ): Double {
+        val earthRadiusMeters = 6_371_000.0
+        val deltaLat = (endLatitude - startLatitude) * PI / 180.0
+        val deltaLng = (endLongitude - startLongitude) * PI / 180.0
+        val a = sin(deltaLat / 2) * sin(deltaLat / 2) +
+            cos(startLatitude * PI / 180.0) *
+            cos(endLatitude * PI / 180.0) *
+            sin(deltaLng / 2) * sin(deltaLng / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return earthRadiusMeters * c
     }
-    
+
     /**
      * Converts distance in meters to miles.
      */

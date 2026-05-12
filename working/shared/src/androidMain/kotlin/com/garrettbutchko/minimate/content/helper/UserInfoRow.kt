@@ -19,7 +19,8 @@ fun UserInfoRow(
     label: String,
     value: String,
     mainOppColor: Color,
-    subOppColor: Color
+    subOppColor: Color? = null,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
@@ -36,10 +37,11 @@ fun UserInfoRow(
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            color = subOppColor,
+            color = subOppColor ?: mainOppColor,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(start = 8.dp).basicMarquee(),
             maxLines = 1
         )
+        trailingIcon?.invoke()
     }
 }

@@ -2,7 +2,6 @@ package com.garrettbutchko.minimate.dataModels.userModels
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.garrettbutchko.minimate.datamodels.UserDTO
 import dev.gitlive.firebase.firestore.Timestamp
 
 @Entity

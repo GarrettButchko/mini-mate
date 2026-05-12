@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.helper.QRScannerView
 import com.garrettbutchko.minimate.logic.JoinViewBusinessLogic
 import com.garrettbutchko.minimate.managers.ViewManager
@@ -60,7 +61,7 @@ import com.garrettbutchko.minimate.viewModels.JoinViewModel
 fun JoinGameView(
     showJoin: Boolean,
     onShowJoinChange: (Boolean) -> Unit,
-    joinVM: JoinViewModel,
+    joinVM: JoinViewModel = JoinViewModel(),
     viewManager: ViewManager,
     gameModel: GameViewModel,
     onBack: () -> Unit = {}
@@ -74,6 +75,7 @@ fun JoinGameView(
     val showExitAlert by joinVM.showExitAlert.collectAsState()
 
     var showScanner by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(showJoin) {
         joinVM.joinDidDismiss(showJoin)
@@ -112,13 +114,17 @@ fun JoinGameView(
                     gameCode = gameCode,
                     message = message,
                     logic = logic,
+                    mainOppColor = MaterialTheme.colorScheme.onSurface,
+                    subColor = MaterialTheme.colorScheme.surfaceVariant,
                     onCodeChange = { joinVM.setGameCode(logic.formatEnteredCode(it)) },
                     onScanClick = { showScanner = true }
                 )
             } else {
                 ActiveLobby(
                     gameModel = gameModel,
-                    logic = logic
+                    logic = logic,
+                    mainOppColor = MaterialTheme.colorScheme.onSurface,
+                    subColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }
         }
@@ -130,28 +136,22 @@ fun JoinGameView(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.background.copy(alpha = 0f)
                         )
                     )
                 )
                 .padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 24.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {
-                    onShowJoinChange(false)
-                    onBack()
-                }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = "Join Game",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.size(48.dp))
             }
         }
 
@@ -162,8 +162,8 @@ fun JoinGameView(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                            MaterialTheme.colorScheme.surface
+                            MaterialTheme.colorScheme.background.copy(alpha = 0f),
+                            MaterialTheme.colorScheme.background
                         )
                     )
                 )
@@ -176,9 +176,12 @@ fun JoinGameView(
                         .fillMaxWidth()
                         .height(54.dp),
                     shape = RoundedCornerShape(27.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text("Exit Game", color = Color.White)
+                    Text("Exit Game", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 }
             } else {
                 val disabled = logic.isJoinButtonDisabled(gameCode)
@@ -188,11 +191,15 @@ fun JoinGameView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape = RoundedCornerShape(27.dp)
+                    shape = RoundedCornerShape(27.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Icon(Icons.Default.SportsGolf, contentDescription = null)
+                    Icon(Icons.Default.SportsGolf, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Join Game")
+                    Text("Join Game", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -201,7 +208,8 @@ fun JoinGameView(
     if (showExitAlert) {
         AlertDialog(
             onDismissRequest = { joinVM.setShowExitAlert(false) },
-            title = { Text("Exit Game?") },
+            title = { Text("Exit Game?", color = MaterialTheme.colorScheme.onSurface) },
+            text = { Text("Are you sure?", color = MaterialTheme.colorScheme.onSurface) },
             confirmButton = {
                 TextButton(onClick = {
                     joinVM.leaveGame()
@@ -212,9 +220,10 @@ fun JoinGameView(
             },
             dismissButton = {
                 TextButton(onClick = { joinVM.setShowExitAlert(false) }) {
-                    Text("Cancel")
+                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
                 }
-            }
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     }
 
@@ -246,13 +255,15 @@ private fun JoinCard(
     gameCode: String,
     message: String,
     logic: JoinViewBusinessLogic,
+    mainOppColor: Color,
+    subColor: Color,
     onCodeChange: (String) -> Unit,
     onScanClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+            colors = CardDefaults.cardColors(containerColor = subColor)
         ) {
             Column(
                 modifier = Modifier
@@ -261,7 +272,12 @@ private fun JoinCard(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Enter Game Code", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    "Enter Game Code",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = mainOppColor
+                )
                 Text(
                     "Ask the host for the 6-digit code",
                     style = MaterialTheme.typography.bodyMedium,
@@ -272,13 +288,19 @@ private fun JoinCard(
                     value = gameCode,
                     onValueChange = onCodeChange,
                     singleLine = true,
-                    label = { Text("000000") },
+                    label = { Text("GameCode ie: 123456") },
                     modifier = Modifier.width(220.dp)
                 )
 
-                Text("OR", style = MaterialTheme.typography.labelSmall)
+                Text("OR", style = MaterialTheme.typography.labelSmall, color = mainOppColor)
 
-                Button(onClick = onScanClick) {
+                Button(
+                    onClick = onScanClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
+                ) {
                     Icon(Icons.Default.QrCodeScanner, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Scan QR Code")
@@ -293,7 +315,7 @@ private fun JoinCard(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp))
+                    .background(subColor, RoundedCornerShape(12.dp))
                     .padding(12.dp)
             )
         }
@@ -311,12 +333,17 @@ private fun JoinCard(
 @Composable
 private fun ActiveLobby(
     gameModel: GameViewModel,
-    logic: JoinViewBusinessLogic
+    logic: JoinViewBusinessLogic,
+    mainOppColor: Color,
+    subColor: Color
 ) {
     val game by gameModel.game.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = subColor)
+        ) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -324,7 +351,8 @@ private fun ActiveLobby(
                 Text(
                     text = logic.getPlayersHeaderText(game.players.size),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = mainOppColor
                 )
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -341,30 +369,41 @@ private fun ActiveLobby(
                         modifier = Modifier.padding(horizontal = 12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.5.dp)
-                        Text("Waiting...", style = MaterialTheme.typography.labelSmall)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(28.dp),
+                            strokeWidth = 2.5.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            "Waiting...",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = mainOppColor
+                        )
                     }
                 }
             }
         }
 
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = subColor)
+        ) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                InfoLine("Code", game.id)
-                InfoLine("Holes", game.numberOfHoles.toString())
-                InfoLine("Location", logic.getLocationName(game.locationName))
+                InfoLine("Code", game.id, mainOppColor)
+                InfoLine("Holes", game.numberOfHoles.toString(), mainOppColor)
+                InfoLine("Location", logic.getLocationName(game.locationName), mainOppColor)
             }
         }
     }
 }
 
 @Composable
-private fun InfoLine(title: String, value: String) {
+private fun InfoLine(title: String, value: String, mainOppColor: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(title)
+        Text(title, color = mainOppColor)
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = value,
@@ -374,5 +413,3 @@ private fun InfoLine(title: String, value: String) {
         )
     }
 }
-
-
