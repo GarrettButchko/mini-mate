@@ -1,6 +1,8 @@
 package com.garrettbutchko.minimate.content.game
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,14 +14,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -68,20 +76,33 @@ fun RecapGameView(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f))
-            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Text("Review of Game", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Congratulations!", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.weight(1f))
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    "Review of Game",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.alpha(0.5f)
+                )
+                Text(
+                    "Congratulations!",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
             if (sortedPlayers.size > 1) {
                 PlayerStandingCard(
@@ -90,8 +111,11 @@ fun RecapGameView(
                     course = course,
                     onlyPlayer = false
                 )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     PlayerStandingCard(
                         player = sortedPlayers[1],
                         place = PlayerStanding.SECOND,
@@ -109,22 +133,16 @@ fun RecapGameView(
                         )
                     }
                 }
-
                 if (sortedPlayers.size > 3) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(220.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(sortedPlayers.size - 3) { index ->
-                            val player = sortedPlayers[index + 3]
-                            PlayerStandingCard(
-                                player = player,
-                                place = null,
-                                course = course,
-                                onlyPlayer = false
-                            )
+                        items(sortedPlayers.drop(3)) { player ->
+                            PlayerStandingCard(player = player, place = null, course = course, onlyPlayer = false)
                         }
                     }
                 } else {
@@ -142,14 +160,30 @@ fun RecapGameView(
                 Spacer(modifier = Modifier.weight(1f))
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+            Spacer(modifier = Modifier.weight(1f))
+
+            OutlinedButton(
+                onClick = { gameReview = game },
+                shape = RoundedCornerShape(50.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
-                Button(onClick = { gameReview = game }) {
-                    Text("Review Game")
-                }
+                Icon(
+                    Icons.Default.BarChart,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Review Game",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = onContinue,
@@ -196,7 +230,11 @@ fun RecapGameView(
     }
 
     gameReview?.let { review ->
-        ModalBottomSheet(onDismissRequest = { gameReview = null }) {
+        ModalBottomSheet(
+            onDismissRequest = { gameReview = null },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = null
+        ) {
             GameReviewView(game = review)
         }
     }
@@ -213,42 +251,46 @@ private fun PlayerStandingCard(
     val logic = remember { RecapViewBusinessLogic() }
 
     val medalColor = when (place) {
-        PlayerStanding.FIRST -> Color(0xFFFFD54F).copy(alpha = 0.45f)
-        PlayerStanding.SECOND -> Color.LightGray.copy(alpha = 0.45f)
-        PlayerStanding.THIRD -> Color(0xFFD7A86E).copy(alpha = 0.45f)
-        null -> MaterialTheme.colorScheme.surfaceVariant
+        PlayerStanding.FIRST -> Color(0xFFFFD54F)
+        PlayerStanding.SECOND -> Color.Gray
+        PlayerStanding.THIRD -> Color(0xFFD7A86E)
+        null -> Color.Transparent
     }
 
-    val iconBackground = if (place != null && !onlyPlayer) medalColor else null
+    val cardModifier = when {
+        place != null && !onlyPlayer ->
+            Modifier.background(medalColor.copy(alpha = 0.2f), RoundedCornerShape(25.dp))
+        place != null && onlyPlayer ->
+            Modifier
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(25.dp))
+                .border(1.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(25.dp))
+        else ->
+            Modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(25.dp))
+    }
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (place != null && !onlyPlayer) medalColor.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(22.dp)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(cardModifier)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                PhotoIconView(
-                    photoURL = player.photoURL,
-                    name = logic.formatPlayerName(player.name, place, onlyPlayer),
-                    ballColor = player.ballColor,
-                    imageSize = logic.getImageSize(place).dp,
-                    backgroundColor = iconBackground,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = player.totalStrokes.toString(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            AddToLeaderBoardButton(course = course, player = player)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PhotoIconView(
+                photoURL = player.photoURL,
+                name = logic.formatPlayerName(player.name, place, onlyPlayer),
+                ballColor = player.ballColor,
+                imageSize = logic.getImageSize(place).dp,
+                backgroundColor = if (place != null && !onlyPlayer) medalColor.copy(alpha = 0.45f) else null,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = player.totalStrokes.toString(),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
         }
+        AddToLeaderBoardButton(course = course, player = player)
     }
 }
-

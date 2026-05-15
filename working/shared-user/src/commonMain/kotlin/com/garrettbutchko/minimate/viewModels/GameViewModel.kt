@@ -210,6 +210,16 @@ class GameViewModel(
         listenerJob?.cancel()
         listenerJob = coroutineScope.launch {
 
+            // Detect game node deletion (host dismissed the game before join player saw dismissed=true)
+            launch {
+                ref.valueEvents.collect { snapshot ->
+                    if (!snapshot.exists && _game.value.id.isNotEmpty() && !_game.value.dismissed) {
+                        Logger.i("GameViewModel: Game node deleted remotely — treating as dismissed")
+                        _game.update { it.copy(dismissed = true) }
+                    }
+                }
+            }
+
             // 1. Listen for Metadata Changes
             launch {
                 ref.childEvents().collect { event ->

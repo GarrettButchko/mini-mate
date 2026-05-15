@@ -4,19 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SportsGolf
 import androidx.compose.material3.AlertDialog
@@ -24,10 +26,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -47,25 +48,26 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.garrettbutchko.minimate.di.KoinHelper
+import com.garrettbutchko.minimate.content.helper.UserInfoRow
+import com.garrettbutchko.minimate.content.helper.WaitingIndicatorView
 import com.garrettbutchko.minimate.helper.QRScannerView
 import com.garrettbutchko.minimate.logic.JoinViewBusinessLogic
 import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.viewModels.GameViewModel
-import com.garrettbutchko.minimate.viewModels.JoinViewModel
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun JoinGameView(
     showJoin: Boolean,
     onShowJoinChange: (Boolean) -> Unit,
-    joinVM: JoinViewModel = JoinViewModel(),
     viewManager: ViewManager,
     gameModel: GameViewModel,
     onBack: () -> Unit = {}
 ) {
+    val joinVM = remember { KoinHelper.getJoinViewModel() }
     val logic = remember { JoinViewBusinessLogic() }
 
     val game by gameModel.game.collectAsState()
@@ -103,29 +105,40 @@ fun JoinGameView(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 92.dp, bottom = 92.dp, start = 16.dp, end = 16.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            if (!inGame) {
-                JoinCard(
-                    gameCode = gameCode,
-                    message = message,
-                    logic = logic,
-                    mainOppColor = MaterialTheme.colorScheme.onSurface,
-                    subColor = MaterialTheme.colorScheme.surfaceVariant,
-                    onCodeChange = { joinVM.setGameCode(logic.formatEnteredCode(it)) },
-                    onScanClick = { showScanner = true }
-                )
-            } else {
-                ActiveLobby(
-                    gameModel = gameModel,
-                    logic = logic,
-                    mainOppColor = MaterialTheme.colorScheme.onSurface,
-                    subColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val minContentHeight = maxHeight - 92.dp - 92.dp
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 92.dp, bottom = 92.dp, start = 16.dp, end = 16.dp),
+            ) {
+                if (!inGame) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = minContentHeight),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        JoinCard(
+                            gameCode = gameCode,
+                            message = message,
+                            logic = logic,
+                            mainOppColor = MaterialTheme.colorScheme.onSurface,
+                            subColor = MaterialTheme.colorScheme.surfaceVariant,
+                            onCodeChange = { joinVM.setGameCode(logic.formatEnteredCode(it)) },
+                            onScanClick = { showScanner = true }
+                        )
+                    }
+                } else {
+                    ActiveLobby(
+                        gameModel = gameModel,
+                        logic = logic,
+                        mainOppColor = MaterialTheme.colorScheme.onSurface,
+                        subColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
             }
         }
 
@@ -288,7 +301,7 @@ private fun JoinCard(
                     value = gameCode,
                     onValueChange = onCodeChange,
                     singleLine = true,
-                    label = { Text("GameCode ie: 123456") },
+                    label = { Text("GameCode") },
                     modifier = Modifier.width(220.dp)
                 )
 
@@ -313,9 +326,10 @@ private fun JoinCard(
                 text = message,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(subColor, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                     .padding(12.dp)
             )
         }
@@ -365,21 +379,10 @@ private fun ActiveLobby(
                             onTap = null
                         )
                     }
-                    Column(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(28.dp),
-                            strokeWidth = 2.5.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            "Waiting...",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = mainOppColor
-                        )
-                    }
+                    WaitingIndicatorView(
+                        label = "Waiting...",
+                        color = mainOppColor
+                    )
                 }
             }
         }
@@ -392,24 +395,12 @@ private fun ActiveLobby(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                InfoLine("Code", game.id, mainOppColor)
-                InfoLine("Holes", game.numberOfHoles.toString(), mainOppColor)
-                InfoLine("Location", logic.getLocationName(game.locationName), mainOppColor)
+                UserInfoRow("Code", game.id, mainOppColor)
+                HorizontalDivider()
+                UserInfoRow("Holes", game.numberOfHoles.toString(), mainOppColor)
+                HorizontalDivider()
+                UserInfoRow("Location", logic.getLocationName(game.locationName), mainOppColor)
             }
         }
-    }
-}
-
-@Composable
-private fun InfoLine(title: String, value: String, mainOppColor: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(title, color = mainOppColor)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = value,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }

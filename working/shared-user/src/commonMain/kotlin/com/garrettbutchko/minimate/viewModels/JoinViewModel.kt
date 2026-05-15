@@ -110,11 +110,12 @@ class JoinViewModel(
      * Called when the game's "dismissed" status changes.
      */
     fun gameDidDismiss(dismissed: Boolean) {
-        val shouldReset = shouldResetOnGameDismiss(dismissed)
+        val shouldReset = dismissed
         Logger.i("JoinViewModel: gameDidDismiss reaction - dismissed: $dismissed, shouldReset: $shouldReset")
         
         if (shouldReset) {
             Logger.i("JoinViewModel: Resetting game state")
+            _message.value = "The host ended the game."
             _gameCode.value = ""
             _inGame.value = false
         }

@@ -40,7 +40,8 @@
 
         <activity
             android:exported="true"
-            android:name="com.garrettbutchko.minimate.MainActivity">
+            android:name="com.garrettbutchko.minimate.MainActivity"
+            android:configChanges="uiMode|keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

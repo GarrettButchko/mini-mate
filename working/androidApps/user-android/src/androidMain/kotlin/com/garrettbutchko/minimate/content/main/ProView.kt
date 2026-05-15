@@ -1,7 +1,6 @@
 package com.garrettbutchko.minimate.content.main
 
 import co.touchlab.kermit.Logger
-
 import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -10,22 +9,27 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,22 +41,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.android.billingclient.api.Purchase
-import com.garrettbutchko.minimate.di.KoinHelper
 import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.helper.IAPManager
-import com.garrettbutchko.minimate.interfaces.LocationFinding
-import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
-import com.garrettbutchko.minimate.utilities.LocationHandler
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
-import com.garrettbutchko.minimate.viewModels.GameViewModel
-import com.garrettbutchko.minimate.viewModels.HostViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -72,11 +69,8 @@ fun ProView(
     }
 
     val authModel: AuthViewModel = KoinHelperParent.getAuthViewModel()
-
-
     val products by iapManager.products.collectAsState()
     val isPurchasing by iapManager.isPurchasing.collectAsState()
-
     val scope = rememberCoroutineScope()
     var thankYou by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -88,12 +82,11 @@ fun ProView(
             onShowSheetChange(false)
             return
         }
-
         scope.launch {
             val upgraded = currentUser.copy(isPro = true)
             authModel.setUserModel(upgraded)
             authModel.userRepository.saveUnified(upgraded.googleId, upgraded)
-            Logger.i("✅ Pro purchase persisted for user ${upgraded.googleId}. Purchase token=${purchase?.purchaseToken}")
+            Logger.i("✅ Pro purchase persisted for ${upgraded.googleId}. token=${purchase?.purchaseToken}")
             thankYou = true
             onShowSheetChange(false)
         }
@@ -104,13 +97,12 @@ fun ProView(
             errorMessage = null
             persistUserProUpgrade(purchase)
         }
-
         iapManager.onProStatusChecked = { hasPro ->
             if (hasPro) {
                 errorMessage = null
                 persistUserProUpgrade(null)
             } else {
-                errorMessage = "No previous Pro purchase found for this account."
+                errorMessage = "No previous Pro purchase found."
             }
         }
     }
@@ -118,63 +110,73 @@ fun ProView(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .fillMaxHeight()
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+                .padding(vertical = 12.dp)
                 .size(width = 38.dp, height = 6.dp)
                 .clip(CircleShape)
-                .background(Color.Gray.copy(alpha = 0.6f))
+                .background(Color.Gray.copy(alpha = 0.4f))
         )
+
+        Spacer(modifier = Modifier.weight(1f))
 
         Text(
             text = "Buy Pro Now!",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold
         )
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         Text(
-            text = "Your support helps build awesome new features. Thank you!",
+            text = "Your support helps to build awesome new features. Thank you! 🙏",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
 
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        Spacer(modifier = Modifier.weight(1f))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    RoundedCornerShape(25.dp)
+                )
+                .padding(vertical = 8.dp, horizontal = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                benefits.forEach { benefit ->
-                    BenefitLine(icon = Icons.Default.CheckCircle, text = benefit)
-                }
+            benefits.forEach { benefit ->
+                BenefitLine(text = benefit)
             }
         }
 
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            androidx.compose.material3.Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = "Pro",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp)
-            )
-        }
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Icon(
+            painter = painterResource(com.garrettbutchko.minimate.shared.R.drawable.logo),
+            contentDescription = null,
+            tint = colorResource(com.garrettbutchko.minimate.shared.R.color.mainOpp),
+            modifier = Modifier.size(40.dp)
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
 
         AnimatedVisibility(visible = thankYou, enter = fadeIn(), exit = fadeOut()) {
             Text(
-                text = "Thank you for your purchase!",
+                text = "🎉 Thank you for your purchase!",
                 color = Color(0xFF2E7D32),
+                style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             )
         }
 
@@ -184,7 +186,9 @@ fun ProView(
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             )
         }
 
@@ -192,8 +196,8 @@ fun ProView(
             onClick = {
                 val product = products.firstOrNull()
                 when {
-                    activity == null -> errorMessage = "Unable to open purchase flow from this screen."
-                    product == null -> errorMessage = "No products available for purchase yet."
+                    activity == null -> errorMessage = "Unable to open purchase flow."
+                    product == null -> errorMessage = "No products available yet."
                     else -> {
                         errorMessage = null
                         iapManager.purchase(activity, product)
@@ -202,47 +206,66 @@ fun ProView(
             },
             enabled = !isPurchasing,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFBC02D)),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp)
+                .shadow(6.dp, RoundedCornerShape(27.dp), spotColor = Color(0xFFFBC02D).copy(alpha = 0.6f)),
+            shape = RoundedCornerShape(27.dp)
         ) {
             if (isPurchasing) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.White)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.White
+                )
             } else {
-                Text("Upgrade Now", color = Color.White)
+                Text(
+                    "Upgrade Now",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         }
 
-        Button(
+        TextButton(
             onClick = {
                 scope.launch {
                     errorMessage = null
                     iapManager.checkIsPurchasedPro()
                 }
             },
-            enabled = !isPurchasing,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            enabled = !isPurchasing
         ) {
-            Text("Restore Purchases")
+            Text(
+                "Restore Purchases",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
-        Spacer(modifier = Modifier.height(if (showSheet) 8.dp else 0.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun BenefitLine(icon: ImageVector, text: String) {
-    androidx.compose.foundation.layout.Row(
-        modifier = Modifier.fillMaxWidth(),
+private fun BenefitLine(text: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        androidx.compose.material3.Icon(
-            imageVector = icon,
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
             contentDescription = null,
-            tint = Color(0xFFFBC02D)
+            tint = Color(0xFFFBC02D),
+            modifier = Modifier.size(20.dp)
         )
-        Text(text = text, style = MaterialTheme.typography.titleSmall)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
-
-

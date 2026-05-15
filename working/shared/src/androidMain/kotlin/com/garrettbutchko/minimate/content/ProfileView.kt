@@ -247,10 +247,6 @@ fun ProfileView(
                                 .padding(top = 8.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = (if (isBotMessageError) dangerColor else successColor).copy(alpha = 0.1f)
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                (if (isBotMessageError) dangerColor else successColor).copy(alpha = 0.5f)
                             )
                         ) {
                             Text(

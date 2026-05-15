@@ -255,7 +255,8 @@ fun MainContentView(
                 if (logic.shouldShowProStopper(user?.isPro, user?.gameIDs?.size ?: 0)) {
                     item {
                         NoticeCard(
-                            message = "You have reached the free limit. Upgrade to Pro to store more than 2 games."
+                            message = "You have reached the free limit. Upgrade to Pro to store more than 2 games.",
+                            makeColor = course?.scoreCardColor
                         )
                     }
                 }
@@ -399,16 +400,39 @@ fun MainContentView(
                         .align(Alignment.BottomEnd)
                         .padding(16.dp)
                 ) {
-                    Button(onClick = {
-                        if (!showPromoStage) {
-                            showPromoStage = true
-                        } else {
-                            showProSheetState.value = true
-                        }
-                    }) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AnimatedVisibility(visible = showPromoStage, enter = fadeIn(), exit = fadeOut()) {
-                                Text("Tap to buy Pro!", color = Color.White)
+                    Box(
+                        modifier = Modifier
+                            .height(50.dp)
+                            .shadow(10.dp, RoundedCornerShape(25.dp))
+                            .background(
+                                Color(0xFF7B1FA2).copy(alpha = 0.78f),
+                                RoundedCornerShape(25.dp)
+                            )
+                            .clip(RoundedCornerShape(25.dp))
+                            .clickable {
+                                if (!showPromoStage) {
+                                    showPromoStage = true
+                                } else {
+                                    showProSheetState.value = true
+                                }
+                            }
+                            .padding(horizontal = 18.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            AnimatedVisibility(
+                                visible = showPromoStage,
+                                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+                            ) {
+                                Text(
+                                    "Tap to buy Pro!",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                             Text("✨")
                         }
@@ -499,7 +523,7 @@ fun MainContentView(
                 },
                 onDeleteAccountGoogle = {
                     scope.launch {
-                        authModel.reauthenticateWithGoogle(context, defaultWebClientId) { res ->
+                        authModel.reauthenticateWithGoogle(context, defaultWebClientId, loginHint = user?.email) { res ->
                             res.fold(
                                 onSuccess = { credential ->
                                     scope.launch {
@@ -561,7 +585,12 @@ fun MainContentView(
     }
 
     if (showProSheetState.value) {
-        ModalBottomSheet(onDismissRequest = { showProSheetState.value = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showProSheetState.value = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = null,
+            containerColor = MaterialTheme.colorScheme.background
+        ) {
             ProView(
                 iapManager = iapManager,
                 showSheet = showProSheetState.value,
@@ -1125,15 +1154,18 @@ private fun LastGameCard(
 }
 
 @Composable
-private fun NoticeCard(message: String) {
-    Card {
-        Text(
-            text = message,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            style = MaterialTheme.typography.bodyMedium
-        )
+private fun NoticeCard(message: String, makeColor: Color?) {
+    val cardModifier = if (makeColor != null) {
+        Modifier.fillMaxWidth()
+    } else {
+        Modifier.fillMaxWidth().shadow(8.dp, RoundedCornerShape(25.dp))
+    }
+    Column(
+        modifier = cardModifier
+            .background(Color.subVsColor(makeColor = makeColor), RoundedCornerShape(25.dp))
+            .padding(14.dp)
+    ) {
+        Text(text = message, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

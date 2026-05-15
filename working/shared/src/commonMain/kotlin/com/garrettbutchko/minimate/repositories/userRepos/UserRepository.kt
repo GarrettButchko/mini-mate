@@ -100,8 +100,21 @@ class UserRepository(
                 createUser(id, firebaseUser, name, signInMethod, appleId, guestGame)
             }
         }
-        onUpdate(result)
-        return result
+
+        // Sync photo URL from Firebase credential if the stored model is missing one
+        val incomingPhoto = firebaseUser?.photoURL
+        val finalResult = if (incomingPhoto != null && result.photoURL.isNullOrBlank()) {
+            log.d { "📸 Syncing missing photo URL from Firebase credential" }
+            val updated = result.copy(photoURL = incomingPhoto, lastUpdated = Timestamp.now())
+            localRepo.save(updated, false)
+            remoteRepo.save(updated, false)
+            updated
+        } else {
+            result
+        }
+
+        onUpdate(finalResult)
+        return finalResult
     }
 
     private suspend fun createUser(

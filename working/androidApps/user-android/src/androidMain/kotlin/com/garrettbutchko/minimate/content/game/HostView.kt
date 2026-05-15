@@ -37,7 +37,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,7 +57,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -73,6 +71,7 @@ import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.logic.HostViewBusinessLogic
 import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
+import com.garrettbutchko.minimate.content.helper.WaitingIndicatorView
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 import com.garrettbutchko.minimate.viewModels.HostViewModel
@@ -81,7 +80,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HostGameView(
-    hostVM: HostViewModel = KoinHelper.getHostViewModel(),
     gameModel: GameViewModel,
     locationHandler: LocationFinding,
     onDismiss: () -> Unit,
@@ -89,6 +87,8 @@ fun HostGameView(
 ) {
     val localGameRepo: LocalGameRepository = KoinHelperParent.getLocalGameRepo()
 
+
+    val hostVM = remember { KoinHelper.getHostViewModel() }
     val logic = remember { HostViewBusinessLogic() }
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()
@@ -102,8 +102,6 @@ fun HostGameView(
     val showDeleteAlert by hostVM.showDeleteAlert.collectAsState()
     val playerToDelete by hostVM.playerToDelete.collectAsState()
     val qrCodeBytes by hostVM.qrCodeImage.collectAsState()
-    hostVM.timeRemaining.collectAsState() // keep timer-driven recomposition active
-
     val scope = rememberCoroutineScope()
     val verticalScrollState = rememberScrollState()
 
@@ -140,9 +138,9 @@ fun HostGameView(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(verticalScrollState)
                 .padding(top = 100.dp, bottom = 80.dp)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(verticalScrollState),
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             PlayersSection(
@@ -386,33 +384,9 @@ private fun PlayersSection(
                 }
 
                 if (onlineGame) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(30.dp),
-                                strokeWidth = 2.5.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(1.dp))
-                        Text(
-                            text = "Searching...",
-                            style = LocalTextStyle.current.copy(
-                                fontSize = with(LocalDensity.current) { 9.dp.toSp() },
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    WaitingIndicatorView(
+                        label = "Searching..."
+                    )
                 }
             }
         }
@@ -433,6 +407,9 @@ private fun GameInfoSection(
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()
     val onlineGame by gameModel.onlineGame.collectAsState()
+    val timeRemaining by hostVM.timeRemaining.collectAsState()
+    val timerSeconds = timeRemaining.toInt()
+    val timerString = "${timerSeconds / 60}:${(timerSeconds % 60).let { if (it < 10) "0$it" else "$it" }}"
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -489,7 +466,7 @@ private fun GameInfoSection(
 
                 UserInfoRow(
                     label = "Expires in",
-                    value = hostVM.timeString(),
+                    value = timerString,
                     mainOppColor = mainOppColor,
                     subOppColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     trailingIcon = {

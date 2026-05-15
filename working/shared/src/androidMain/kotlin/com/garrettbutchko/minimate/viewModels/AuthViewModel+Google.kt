@@ -36,7 +36,7 @@ private fun parseGoogleIdTokenCredential(credential: Credential): GoogleIdTokenC
 fun AuthViewModel.signInWithGoogle(
     context: Context,
     serverClientId: String,
-    completion: (Result<FirebaseUser?>) -> Unit
+    completion: (Result<FirebaseUser?>, String?) -> Unit
 ) {
     val credentialManager = CredentialManager.create(context.applicationContext)
     val googleIdOption = GetGoogleIdOption.Builder()
@@ -53,12 +53,15 @@ fun AuthViewModel.signInWithGoogle(
         try {
             val result = credentialManager.getCredential(context, request)
             val googleCredential = parseGoogleIdTokenCredential(result.credential)
+            val photoUrl = googleCredential.profilePictureUri?.toString()
             // Credential Manager Google ID flow returns an ID token; access token is null here.
-            signInWithGoogleTokens(googleCredential.idToken, null, completion)
+            signInWithGoogleTokens(googleCredential.idToken, null) { firebaseResult ->
+                completion(firebaseResult, photoUrl)
+            }
         } catch (e: GetCredentialException) {
-            completion(Result.failure(e))
+            completion(Result.failure(e), null)
         } catch (e: Exception) {
-            completion(Result.failure(e))
+            completion(Result.failure(e), null)
         }
     }
 }
@@ -76,11 +79,12 @@ fun AuthViewModel.signInWithGoogle(
 fun AuthViewModel.reauthenticateWithGooglePair(
     context: Context,
     serverClientId: String,
+    loginHint: String? = null,
     completion: (Result<Pair<String, String?>>) -> Unit
 ) {
     val credentialManager = CredentialManager.create(context.applicationContext)
     val googleIdOption = GetGoogleIdOption.Builder()
-        .setFilterByAuthorizedAccounts(false)
+        .setFilterByAuthorizedAccounts(true)
         .setServerClientId(serverClientId)
         .build()
 
@@ -92,6 +96,11 @@ fun AuthViewModel.reauthenticateWithGooglePair(
         try {
             val result = credentialManager.getCredential(context, request)
             val googleCredential = parseGoogleIdTokenCredential(result.credential)
+            // Verify the credential matches the expected account
+            if (loginHint != null && googleCredential.id != loginHint) {
+                completion(Result.failure(Exception("Please select the account you are signed in with: $loginHint")))
+                return@launch
+            }
             completion(Result.success(googleCredential.idToken to null))
         } catch (e: Exception) {
             completion(Result.failure(e))
@@ -104,11 +113,13 @@ fun AuthViewModel.reauthenticateWithGooglePair(
  *
  * @param context The Android context.
  * @param serverClientId The Web Client ID.
+ * @param loginHint The email of the currently signed-in user to prevent account mismatch.
  * @param completion Callback with the Result<AuthCredential>.
  */
 fun AuthViewModel.reauthenticateWithGoogle(
     context: Context,
     serverClientId: String,
+    loginHint: String? = null,
     completion: (Result<AuthCredential>) -> Unit
 ) {
     val completionPair: (Result<Pair<String, String?>>) -> Unit = { res ->
@@ -123,5 +134,5 @@ fun AuthViewModel.reauthenticateWithGoogle(
             }
         )
     }
-    reauthenticateWithGooglePair(context, serverClientId, completionPair)
+    reauthenticateWithGooglePair(context, serverClientId, loginHint, completionPair)
 }

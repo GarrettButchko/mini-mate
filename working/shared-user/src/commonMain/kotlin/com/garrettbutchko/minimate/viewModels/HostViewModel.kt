@@ -127,7 +127,6 @@ class HostViewModel(
 
     fun tick(onTimeout: (Boolean) -> Unit) {
         if (!gameModel.onlineGame.value) return
-
         val currentTime = Clock.System.now()
         val remaining = calculateTimeRemaining(lastUpdated, ttl, currentTime)
         _timeRemaining.value = remaining
@@ -140,8 +139,6 @@ class HostViewModel(
     }
 
     fun resetTimer() {
-        if (!gameModel.onlineGame.value) return
-
         val currentTime = Clock.System.now()
         if (!canResetTimer(lastResetTime, resetCooldown, currentTime)) {
             return
@@ -149,7 +146,9 @@ class HostViewModel(
 
         lastUpdated = currentTime
         lastResetTime = currentTime
-        gameModel.setLastUpdated(Timestamp(currentTime.epochSeconds, 0))
+        if (gameModel.onlineGame.value) {
+            gameModel.setLastUpdated(Timestamp(currentTime.epochSeconds, 0))
+        }
         _timeRemaining.value = ttl
     }
 

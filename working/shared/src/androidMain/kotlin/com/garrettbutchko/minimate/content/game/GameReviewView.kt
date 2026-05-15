@@ -144,14 +144,22 @@ fun GameReviewView(
             }
 
             // Average Strokes Chart
+            val hasCustomColor = course?.scoreCardColor != null
+            val gridBgColor = Color.subVsColor(makeColor = course?.scoreCardColor)
             if (!isInCourseSettings) {
-                Box(
-                    modifier = Modifier
+                val chartModifier = if (hasCustomColor) {
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(0.3f)
+                        .background(gridBgColor, RoundedCornerShape(25.dp))
+                } else {
+                    Modifier
                         .fillMaxWidth()
                         .weight(0.3f)
                         .shadow(8.dp, RoundedCornerShape(25.dp))
-                        .background(Color.subVsColor(makeColor = course?.scoreCardColor), RoundedCornerShape(25.dp))
-                ) {
+                        .background(gridBgColor, RoundedCornerShape(25.dp))
+                }
+                Box(modifier = chartModifier) {
                     BarChartView(
                         data = viewModel.averageStrokes(),
                         title = "Average Strokes",
@@ -161,13 +169,20 @@ fun GameReviewView(
             }
 
             // Score Grid View
-            Column(
-                modifier = Modifier
+            val gridModifier = if (hasCustomColor) {
+                Modifier
                     .fillMaxWidth()
-                    .weight(1f) // Takes up remaining space
+                    .weight(1f)
+                    .background(gridBgColor, RoundedCornerShape(25.dp))
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
                     .shadow(8.dp, RoundedCornerShape(25.dp))
-                    .background(Color.subVsColor(makeColor = course?.scoreCardColor), RoundedCornerShape(25.dp))
-                    .clip(RoundedCornerShape(25.dp))
+                    .background(gridBgColor, RoundedCornerShape(25.dp))
+            }
+            Column(
+                modifier = gridModifier.clip(RoundedCornerShape(25.dp))
             ) {
                 // Player Header Row
                 Row(

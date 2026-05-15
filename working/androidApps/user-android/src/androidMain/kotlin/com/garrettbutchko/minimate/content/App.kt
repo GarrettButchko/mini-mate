@@ -220,9 +220,10 @@ fun App() {
                             if (clientId.isBlank()) {
                                 Logger.i("Missing default_web_client_id string; Google sign-in not configured.")
                             } else {
-                                deps.authModel.signInWithGoogle(context, clientId) { result ->
+                                deps.authModel.signInWithGoogle(context, clientId) { result, photoUrl ->
                                     deps.authModel.handleSignInResult(
                                         result = result,
+                                        photoUrl = photoUrl,
                                         onErrorMessage = { msg, _ -> Logger.i("Google sign-in error: ${msg ?: "Unknown error"}") },
                                         onClearGuestGame = {
                                             appScope.launch {
@@ -313,6 +314,28 @@ private fun MainTabView(
     }
 
     LaunchedEffect(iapManager) {
+        iapManager.onProStatusChecked = { hasPro ->
+            if (hasPro) {
+                val user = authModel.userModel.value
+                if (user != null && !user.isPro) {
+                    val upgraded = user.copy(isPro = true)
+                    authModel.setUserModel(upgraded)
+                    appScope.launch {
+                        runCatching { authModel.userRepository.saveUnified(upgraded.googleId, upgraded) }
+                    }
+                }
+            }
+        }
+        iapManager.onPurchaseSuccess = { purchase ->
+            val user = authModel.userModel.value
+            if (user != null && !user.isPro) {
+                val upgraded = user.copy(isPro = true)
+                authModel.setUserModel(upgraded)
+                appScope.launch {
+                    runCatching { authModel.userRepository.saveUnified(upgraded.googleId, upgraded) }
+                }
+            }
+        }
         iapManager.initialize()
     }
 
@@ -356,13 +379,10 @@ private fun MainTabView(
     }
 
     val customNavColors = NavigationBarItemDefaults.colors(
-        // This is the highlight "pill" color
-        indicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-
-        // This manages the icon/text colors automatically based on state
-        selectedIconColor = MaterialTheme.colorScheme.onSurface,
+        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
         unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+        selectedTextColor = MaterialTheme.colorScheme.primary,
         unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     )
 
