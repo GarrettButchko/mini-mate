@@ -190,7 +190,7 @@ struct HostView: View {
                 }
                 
                 if locationHandler.hasLocationAccess{
-                    LocationButtons()
+                    LocationButtons(isGuest: isGuest)
                 }
                 
                 if let course = course.value {
@@ -313,45 +313,47 @@ struct HostView: View {
 }
 
 struct LocationButtons: View {
-    
+
     @EnvironmentObject var VM: HostViewModelSwift
     @EnvironmentObject var gameModel: GameViewModelSwift
     @EnvironmentObject var locationHandler: LocationHandlerSwift
-    
+
+    var isGuest: Bool = false
+
     var body: some View {
         let item = gameModel.kotlin.course.value?.name
         let isConnected = NetworkChecker.companion.shared.isConnected
-    
+
         Group{
-            if VM.showLocationButton && isConnected {
+            if (VM.showLocationButton || isGuest) && isConnected {
                 HStack{
                     VStack{
                         HStack{
                             Text("Location:")
                             Spacer()
                         }
-                        
+
                         if let item = item {
                             HStack{
                                 Text(item)
                                     .foregroundStyle(.secondary)
                                     .truncationMode(.tail)
-                                    .transition(.move(edge: .top).combined(with: .opacity))
+                                    .transition(.move(edge: .top).combined(with: .opacity).combined(with: .blurReplace))
                                 Spacer()
                             }
                         } else {
                             HStack{
                                 Text("No Location")
                                     .foregroundStyle(.secondary)
-                                    .transition(.move(edge: .top).combined(with: .opacity))
+                                    .transition(.move(edge: .top).combined(with: .opacity).combined(with: .blurReplace))
                                 Spacer()
                             }
                         }
                     }
-                    
+                    .animation(.spring, value: item)
+
                     Spacer()
-                    
-                    
+
                     if item == nil {
                         searchNearbyButton
                     } else {
@@ -359,7 +361,8 @@ struct LocationButtons: View {
                         exitButton
                     }
                 }
-                
+                .animation(.spring, value: item == nil)
+
             } else if let item = item, !VM.showLocationButton && isConnected {
                 HStack{
                     Text("Location:")
@@ -406,12 +409,12 @@ struct LocationButtons: View {
             .clipShape(RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)
-        .transition(.move(edge: .trailing).combined(with: .opacity))
+        .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .blurReplace))
     }
-    
+
     var retryButton: some View {
         Button(action: {
-            withAnimation(){
+            withAnimation(.spring) {
                 VM.kotlin.retry()
             }
         }) {
@@ -424,12 +427,13 @@ struct LocationButtons: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
-        .transition(.move(edge: .trailing).combined(with: .opacity))
+        .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .blurReplace))
+        .animation(.spring, value: VM.isRotating)
     }
-    
+
     var exitButton: some View {
         Button(action: {
-            withAnimation {
+            withAnimation(.spring) {
                 VM.kotlin.exit()
             }
         }) {
@@ -441,6 +445,6 @@ struct LocationButtons: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
-        .transition(.move(edge: .trailing).combined(with: .opacity))
+        .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .blurReplace))
     }
 }

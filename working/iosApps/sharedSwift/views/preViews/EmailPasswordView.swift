@@ -28,6 +28,7 @@ struct EmailPasswordView: View {
     
     @State var showSignUp: Bool = false
     @State private var errorMessage: (message: String?, type: Bool) = (nil, false)
+    @State private var isLoading: Bool = false
 
     typealias Field = SignInView.Field
     var isTextFieldFocused: FocusState<Field?>.Binding
@@ -77,23 +78,30 @@ struct EmailPasswordView: View {
                                 if showSignUp { confirmSection.id(Field.confirm) }
                                 
                                 Button {
+                                    isLoading = true
                                     if !showSignUp {
                                         authModel.signInUIManage(email: $email, password: $password, confirmPassword: $confirmPassword, isTextFieldFocused: isTextFieldFocused, errorMessage: $errorMessage, showSignUp: $showSignUp, guestGame: $guestGame)
                                     } else {
                                         authModel.signUpUIManage(email: $email, password: $password, confirmPassword: $confirmPassword, isTextFieldFocused: isTextFieldFocused, errorMessage: $errorMessage, showSignUp: $showSignUp, guestGame: $guestGame)
-                                        
                                     }
                                 } label: {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 25)
                                             .frame(width: 150, height: 50)
                                             .foregroundColor(.green)
-                                        Text(showSignUp ? "Sign Up" : "Login")
-                                            .foregroundColor(.white)
+                                        if isLoading {
+                                            ProgressView()
+                                                .tint(.white)
+                                        } else {
+                                            Text(showSignUp ? "Sign Up" : "Login")
+                                                .foregroundColor(.white)
+                                        }
                                     }
-                                    .opacity(disabled ? 0.5 : 1)
+                                    .opacity(disabled || isLoading ? 0.5 : 1)
                                 }
-                                .disabled(disabled)
+                                .disabled(disabled || isLoading)
+                                .onChange(of: errorMessage.message) { _, _ in isLoading = false }
+                                .onChange(of: showSignUp) { _, _ in isLoading = false }
                                 
                                 // Error
                                 if let errorMessageText = errorMessage.message {

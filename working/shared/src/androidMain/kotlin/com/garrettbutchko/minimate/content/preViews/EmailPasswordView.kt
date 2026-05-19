@@ -1,5 +1,10 @@
 package com.garrettbutchko.minimate.content.preViews
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -54,6 +59,7 @@ fun EmailPasswordView(
     var showSignUp by remember { mutableStateOf(initialShowSignUp) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isErrorPositive by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
@@ -91,7 +97,7 @@ fun EmailPasswordView(
                 text = "Enter email and password",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Light,
-                color = colorResource(id = R.color.subThreeOpp)
+                color = colorResource(id = R.color.subTwoOpp)
             )
 
             Spacer(modifier = Modifier.height(50.dp))
@@ -115,8 +121,11 @@ fun EmailPasswordView(
                     focusRequester = passwordFocus
                 )
 
-                if (showSignUp) {
-                    // Confirm Password Field
+                AnimatedVisibility(
+                    visible = showSignUp,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
                     PasswordSection(
                         title = "Confirm Password",
                         password = confirmPassword,
@@ -131,6 +140,7 @@ fun EmailPasswordView(
                 Button(
                     onClick = {
                         focusManager.clearFocus()
+                        isLoading = true
                         if (!showSignUp) {
                             authModel?.signInUIManage(
                                 emailInput = email,
@@ -140,11 +150,16 @@ fun EmailPasswordView(
                                     onEmailChange("")
                                     onPasswordChange("")
                                     onConfirmPasswordChange("")
+                                    isLoading = false
                                 },
-                                onShowSignUp = { showSignUp = true },
-                                onErrorMessage = { msg, type -> 
+                                onShowSignUp = {
+                                    showSignUp = true
+                                    isLoading = false
+                                },
+                                onErrorMessage = { msg, type ->
                                     errorMessage = msg
                                     isErrorPositive = type
+                                    isLoading = false
                                 },
                                 onClearGuestGame = { /* Handled in AuthViewModel / Repo */ }
                             )
@@ -157,19 +172,22 @@ fun EmailPasswordView(
                                     onEmailChange("")
                                     onPasswordChange("")
                                     onConfirmPasswordChange("")
+                                    isLoading = false
                                 },
                                 onSuccess = {
                                     showSignUp = false
+                                    isLoading = false
                                 },
-                                onErrorMessage = { msg, type -> 
+                                onErrorMessage = { msg, type ->
                                     errorMessage = msg
                                     isErrorPositive = type
+                                    isLoading = false
                                 },
                                 onClearGuestGame = { /* Handled in AuthViewModel / Repo */ }
                             )
                         }
                     },
-                    enabled = !disabled,
+                    enabled = !disabled && !isLoading,
                     shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorResource(id = R.color.swiftGreen),
@@ -180,10 +198,18 @@ fun EmailPasswordView(
                         .width(150.dp)
                         .align(Alignment.CenterHorizontally)
                 ) {
-                    Text(
-                        text = if (showSignUp) "Sign Up" else "Login",
-                        color = Color.White
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = if (showSignUp) "Sign Up" else "Login",
+                            color = Color.White
+                        )
+                    }
                 }
 
                 // Error Message
@@ -242,12 +268,12 @@ fun EmailSection(
     focusRequester: FocusRequester
 ) {
     Column {
-        Text(text = "Email", color = colorResource(id = R.color.subThreeOpp))
+        Text(text = "Email", color = colorResource(id = R.color.subTwoOpp))
         TextField(
             value = email,
             onValueChange = onEmailChange,
-            placeholder = { Text("example@example.com", color = colorResource(id = R.color.subThreeOpp).copy(alpha = 0.5f)) },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = colorResource(id = R.color.subThreeOpp)) },
+            placeholder = { Text("example@example.com", color = colorResource(id = R.color.subTwoOpp).copy(alpha = 0.5f)) },
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = colorResource(id = R.color.subTwoOpp)) },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
@@ -278,12 +304,12 @@ fun PasswordSection(
     focusRequester: FocusRequester
 ) {
     Column {
-        Text(text = title, color = colorResource(id = R.color.subThreeOpp))
+        Text(text = title, color = colorResource(id = R.color.subTwoOpp))
         TextField(
             value = password,
             onValueChange = onPasswordChange,
-            placeholder = { Text("••••••", color = colorResource(id = R.color.subThreeOpp).copy(alpha = 0.5f)) },
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = colorResource(id = R.color.subThreeOpp)) },
+            placeholder = { Text("••••••", color = colorResource(id = R.color.subTwoOpp).copy(alpha = 0.5f)) },
+            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = colorResource(id = R.color.subTwoOpp)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,

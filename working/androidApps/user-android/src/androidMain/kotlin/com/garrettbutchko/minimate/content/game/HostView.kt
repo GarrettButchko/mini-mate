@@ -2,6 +2,16 @@ package com.garrettbutchko.minimate.content.game
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -158,7 +168,8 @@ fun HostGameView(
                 isConnected = NetworkChecker.shared.isConnected,
                 isRotating = isRotating,
                 qrCodeBytes = qrCodeBytes,
-                mainOppColor = MaterialTheme.colorScheme.onSurface
+                mainOppColor = MaterialTheme.colorScheme.onSurface,
+                isGuest = isGuest
             )
         }
 
@@ -175,34 +186,38 @@ fun HostGameView(
                         )
                     )
                 )
-                .padding(top = if (isGuest) 12.dp else 28.dp)
+                .padding(top = 30.dp)
                 .padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth()
             ) {
                 if (isGuest) {
-                    IconButton(
-                        onClick = {
-                            logic.handleGuestBackAction(
-                                dismissGame = { gameModel.dismissGame() },
-                                navigateToSignIn = { hostVM.viewManager.navigateToSignIn() }
-                            )
-                            onDismiss()
-                        },
-                        modifier = Modifier.size(40.dp)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .width(64.dp)
+                            .height(32.dp)
+                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(25.dp))
+                            .clickable {
+                                logic.handleGuestBackAction(
+                                    dismissGame = { gameModel.dismissGame() },
+                                    navigateToSignIn = { hostVM.viewManager.navigateToSignIn() }
+                                )
+                                onDismiss()
+                            }
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 } else {
-                    Spacer(modifier = Modifier.width(40.dp))
+                    Spacer(modifier = Modifier.width(64.dp))
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -213,7 +228,7 @@ fun HostGameView(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(40.dp))
+                Spacer(modifier = Modifier.width(64.dp))
             }
         }
 
@@ -402,7 +417,8 @@ private fun GameInfoSection(
     isConnected: Boolean,
     isRotating: Boolean,
     qrCodeBytes: ByteArray?,
-    mainOppColor: Color
+    mainOppColor: Color,
+    isGuest: Boolean = false
 ) {
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()
@@ -486,13 +502,11 @@ private fun GameInfoSection(
                 LocationButtons(
                     hostVM = hostVM,
                     gameModel = gameModel,
-                    showLocationButton = showLocationButton,
+                    showLocationButton = showLocationButton || isGuest,
                     isConnected = isConnected,
                     isRotating = isRotating,
                     mainOppColor = mainOppColor
                 )
-
-
             }
 
             val currentCourse = course
@@ -544,6 +558,12 @@ private fun LocationButtons(
     val selectedCourse by gameModel.course.collectAsState()
     val locationName = selectedCourse?.name
 
+    val rotation by animateFloatAsState(
+        targetValue = if (isRotating) 360f else 0f,
+        animationSpec = tween(durationMillis = 600),
+        label = "retryRotation"
+    )
+
     if (!isConnected) return
 
     if (showLocationButton) {
@@ -558,19 +578,36 @@ private fun LocationButtons(
                     color = mainOppColor,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = locationName ?: "No Location",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = 8.dp).basicMarquee(),
-                    maxLines = 1
-                )
+                AnimatedContent(
+                    targetState = locationName,
+                    transitionSpec = {
+                        slideInVertically(initialOffsetY = { -it }) + fadeIn() togetherWith
+                        slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                    },
+                    label = "locationName"
+                ) { name ->
+                    Text(
+                        text = name ?: "No Location",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = if (name != null) Modifier.basicMarquee() else Modifier
+                    )
+                }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (locationName == null) {
+            Spacer(modifier = Modifier.width(8.dp))
+
+            AnimatedContent(
+                targetState = locationName == null,
+                transitionSpec = {
+                    slideInHorizontally(initialOffsetX = { it }) + fadeIn() togetherWith
+                    slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
+                },
+                label = "locationButtons"
+            ) { noLocation ->
+                if (noLocation) {
                     Button(
                         onClick = { hostVM.searchNearby() },
                         colors = ButtonDefaults.buttonColors(
@@ -578,47 +615,58 @@ private fun LocationButtons(
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.height(50.dp).width(180.dp)
+                        modifier = Modifier
+                            .height(50.dp)
+                            .width(180.dp)
                     ) {
                         Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Search Nearby")
                     }
                 } else {
-                    IconButton(
-                        onClick = { hostVM.retry() },
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
-                            .size(50.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Retry",
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
                             modifier = Modifier
-                                .rotate(if (isRotating) 360f else 0f)
-                                .size(24.dp),
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(
-                        onClick = { hostVM.exit() },
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.error, CircleShape)
-                            .size(50.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Clear Location",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
+                                .size(50.dp)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                .clickable { hostVM.retry() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Retry",
+                                modifier = Modifier
+                                    .rotate(rotation)
+                                    .size(24.dp),
+                                tint = Color.White
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                                .clickable { hostVM.exit() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Clear Location",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
         }
         HorizontalDivider()
     } else if (locationName != null) {
-        UserInfoRow(label = "Location", value = locationName, mainOppColor = mainOppColor, subOppColor = MaterialTheme.colorScheme.onSurfaceVariant)
+        UserInfoRow(
+            label = "Location",
+            value = locationName,
+            mainOppColor = mainOppColor,
+            subOppColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         HorizontalDivider()
     }
 }
