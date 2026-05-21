@@ -37,6 +37,43 @@ enum class ChartTopic(val title: String) {
     RETURNING("Returning Visits")
 }
 
+enum class PlayerTier(
+    val label: String,
+    val miniDescription: String,
+    val tierDescription: String,
+    val colorKey: String,
+    val iconName: String
+) {
+    NEW(
+        label = "New",
+        miniDescription = "Played once",
+        tierDescription = "Players who have played only once within the average return window.",
+        colorKey = "purple",
+        iconName = "star.fill"
+    ),
+    MID_TIER(
+        label = "Mid-Tier",
+        miniDescription = "2–5 plays, active",
+        tierDescription = "Players who have played 2 to 5 times and have returned within the average window.",
+        colorKey = "gray",
+        iconName = "medal.fill"
+    ),
+    FREQUENT(
+        label = "Frequent",
+        miniDescription = "5+ plays, active",
+        tierDescription = "Players who have played more than 5 times and have returned within the average window.",
+        colorKey = "yellow",
+        iconName = "crown.fill"
+    ),
+    AT_RISK(
+        label = "At Risk",
+        miniDescription = "Inactive",
+        tierDescription = "Players who have played previously but have not returned within the average window.",
+        colorKey = "red",
+        iconName = "exclamationmark.triangle.fill"
+    )
+}
+
 data class AnalyticsObject(
     val type: AnalyticsSection,
     val icon: String,

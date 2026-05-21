@@ -32,8 +32,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -72,7 +70,6 @@ import kotlinx.coroutines.launch
 import org.koin.core.context.GlobalContext
 import com.garrettbutchko.minimate.content.courseScreen.CourseScreen
 import com.garrettbutchko.minimate.content.game.HostGameView
-import com.garrettbutchko.minimate.content.game.JoinGameView
 import com.garrettbutchko.minimate.content.game.ScoreCardGameView
 import com.garrettbutchko.minimate.content.helper.InterstitialAdView
 import com.garrettbutchko.minimate.content.main.MainContentView

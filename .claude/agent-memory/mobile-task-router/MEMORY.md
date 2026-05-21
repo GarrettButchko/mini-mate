@@ -1,0 +1,1 @@
+- [PlayerTier — presentation-layer type, not in shared-admin](project_player_tier.md) — PlayerTier is defined per platform; define it as a Kotlin enum in the Android presentation layer when converting iOS components

@@ -105,6 +105,7 @@ import com.garrettbutchko.minimate.managers.GameManager
 import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.modelKotlinExtensions.courseColors
 import com.garrettbutchko.minimate.modelKotlinExtensions.scoreCardColor
+import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
@@ -466,6 +467,7 @@ fun MainContentView(
                 userGoogleId = user?.googleId ?: "",
                 userIsPro = user?.isPro ?: false,
                 userAccountType = user?.accountType?.joinToString(",") ?: "",
+                userBallColor = user?.ballColorDT.toColor(),
                 isDebug = BuildConfig.DEBUG,
                 botMessage = profileBotMessage,
                 isBotMessageError = isProfileBotError,

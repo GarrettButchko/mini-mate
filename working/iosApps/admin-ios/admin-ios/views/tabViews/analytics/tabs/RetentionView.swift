@@ -55,25 +55,25 @@ struct RetentionView: View {
                         }
                         // Four Player Tier Cards
                         PlayerTierCard(
-                            tier: .new,
+                            tier: PlayerTier.theNew,
                             players: VM.cachedNewPlayers,
                             VM: VM
                         )
                         
                         PlayerTierCard(
-                            tier: .midTier,
+                            tier: PlayerTier.midTier,
                             players: VM.cachedMidTierPlayers,
                             VM: VM
                         )
                         
                         PlayerTierCard(
-                            tier: .frequent,
+                            tier: PlayerTier.frequent,
                             players: VM.cachedFrequentPlayers,
                             VM: VM
                         )
                         
                         PlayerTierCard(
-                            tier: .atRisk,
+                            tier: PlayerTier.atRisk,
                             players: VM.cachedAtRiskPlayers,
                             VM: VM
                         )
@@ -117,62 +117,6 @@ struct RetentionView: View {
     }
 }
 
-// MARK: - Player Tier Card Component
-enum PlayerTier: Equatable {
-    case new
-    case midTier
-    case frequent
-    case atRisk
-    
-    var icon: String {
-        switch self {
-        case .new: return "star.fill"
-        case .midTier: return "medal.fill"
-        case .frequent: return "crown.fill"
-        case .atRisk: return "exclamationmark.triangle.fill"
-        }
-    }
-    
-    var label: String {
-        switch self {
-        case .new: return "New"
-        case .midTier: return "Mid-Tier"
-        case .frequent: return "Frequent"
-        case .atRisk: return "At Risk"
-        }
-    }
-    
-    var minidescription: String {
-        switch self {
-        case .new: return "Played once"
-        case .midTier: return "2–5 plays, active"
-        case .frequent: return "5+ plays, active"
-        case .atRisk: return "Inactive"
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .new:
-            return "Players who have played only once within the average return window."
-        case .midTier:
-            return "Players who have played 2 to 5 times and have returned within the average window."
-        case .frequent:
-            return "Players who have played more than 5 times and have returned within the average window."
-        case .atRisk:
-            return "Players who have played previously but have not returned within the average window."
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .new: return .purple
-        case .midTier: return .gray
-        case .frequent: return .yellow
-        case .atRisk: return .red
-        }
-    }
-}
 
 struct PlayerTierCard: View {
     let tier: PlayerTier
@@ -202,7 +146,7 @@ struct PlayerTierCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tier.label)
                         .font(.headline)
-                    Text(tier.minidescription)
+                    Text(tier.miniDescription)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

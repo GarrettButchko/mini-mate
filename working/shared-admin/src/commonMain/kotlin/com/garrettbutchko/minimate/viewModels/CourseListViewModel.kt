@@ -2,6 +2,7 @@ package com.garrettbutchko.minimate.viewModels
 
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
+import com.garrettbutchko.minimate.repositories.CourseLeaderboardRepository
 import com.garrettbutchko.minimate.repositories.CourseRepository
 import com.garrettbutchko.minimate.repositories.userRepos.UserRepository
 import kotlinx.coroutines.CoroutineScope
@@ -22,8 +23,8 @@ import co.touchlab.kermit.Logger
 open class CourseListViewModel(
     private val courseRepo: CourseRepository,
     private val userRepo: UserRepository,
-
     private val authModel: AuthViewModel,
+    private val lbRepo: CourseLeaderboardRepository = CourseLeaderboardRepository(),
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
     private val log = Logger.withTag("CourseListViewModel")
@@ -344,5 +345,12 @@ open class CourseListViewModel(
         
         _selectedCourse.value = currentCourse.copy(pars = updatedPars)
         debouncedSave(300)
+    }
+
+    fun deleteLeaderboard() {
+        val courseId = _selectedCourse.value?.id ?: return
+        coroutineScope.launch {
+            lbRepo.deleteAllEntries(courseId)
+        }
     }
 }

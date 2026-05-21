@@ -15,16 +15,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.colorResource
-import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.shared.R
-import com.garrettbutchko.minimate.content.helper.UserInfoRow
+import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.PhotoIconView
+import com.garrettbutchko.minimate.content.helper.PhotoPicker
+import com.garrettbutchko.minimate.content.helper.SectionCard
 
 enum class DeleteAlertType {
     GOOGLE, APPLE, EMAIL
@@ -39,6 +39,7 @@ fun ProfileView(
     userGoogleId: String,
     userIsPro: Boolean,
     userAccountType: String,
+    userBallColor: Color? = null,
     buildTypeLabel: String? = null,
     isDebug: Boolean = false,
     botMessage: String = "",
@@ -59,6 +60,7 @@ fun ProfileView(
     var showEmailDeleteOverlay by remember { mutableStateOf(false) }
     var deletePasswordInput by remember { mutableStateOf("") }
     var deleteConfirmPasswordInput by remember { mutableStateOf("") }
+    var showPhotoPicker by remember { mutableStateOf(false) }
 
     val bgColor = colorResource(id = R.color.bg)
     val mainOppColor = colorResource(id = R.color.mainOpp)
@@ -69,11 +71,11 @@ fun ProfileView(
     val warningColor = colorResource(id = R.color.swiftOrange)
     val dangerColor = colorResource(id = R.color.swiftRed)
 
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        uri?.let { onPhotoChange(it) }
-    }
+    PhotoPicker(
+        show = showPhotoPicker,
+        onImagePicked = { uri -> uri?.let { onPhotoChange(it) } },
+        onDismiss = { showPhotoPicker = false }
+    )
 
     Column(
         modifier = Modifier
@@ -98,32 +100,17 @@ fun ProfileView(
                 Text("Tap to change photo", fontSize = 12.sp, color = mainOppColor)
                 Spacer(modifier = Modifier.width(6.dp))
 
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(subColor)
-                        .clickable {
-                            photoPickerLauncher.launch(
-                                PickVisualMediaRequest(
-                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                )
-                            )
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (userProfileImage != null) {
-                        AsyncImage(
-                            model = userProfileImage,
-                            contentDescription = "Profile Photo",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        // Placeholder LogoOpp equivalent
-                        Text("", fontSize = 10.sp, color = mainOppColor)
+                PhotoIconView(
+                    photoURL = userProfileImage,
+                    name = userName,
+                    ballColor = userBallColor,
+                    imageSize = 40.dp,
+                    backgroundColor = subColor,
+                    showName = false,
+                    modifier = Modifier.clickable {
+                        showPhotoPicker = true
                     }
-                }
+                )
             }
         }
 
@@ -134,99 +121,89 @@ fun ProfileView(
         ) {
             // User Details Section
             item {
-                Text("User Details", fontWeight = FontWeight.Bold, color = mainOppColor)
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = subColor)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        UserInfoRow(label = "Name", value = userName, mainOppColor = mainOppColor, subOppColor = subOppColor)
-                        HorizontalDivider()
-                        UserInfoRow(label = "Email", value = userEmail ?: "N/A", mainOppColor = mainOppColor, subOppColor = subOppColor)
-                        HorizontalDivider()
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Pro:", style = MaterialTheme.typography.bodyMedium, color = mainOppColor, fontWeight = FontWeight.SemiBold)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(if (userIsPro) "Yes" else "Not Yet!", style = MaterialTheme.typography.bodyMedium, color = subOppColor, fontWeight = FontWeight.Medium)
-                            if (isMiniMateApp && !userIsPro) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = onGetPro,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = colorResource(id = R.color.swiftBlue),
-                                        contentColor = Color.White
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                    modifier = Modifier.heightIn(min = 32.dp)
-                                ) {
-                                    Text("Get Pro Now!", fontSize = 12.sp)
-                                }
+                SectionCard(title = "User Details") {
+                    InfoRow(label = "Name", value = userName, mainOppColor = mainOppColor, subOppColor = subOppColor)
+                    HorizontalDivider(color = mainOppColor.copy(alpha = 0.1f))
+                    InfoRow(label = "Email", value = userEmail ?: "N/A", mainOppColor = mainOppColor, subOppColor = subOppColor)
+                    HorizontalDivider(color = mainOppColor.copy(alpha = 0.1f))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Pro:", style = MaterialTheme.typography.bodyMedium, color = mainOppColor, fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(if (userIsPro) "Yes" else "Not Yet!", style = MaterialTheme.typography.bodyMedium, color = subOppColor, fontWeight = FontWeight.Medium)
+                        if (isMiniMateApp && !userIsPro) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = onGetPro,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colorResource(id = R.color.swiftBlue),
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                modifier = Modifier.heightIn(min = 32.dp)
+                            ) {
+                                Text("Get Pro Now!", fontSize = 12.sp)
                             }
                         }
-                        if (isDebug) {
-                            HorizontalDivider()
-                            UserInfoRow(label = "Build", value = buildTypeLabel ?: "debug", mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
-                            HorizontalDivider()
-                            UserInfoRow(label = "UID", value = userGoogleId, mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
-                            HorizontalDivider()
-                            UserInfoRow(label = "PhotoURL", value = userProfileImage ?: "N/A", mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
-                        }
+                    }
+                    if (isDebug) {
+                        HorizontalDivider(color = mainOppColor.copy(alpha = 0.1f))
+                        InfoRow(label = "Build", value = buildTypeLabel ?: "debug", mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
+                        HorizontalDivider(color = mainOppColor.copy(alpha = 0.1f))
+                        InfoRow(label = "UID", value = userGoogleId, mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
+                        HorizontalDivider(color = mainOppColor.copy(alpha = 0.1f))
+                        InfoRow(label = "PhotoURL", value = userProfileImage ?: "N/A", mainOppColor = mainOppColor, subOppColor = subThreeOppColor)
                     }
                 }
             }
 
             // Account Management Section
             item {
-                Text("Account Management", fontWeight = FontWeight.Bold, color = mainOppColor)
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = subColor)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionCard(title = "Account Management") {
+                    Button(
+                        onClick = { showEditName = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White),
+                        shape = RoundedCornerShape(15.dp)
+                    ) {
+                        Text("Edit Name")
+                    }
 
+                    if (userAccountType.contains("email", ignoreCase = true) && !userAccountType.contains("google", ignoreCase = true)) {
                         Button(
-                            onClick = { showEditName = true },
+                            onClick = onPasswordReset,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White)
+                            colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White),
+                            shape = RoundedCornerShape(15.dp)
                         ) {
-                            Text("Edit Name")
+                            Text("Password Reset")
                         }
+                    }
 
-                        if (userAccountType.contains("email", ignoreCase = true) && !userAccountType.contains("google", ignoreCase = true)) {
-                            Button(
-                                onClick = onPasswordReset,
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White)
-                            ) {
-                                Text("Password Reset")
-                            }
-                        }
+                    Button(
+                        onClick = onLogout,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = warningColor, contentColor = Color.White),
+                        shape = RoundedCornerShape(15.dp)
+                    ) {
+                        Text("Logout")
+                    }
 
-                        Button(
-                            onClick = onLogout,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = warningColor, contentColor = Color.White)
-                        ) {
-                            Text("Logout")
-                        }
-
-                        Button(
-                            onClick = {
-                                activeDeleteAlert =
-                                    if (userAccountType.contains("google", ignoreCase = true)) {
-                                        DeleteAlertType.GOOGLE
-                                    } else if (userAccountType.contains("apple", ignoreCase = true)) {
-                                        DeleteAlertType.APPLE
-                                    } else {
-                                        DeleteAlertType.EMAIL
-                                    }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = dangerColor, contentColor = Color.White)
-                        ) {
-                            Text("Delete Account")
-                        }
-
+                    Button(
+                        onClick = {
+                            activeDeleteAlert =
+                                if (userAccountType.contains("google", ignoreCase = true)) {
+                                    DeleteAlertType.GOOGLE
+                                } else if (userAccountType.contains("apple", ignoreCase = true)) {
+                                    DeleteAlertType.APPLE
+                                } else {
+                                    DeleteAlertType.EMAIL
+                                }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = dangerColor, contentColor = Color.White),
+                        shape = RoundedCornerShape(15.dp)
+                    ) {
+                        Text("Delete Account")
                     }
                 }
             }
@@ -240,19 +217,10 @@ fun ProfileView(
                 ) {
                     Column {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Message", fontWeight = FontWeight.Bold, color = mainOppColor)
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = (if (isBotMessageError) dangerColor else successColor).copy(alpha = 0.1f)
-                            )
-                        ) {
+                        SectionCard(title = "Message") {
                             Text(
                                 text = botMessage,
                                 color = if (isBotMessageError) dangerColor else successColor,
-                                modifier = Modifier.padding(16.dp),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )

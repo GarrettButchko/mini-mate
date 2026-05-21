@@ -75,7 +75,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.helper.AddLocalPlayerView
 import com.garrettbutchko.minimate.content.helper.NumberPickerView
-import com.garrettbutchko.minimate.content.helper.UserInfoRow
+import com.garrettbutchko.minimate.content.helper.InfoRow
 import com.garrettbutchko.minimate.di.KoinHelper
 import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.interfaces.LocationFinding
@@ -443,7 +443,7 @@ private fun GameInfoSection(
             )
 
             if (onlineGame) {
-                UserInfoRow(
+                InfoRow(
                     label = "Game Code",
                     value = game.id,
                     mainOppColor = mainOppColor,
@@ -480,7 +480,7 @@ private fun GameInfoSection(
 
                 HorizontalDivider()
 
-                UserInfoRow(
+                InfoRow(
                     label = "Expires in",
                     value = timerString,
                     mainOppColor = mainOppColor,
@@ -512,7 +512,7 @@ private fun GameInfoSection(
             val currentCourse = course
             if (currentCourse != null) {
                 if (currentCourse.customPar) {
-                    UserInfoRow(label = "Holes", value = currentCourse.numHoles.toString(), mainOppColor = mainOppColor, subOppColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    InfoRow(label = "Holes", value = currentCourse.numHoles.toString(), mainOppColor = mainOppColor, subOppColor = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     HolesPickerRow(gameModel, hostVM, game.numberOfHoles, mainOppColor)
                 }
@@ -661,7 +661,7 @@ private fun LocationButtons(
         }
         HorizontalDivider()
     } else if (locationName != null) {
-        UserInfoRow(
+        InfoRow(
             label = "Location",
             value = locationName,
             mainOppColor = mainOppColor,

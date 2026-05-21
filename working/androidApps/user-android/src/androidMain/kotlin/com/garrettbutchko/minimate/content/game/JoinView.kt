@@ -51,7 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.di.KoinHelper
-import com.garrettbutchko.minimate.content.helper.UserInfoRow
+import com.garrettbutchko.minimate.content.helper.InfoRow
 import com.garrettbutchko.minimate.content.helper.WaitingIndicatorView
 import com.garrettbutchko.minimate.helper.QRScannerView
 import com.garrettbutchko.minimate.logic.JoinViewBusinessLogic
@@ -395,11 +395,11 @@ private fun ActiveLobby(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                UserInfoRow("Code", game.id, mainOppColor)
+                InfoRow("Code", game.id, mainOppColor)
                 HorizontalDivider()
-                UserInfoRow("Holes", game.numberOfHoles.toString(), mainOppColor)
+                InfoRow("Holes", game.numberOfHoles.toString(), mainOppColor)
                 HorizontalDivider()
-                UserInfoRow("Location", logic.getLocationName(game.locationName), mainOppColor)
+                InfoRow("Location", logic.getLocationName(game.locationName), mainOppColor)
             }
         }
     }

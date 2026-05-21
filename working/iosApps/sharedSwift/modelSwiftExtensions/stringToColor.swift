@@ -20,6 +20,7 @@ extension String {
             "pink": .pink,
             "cyan": .cyan,
             "brown": .brown,
+            "gray": .gray,
             "main_opp": .mainOpp
         ]
 

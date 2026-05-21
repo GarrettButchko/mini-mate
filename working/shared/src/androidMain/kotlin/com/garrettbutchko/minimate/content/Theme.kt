@@ -6,8 +6,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 // Semantic colors — same in both modes
-private val SwiftBlue  = Color(0xFF0088FF)
-private val SwiftRed   = Color(0xFFFF383C)
+val SwiftBlue  = Color(0xFF0088FF)
+val SwiftRed   = Color(0xFFFF383C)
 
 val MiniMateLightColorScheme = lightColorScheme(
     primary                = SwiftBlue,

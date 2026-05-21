@@ -35,7 +35,7 @@
               "client_id": "889696350396-6gp2nrr77r5v8co0is7r25kbdpf3lsa8.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.garrettbutchko.MiniMate-Manager"
+                "bundle_id": "com.garrettbutchko.minimate.admin"
               }
             }
           ]
@@ -71,7 +71,7 @@
               "client_id": "889696350396-6gp2nrr77r5v8co0is7r25kbdpf3lsa8.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.garrettbutchko.MiniMate-Manager"
+                "bundle_id": "com.garrettbutchko.minimate.admin"
               }
             }
           ]
