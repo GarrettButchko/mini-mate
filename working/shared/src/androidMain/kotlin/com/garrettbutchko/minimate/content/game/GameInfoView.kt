@@ -27,6 +27,7 @@ import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.shared.R
 import com.garrettbutchko.minimate.viewModels.GameInfoViewModel
 import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.SectionCard
 
 @Composable
 fun GameInfoViewAndroid(
@@ -63,30 +64,18 @@ fun GameInfoViewAndroid(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Info",
-                fontWeight = FontWeight.Bold,
-                color = mainOppColor,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = subColor)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    InfoRow(label = "Game ID/Code", value = viewModel.gameId, mainOppColor = mainOppColor, subOppColor = subOppColor)
-                    HorizontalDivider()
-                    InfoRow(label = "Number of players", value = viewModel.playerCount, mainOppColor = mainOppColor, subOppColor = subOppColor)
-                    HorizontalDivider()
-                    InfoRow(label = "Number of holes", value = viewModel.holeCount, mainOppColor = mainOppColor, subOppColor = subOppColor)
-                    HorizontalDivider()
-                    InfoRow(label = "Date Started", value = viewModel.dateStarted, mainOppColor = mainOppColor, subOppColor = subOppColor)
-                    HorizontalDivider()
-                    InfoRow(label = "Location", value = viewModel.location, mainOppColor = mainOppColor, subOppColor = subOppColor)
-                    HorizontalDivider()
-                    InfoRow(label = "Course ID", value = viewModel.courseId, mainOppColor = mainOppColor, subOppColor = subOppColor)
-                }
+            SectionCard("Info") {
+                InfoRow(label = "Game ID/Code", value = viewModel.gameId, mainOppColor = mainOppColor, subOppColor = subOppColor)
+                HorizontalDivider()
+                InfoRow(label = "Number of players", value = viewModel.playerCount, mainOppColor = mainOppColor, subOppColor = subOppColor)
+                HorizontalDivider()
+                InfoRow(label = "Number of holes", value = viewModel.holeCount, mainOppColor = mainOppColor, subOppColor = subOppColor)
+                HorizontalDivider()
+                InfoRow(label = "Date Started", value = viewModel.dateStarted, mainOppColor = mainOppColor, subOppColor = subOppColor)
+                HorizontalDivider()
+                InfoRow(label = "Location", value = viewModel.location, mainOppColor = mainOppColor, subOppColor = subOppColor)
+                HorizontalDivider()
+                InfoRow(label = "Course ID", value = viewModel.courseId, mainOppColor = mainOppColor, subOppColor = subOppColor)
             }
         }
     }

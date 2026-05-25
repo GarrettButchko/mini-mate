@@ -19,10 +19,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 import com.garrettbutchko.minimate.viewModels.analytics.DataPointObject
 
-// Parses "#RRGGBB" or "#AARRGGBB" hex strings into a Compose Color.
+// Parses named colors ("red", "blue", etc.) or "#RRGGBB"/"#AARRGGBB" hex strings into a Compose Color.
 fun String.toComposeColor(): Color? {
+    this.toColor()?.let { return it }
     val hex = this.trimStart('#')
     return when (hex.length) {
         6 -> hex.toLongOrNull(16)?.let { Color(it.or(0xFF000000L).toInt()) }

@@ -381,7 +381,7 @@ private fun CourseTabView(
             visible = showColor,
             disabledColors = selectedCourse?.courseColorsDT?.mapNotNull { it.toComposeColor() }?.toSet() ?: emptySet(),
             onColorSelected = { color ->
-                val colorStr = color.toHexString()
+                val colorStr = color.toColorName()
                 courseListVM.updateCourseField { course ->
                     when (addTarget) {
                         ColorAddTarget.SCORE_CARD_COLOR -> course.copy(scoreCardColorDT = colorStr)
@@ -390,11 +390,24 @@ private fun CourseTabView(
                     }
                 }
             },
-            onDismiss = { courseListVM.setShowColor(false) }
+            onDismiss = { courseListVM.setShowColor(false) },
+            notScoreCard = addTarget != ColorAddTarget.SCORE_CARD_COLOR
         )
     }
 }
 
-private fun Color.toHexString(): String {
-    return String.format("#%08X", toArgb())
+private fun Color.toColorName(): String = when (this) {
+    Color(0xFFFF383C) -> "red"
+    Color(0xFFFF8D28) -> "orange"
+    Color(0xFFFFCC00) -> "yellow"
+    Color(0xFF34C759) -> "green"
+    Color(0xFF00C8B3) -> "mint"
+    Color(0xFF00C3D0) -> "teal"
+    Color(0xFF00C0E8) -> "cyan"
+    Color(0xFF0088FF) -> "blue"
+    Color(0xFF6155F5) -> "indigo"
+    Color(0xFFCB30E0) -> "purple"
+    Color(0xFFFF2D55) -> "pink"
+    Color(0xFFAC7F5E) -> "brown"
+    else -> String.format("#%08X", toArgb())
 }

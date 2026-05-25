@@ -1,6 +1,13 @@
 package com.garrettbutchko.minimate.content.tabviews.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,11 +21,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -34,9 +44,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,11 +61,17 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.PhotoPicker
 import com.garrettbutchko.minimate.content.helper.SectionCard
+import com.garrettbutchko.minimate.content.helper.StepperControl
+import com.garrettbutchko.minimate.viewModelsAndroidAddOns.uploadAdImageAndroid
+import com.garrettbutchko.minimate.viewModelsAndroidAddOns.uploadLogoImageAndroid
 import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.toComposeColor
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialLink
@@ -64,6 +82,21 @@ import com.garrettbutchko.minimate.viewModels.CourseListViewModel
 import com.garrettbutchko.minimate.viewModels.CourseSettingsViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.CourseHealthReport // just in case
 import com.garrettbutchko.minimate.generateUUID
+
+@Composable
+private fun appSwitchColors(swiftBlue: Color, mainOpp: Color) = SwitchDefaults.colors(
+    checkedTrackColor = swiftBlue,
+    checkedThumbColor = Color.White,
+    checkedBorderColor = Color.Transparent,
+    uncheckedTrackColor = mainOpp.copy(alpha = 0.15f),
+    uncheckedBorderColor = mainOpp.copy(alpha = 0.4f),
+    uncheckedThumbColor = mainOpp.copy(alpha = 0.6f),
+    disabledCheckedTrackColor = swiftBlue.copy(alpha = 0.38f),
+    disabledCheckedThumbColor = Color.White.copy(alpha = 0.38f),
+    disabledUncheckedTrackColor = mainOpp.copy(alpha = 0.06f),
+    disabledUncheckedBorderColor = mainOpp.copy(alpha = 0.2f),
+    disabledUncheckedThumbColor = mainOpp.copy(alpha = 0.3f),
+)
 
 /**
  * CourseSettingsView
@@ -112,7 +145,7 @@ fun CourseSettingsView(
 
                 if (tier >= 2) {
                     SectionCard(title = "Appearance") { AppearanceSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
-                    SectionCard(title = "Ad") { AdSectionContent(course = currentCourse, courseListVM = courseListVM) }
+                    SectionCard(title = "Ad") { AdSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
                     SectionCard(title = "Leaderboard") { LeaderboardSectionContent(course = currentCourse, courseListVM = courseListVM) }
                 }
 
@@ -169,8 +202,10 @@ private fun CourseSectionContent(course: Course) {
 private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
     var showPassword by remember { mutableStateOf(false) }
     var showChangeDialog by remember { mutableStateOf(false) }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+
+    val newPassword by vm.newPassword.collectAsState()
+    val confirmPassword by vm.confirmPassword.collectAsState()
+    val isValidPassword = newPassword.isNotEmpty() && newPassword == confirmPassword
 
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
@@ -197,16 +232,18 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
 
     HorizontalDivider(color = mainOpp.copy(alpha = 0.1f))
 
-    TextButton(onClick = { showChangeDialog = true }) {
-        Text("Change Password", color = swiftBlue)
+    Button(
+        onClick = { showChangeDialog = true },
+        colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
+    ) {
+        Text("Change Password")
     }
 
     if (showChangeDialog) {
         AlertDialog(
             onDismissRequest = {
+                vm.resetPasswordFields()
                 showChangeDialog = false
-                newPassword = ""
-                confirmPassword = ""
             },
             title = { Text("Change Password", color = mainOpp) },
             text = {
@@ -214,7 +251,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                     Text("Enter and confirm your new password", color = mainOpp)
                     OutlinedTextField(
                         value = newPassword,
-                        onValueChange = { newPassword = it; vm.setNewPassword(it) },
+                        onValueChange = { vm.setNewPassword(it) },
                         label = { Text("New Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -231,7 +268,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                     )
                     OutlinedTextField(
                         value = confirmPassword,
-                        onValueChange = { confirmPassword = it; vm.setConfirmPassword(it) },
+                        onValueChange = { vm.setConfirmPassword(it) },
                         label = { Text("Confirm Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -249,22 +286,19 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         vm.changePassword(course = course, userID = "admin", onCourseUpdated = { courseListVM.setCourse(it) })
                         showChangeDialog = false
-                        newPassword = ""
-                        confirmPassword = ""
                     },
-                    enabled = vm.isValidPassword
-                ) { Text("Save", color = swiftBlue) }
+                    enabled = isValidPassword,
+                    colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
+                ) { Text("Save") }
             },
             dismissButton = {
                 TextButton(onClick = {
                     vm.resetPasswordFields()
                     showChangeDialog = false
-                    newPassword = ""
-                    confirmPassword = ""
                 }) { Text("Cancel", color = colorResource(id = ResColor.swiftRed)) }
             }
         )
@@ -276,30 +310,57 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
 // ---------------------------------------------------------------------------
 @Composable
 private fun SocialLinksSectionContent(course: Course, courseListVM: CourseListViewModel) {
+    var removingIds by remember { mutableStateOf(setOf<String>()) }
+
     course.socialLinks.forEachIndexed { index, link ->
-        SocialLinkRow(
-            index = index,
-            platform = link.platform,
-            url = link.url,
-            onPlatformChange = { courseListVM.updateSocialPlatform(index, it) },
-            onUrlChange = { url ->
+        val isRemoving = link.id in removingIds
+        val visibleState = remember(link.id) {
+            MutableTransitionState(false).apply { targetState = true }
+        }
+
+        // Trigger exit animation when marked for removal
+        if (isRemoving) visibleState.targetState = false
+
+        // Once exit animation finishes, do the real deletion
+        LaunchedEffect(visibleState.isIdle, isRemoving) {
+            if (isRemoving && visibleState.isIdle && !visibleState.currentState) {
                 val updatedLinks = course.socialLinks.toMutableList()
-                updatedLinks[index] = updatedLinks[index].copy(url = url)
-                courseListVM.updateCourseField(debounce = true) { it.copy(socialLinks = updatedLinks) }
-            },
-            onDelete = {
-                val updatedLinks = course.socialLinks.toMutableList()
-                updatedLinks.removeAt(index)
+                val idx = updatedLinks.indexOfFirst { it.id == link.id }
+                if (idx >= 0) updatedLinks.removeAt(idx)
                 courseListVM.updateCourseField { it.copy(socialLinks = updatedLinks) }
+                removingIds = removingIds - link.id
             }
-        )
+        }
+
+        AnimatedVisibility(
+            visibleState = visibleState,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            SocialLinkRow(
+                index = index,
+                platform = link.platform,
+                url = link.url,
+                onPlatformChange = { courseListVM.updateSocialPlatform(index, it) },
+                onUrlChange = { url ->
+                    val updatedLinks = course.socialLinks.toMutableList()
+                    updatedLinks[index] = updatedLinks[index].copy(url = url)
+                    courseListVM.updateCourseField(debounce = true) { it.copy(socialLinks = updatedLinks) }
+                },
+                onDelete = { removingIds = removingIds + link.id }
+            )
+        }
     }
 
     if (course.socialLinks.size < 5) {
-        TextButton(onClick = {
-            val updatedLinks = course.socialLinks + SocialLink(id = generateUUID(), platform = SocialPlatform.DEFAULT, url = "")
-            courseListVM.updateCourseField { it.copy(socialLinks = updatedLinks) }
-        }) {
+        val swiftBlue = colorResource(id = ResColor.swiftBlue)
+        Button(
+            onClick = {
+                val updatedLinks = course.socialLinks + SocialLink(id = generateUUID(), platform = SocialPlatform.DEFAULT, url = "")
+                courseListVM.updateCourseField { it.copy(socialLinks = updatedLinks) }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
+        ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Text("Add Social Link")
         }
@@ -380,25 +441,82 @@ private fun SocialLinkRow(
 private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
+    val context = LocalContext.current
+    val showingLogoPicker by vm.showingPickerLogo.collectAsState()
 
-    // Logo row — stubbed (image upload not wired)
+    // ── Logo row ──────────────────────────────────────────────────────────────
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("Logo:", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
         Spacer(modifier = Modifier.weight(1f))
-        if (course.logo != null) {
-            AsyncImage(
-                model = course.logo,
-                contentDescription = "Course logo",
-                modifier = Modifier.size(60.dp)
-            )
-        } else {
-            Text("None", color = subOpp, style = MaterialTheme.typography.bodySmall)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Tappable thumbnail / placeholder — matches iOS LogoSectionView tap target
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(mainOpp.copy(alpha = 0.08f))
+                    .clickable { vm.setShowingPickerLogo(true) },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (course.logo != null) {
+                    AsyncImage(
+                        model = course.logo,
+                        contentDescription = "Course logo",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp)),
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = "Add logo",
+                        tint = subOpp,
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
+            }
+
+            // Red X delete button — only when logo exists (mirrors iOS xmark.circle.fill)
+            if (course.logo != null) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(Color.Red, CircleShape)
+                        .clip(CircleShape)
+                        .clickable { vm.deleteLogoImage(course) { courseListVM.setCourse(it) } },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Remove logo",
+                        tint = Color.White,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
         }
     }
 
+    // Photo picker — launches when showingLogoPicker becomes true
+    PhotoPicker(
+        show = showingLogoPicker,
+        onImagePicked = { uri ->
+            if (uri != null) {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                if (bytes != null) {
+                    vm.uploadLogoImageAndroid(bytes, course) { courseListVM.setCourse(it) }
+                }
+            }
+        },
+        onDismiss = { vm.setShowingPickerLogo(false) },
+    )
+
     HorizontalDivider(color = mainOpp.copy(alpha = 0.1f))
 
-    // Scorecard Color row
+    // ── Scorecard Color row ───────────────────────────────────────────────────
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("Scorecard Color:", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
         Spacer(modifier = Modifier.weight(1f))
@@ -408,37 +526,35 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
                 courseListVM.setAddTarget(ColorAddTarget.SCORE_CARD_COLOR)
                 courseListVM.setShowColor(true)
             },
-            deleteFunction = { vm.deleteColor(ColorDeleteTarget.ScoreCardColor, course) { courseListVM.setCourse(it) } }
+            deleteFunction = { vm.deleteColor(ColorDeleteTarget.ScoreCardColor, course) { courseListVM.setCourse(it) } },
         )
     }
 
     HorizontalDivider(color = mainOpp.copy(alpha = 0.1f))
 
-    // Course Colors row
+    // ── Course Colors row ─────────────────────────────────────────────────────
     Column {
         Text("Course Colors", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             course.courseColorsDT?.forEachIndexed { index, dt ->
-                val color = dt.toComposeColor()
                 ColorHolderView(
-                    color = color,
+                    color = dt.toComposeColor(),
                     showFunction = {},
-                    deleteFunction = { vm.deleteColor(ColorDeleteTarget.CourseColor(index), course) { courseListVM.setCourse(it) } }
+                    deleteFunction = { vm.deleteColor(ColorDeleteTarget.CourseColor(index), course) { courseListVM.setCourse(it) } },
                 )
             }
-            // "+" add button
             ColorHolderView(
                 color = null,
                 showFunction = {
                     courseListVM.setAddTarget(ColorAddTarget.COURSE_COLOR)
                     courseListVM.setShowColor(true)
                 },
-                deleteFunction = {}
+                deleteFunction = {},
             )
         }
     }
@@ -448,8 +564,10 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
 // Ad section
 // ---------------------------------------------------------------------------
 @Composable
-private fun AdSectionContent(course: Course, courseListVM: CourseListViewModel) {
+private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
     var adActive by remember(course.customAdActive) { mutableStateOf(course.customAdActive) }
+    val showingAdPicker by vm.showingPickerAd.collectAsState()
+    val context = LocalContext.current
 
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
@@ -459,10 +577,14 @@ private fun AdSectionContent(course: Course, courseListVM: CourseListViewModel) 
 
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("Ad Active:", style = MaterialTheme.typography.bodyMedium, color = mainOpp, modifier = Modifier.weight(1f))
-        Switch(checked = adActive, onCheckedChange = { newValue ->
-            adActive = newValue
-            courseListVM.updateCourseField { it.copy(customAdActive = newValue) }
-        })
+        Switch(
+            checked = adActive,
+            onCheckedChange = { newValue ->
+                adActive = newValue
+                courseListVM.updateCourseField { it.copy(customAdActive = newValue) }
+            },
+            colors = appSwitchColors(swiftBlue = swiftBlue, mainOpp = mainOpp)
+        )
     }
 
     if (adActive) {
@@ -533,12 +655,72 @@ private fun AdSectionContent(course: Course, courseListVM: CourseListViewModel) 
                 unfocusedBorderColor = subThreeOpp
             )
         )
-        // Ad image — stubbed (image upload not wired)
+        // Ad image row
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("Ad Image:", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
             Spacer(modifier = Modifier.weight(1f))
-            Text("(upload not yet wired)", style = MaterialTheme.typography.bodySmall, color = subOpp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(mainOpp.copy(alpha = 0.08f))
+                        .clickable { vm.setShowingPickerAd(true) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (course.adImage != null) {
+                        AsyncImage(
+                            model = course.adImage,
+                            contentDescription = "Ad image",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(8.dp)),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "Add ad image",
+                            tint = subOpp,
+                            modifier = Modifier.size(32.dp),
+                        )
+                    }
+                }
+
+                if (course.adImage != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(Color.Red, CircleShape)
+                            .clip(CircleShape)
+                            .clickable { vm.deleteAdImage(course) { courseListVM.setCourse(it) } },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Remove ad image",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                }
+            }
         }
+
+        PhotoPicker(
+            show = showingAdPicker,
+            onImagePicked = { uri ->
+                if (uri != null) {
+                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    if (bytes != null) {
+                        vm.uploadAdImageAndroid(bytes, course) { courseListVM.setCourse(it) }
+                    }
+                }
+            },
+            onDismiss = { vm.setShowingPickerAd(false) },
+        )
     }
 }
 
@@ -550,6 +732,7 @@ private fun LeaderboardSectionContent(course: Course, courseListVM: CourseListVi
     var lbActive by remember(course.leaderBoardActive) { mutableStateOf(course.leaderBoardActive) }
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
+    val swiftBlue = colorResource(id = ResColor.swiftBlue)
 
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("Leaderboard Active:", style = MaterialTheme.typography.bodyMedium, color = mainOpp, modifier = Modifier.weight(1f))
@@ -559,7 +742,8 @@ private fun LeaderboardSectionContent(course: Course, courseListVM: CourseListVi
                 lbActive = newValue
                 courseListVM.updateCourseField { it.copy(leaderBoardActive = newValue) }
             },
-            enabled = course.customPar
+            enabled = course.customPar,
+            colors = appSwitchColors(swiftBlue = swiftBlue, mainOpp = mainOpp)
         )
     }
 
@@ -609,6 +793,7 @@ private fun ParConfigurationSectionContent(
     val mainOpp  = colorResource(id = ResColor.mainOpp)
     val subOpp   = colorResource(id = ResColor.subOpp)
     val swiftRed = colorResource(id = ResColor.swiftRed)
+    val swiftBlue = colorResource(id = ResColor.swiftBlue)
     val subThree = colorResource(id = ResColor.subThree)
 
     // ── "Par Configuration" section ──────────────────────────────────────────
@@ -632,7 +817,8 @@ private fun ParConfigurationSectionContent(
                         // Mirror iOS: initialise 18 holes all par-2, set customPar = true
                         courseListVM.updateCustomPar(true)
                     }
-                }
+                },
+                colors = appSwitchColors(swiftBlue = swiftBlue, mainOpp = mainOpp)
             )
         }
 
@@ -691,7 +877,7 @@ private fun ParConfigurationSectionContent(
         }
 
         // "Show Configuration" toggle section
-        SectionCard(title = "") {
+        SectionCard {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "Show Configuration",
@@ -701,27 +887,29 @@ private fun ParConfigurationSectionContent(
                 )
                 Switch(
                     checked = showParConfig,
-                    onCheckedChange = { vm.setShowParConfiguration(it) }
+                    onCheckedChange = { vm.setShowParConfiguration(it) },
+                    colors = appSwitchColors(swiftBlue = swiftBlue, mainOpp = mainOpp)
                 )
             }
         }
 
         // Per-hole configuration — only visible when showParConfig is true
         if (showParConfig) {
-            SectionCard(title = "") {
+            SectionCard {
                 // Number of holes stepper (mirrors iOS NumberPickerView min=9 max=21)
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         "Number Of Holes",
                         style = MaterialTheme.typography.bodyMedium,
                         color = mainOpp,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(2f)
                     )
                     StepperControl(
                         value = pars.size,
-                        min = 9,
-                        max = 21,
-                        onValueChange = { courseListVM.updateNumHoles(it) }
+                        onDecrement = { if (pars.size > 9) courseListVM.updateNumHoles(pars.size - 1) },
+                        onIncrement = { if (pars.size < 21) courseListVM.updateNumHoles(pars.size + 1) },
+                        textColor = mainOpp,
+                        modifier = Modifier.weight(1.5f)
                     )
                 }
 
@@ -737,13 +925,14 @@ private fun ParConfigurationSectionContent(
                             "Hole ${index + 1}:",
                             style = MaterialTheme.typography.bodyMedium,
                             color = mainOpp,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(2f)
                         )
                         StepperControl(
                             value = par,
-                            min = 0,
-                            max = 10,
-                            onValueChange = { courseListVM.updatePar(index = index, newPar = it) }
+                            onDecrement = { if (par > 0) courseListVM.updatePar(index = index, newPar = par - 1) },
+                            onIncrement = { if (par < 10) courseListVM.updatePar(index = index, newPar = par + 1) },
+                            textColor = mainOpp,
+                            modifier = Modifier.weight(1.5f)
                         )
                     }
                     if (index < pars.lastIndex) {
@@ -787,28 +976,3 @@ private fun ParConfigurationSectionContent(
     }
 }
 
-// Simple +/- stepper replacing iOS NumberPickerView wheel
-@Composable
-private fun StepperControl(value: Int, min: Int, max: Int, onValueChange: (Int) -> Unit) {
-    val mainOpp = colorResource(id = ResColor.mainOpp)
-    val swiftBlue = colorResource(id = ResColor.swiftBlue)
-
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        TextButton(
-            onClick = { if (value > min) onValueChange(value - 1) },
-            enabled = value > min
-        ) { Text("−", style = MaterialTheme.typography.titleMedium, color = if (value > min) swiftBlue else mainOpp.copy(alpha = 0.3f)) }
-
-        Text(
-            text = "$value",
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
-            modifier = Modifier.width(28.dp),
-            color = mainOpp
-        )
-
-        TextButton(
-            onClick = { if (value < max) onValueChange(value + 1) },
-            enabled = value < max
-        ) { Text("+", style = MaterialTheme.typography.titleMedium, color = if (value < max) swiftBlue else mainOpp.copy(alpha = 0.3f)) }
-    }
-}

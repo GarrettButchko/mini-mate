@@ -60,6 +60,7 @@ import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.game.fix.GameInfoViewAndroid
 import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
+import com.garrettbutchko.minimate.content.helper.StepperControl
 import com.garrettbutchko.minimate.content.helper.modifiers.SyncScrollStates
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import com.garrettbutchko.minimate.logic.ScoreCardBusinessLogic
@@ -299,27 +300,13 @@ fun ScoreCardGameView(
                                 for (i in 1..holeCount) {
                                     if (i > 1) HorizontalDivider(color = scoreGridDividerColor)
                                     val strokes = player.holes.firstOrNull { it.number == i }?.strokes ?: 0
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().height(60.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        IconButton(onClick = {
-                                            gameModel.updateHoleStroke(player.id, i, (strokes - 1).coerceAtLeast(0))
-                                        }) {
-                                            Icon(Icons.Default.Remove, contentDescription = "Decrease", tint = primaryTextColor)
-                                        }
-                                        Text(
-                                            text = strokes.toString(),
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = primaryTextColor
-                                        )
-                                        IconButton(onClick = {
-                                            gameModel.updateHoleStroke(player.id, i, (strokes + 1).coerceAtMost(10))
-                                        }) {
-                                            Icon(Icons.Default.Add, contentDescription = "Increase", tint = primaryTextColor)
-                                        }
-                                    }
+                                    StepperControl(
+                                        value = strokes,
+                                        onDecrement = { gameModel.updateHoleStroke(player.id, i, (strokes - 1).coerceAtLeast(0)) },
+                                        onIncrement = { gameModel.updateHoleStroke(player.id, i, (strokes + 1).coerceAtMost(10)) },
+                                        textColor = primaryTextColor,
+                                        modifier = Modifier.fillMaxWidth().height(60.dp)
+                                    )
                                 }
                             }
                         }
@@ -470,3 +457,4 @@ fun ScoreCardGameView(
         )
     }
 }
+

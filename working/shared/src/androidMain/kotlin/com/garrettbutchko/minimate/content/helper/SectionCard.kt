@@ -17,19 +17,21 @@ import com.garrettbutchko.minimate.shared.R
 
 @Composable
 fun SectionCard(
-    title: String,
+    title: String? = null,
     content: @Composable () -> Unit
 ) {
     val mainOppColor = colorResource(id = R.color.mainOpp)
     val subColor = colorResource(id = R.color.sub)
 
     Column {
-        Text(
-            title,
-            modifier = Modifier.padding(start = 16.dp),
-            fontWeight = FontWeight.Bold,
-            color = mainOppColor
-        )
+        if (title != null) {
+            Text(
+                title,
+                modifier = Modifier.padding(start = 16.dp),
+                fontWeight = FontWeight.Bold,
+                color = mainOppColor
+            )
+        }
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
