@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -41,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -52,14 +54,20 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.tabviews.leaderboard.LeaderBoardView
 import com.garrettbutchko.minimate.content.tabviews.tournament.TournamentView
-import com.garrettbutchko.minimate.viewModels.CourseListViewModel
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.toComposeColor
+import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import kotlinx.coroutines.launch
+import com.garrettbutchko.minimate.content.TitleView
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.colorResource
+import com.garrettbutchko.minimate.shared.R.color as ResColor
+import com.garrettbutchko.minimate.content.tabviews.analytics.charts.HealthRatingChart
+import com.garrettbutchko.minimate.content.tabviews.analytics.charts.SectionHealthDetailView
+import com.garrettbutchko.minimate.modelKotlinExtensions.courseColors
 
 /**
  * MainView
@@ -90,14 +98,18 @@ fun MainView(
 ) {
     var showLeaderboardSheet by remember { mutableStateOf(false) }
     var showTournamentSheet by remember { mutableStateOf(false) }
-    val leaderboardSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    val tournamentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val leaderboardSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val tournamentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    val scoreCardColor = course?.scoreCardColorDT?.toComposeColor()
+    val subColor = Color.subVsColor(makeColor = scoreCardColor)
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally,
+
     ) {
         // Header row: back button + course name + logo + avatar
         MainViewHeader(
@@ -107,8 +119,7 @@ fun MainView(
             onProfileTap = onProfileTap
         )
 
-        // Course color banner — replaces iOS TitleView
-        CourseBanner(course = course)
+        TitleView(colors = course?.courseColors, isManager = true)
 
         // Health chart + action buttons area
         Box(modifier = Modifier.fillMaxSize()) {
@@ -118,7 +129,7 @@ fun MainView(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp)
-                    .padding(top = 100.dp) // space for floating buttons bar
+                    .padding(top = 108.dp) // space for floating buttons bar
                     .padding(bottom = 16.dp)
             ) {
                 HealthSection(course = course, analyticsVM = analyticsVM)
@@ -141,7 +152,7 @@ fun MainView(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(25.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    color = subColor,
                     tonalElevation = 4.dp
                 ) {
                     Row(
@@ -174,7 +185,8 @@ fun MainView(
     if (showLeaderboardSheet) {
         ModalBottomSheet(
             onDismissRequest = { showLeaderboardSheet = false },
-            sheetState = leaderboardSheetState
+            sheetState = leaderboardSheetState,
+            containerColor = colorResource(id = ResColor.bg)
         ) {
             LeaderBoardView(vm = leaderboardVM, course = course)
         }
@@ -184,7 +196,8 @@ fun MainView(
     if (showTournamentSheet) {
         ModalBottomSheet(
             onDismissRequest = { showTournamentSheet = false },
-            sheetState = tournamentSheetState
+            sheetState = tournamentSheetState,
+            containerColor = colorResource(id = ResColor.bg)
         ) {
             TournamentView(modifier = Modifier.height(500.dp))
         }
@@ -274,51 +287,34 @@ private fun MainViewHeader(
 }
 
 // ---------------------------------------------------------------------------
-// CourseBanner — stand-in for iOS TitleView
-// ---------------------------------------------------------------------------
-@Composable
-private fun CourseBanner(course: Course?) {
-    val colors = course?.courseColorsDT
-    val bannerBrush = if (!colors.isNullOrEmpty()) {
-        val composeColors = colors.mapNotNull { it.toComposeColor() }
-
-        if (composeColors.size >= 2) {
-            Brush.horizontalGradient(composeColors)
-        } else {
-            Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary))
-        }
-    } else {
-        Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary))
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .background(bannerBrush)
-    )
-}
-
-// ---------------------------------------------------------------------------
 // Health section
 // ---------------------------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
     val isTierGated = (course?.tier ?: 0) < 3
     val isLoadingHealth by analyticsVM.isLoadingHealth.collectAsState()
     val healthReport by analyticsVM.healthReport.collectAsState()
+    val scoreCardColor = course?.scoreCardColorDT?.toComposeColor()
+    val cardBackground = Color.subVsColor(makeColor = scoreCardColor)
+    var showHealthSheet by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        Surface(
+        // Content — blurred when tier-gated, matching iOS .blur(radius: 6)
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(375.dp),
-            shape = RoundedCornerShape(25.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant
+                .height(375.dp)
+                .then(if (isTierGated) Modifier.blur(6.dp) else Modifier)
         ) {
             when {
                 isLoadingHealth -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(cardBackground, RoundedCornerShape(25.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -333,19 +329,35 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
                     }
                 }
                 healthReport != null -> {
-                    // HealthRatingChart already converted — render it directly
-                    // Sheet on tap (SectionHealthDetailView) is stubbed
-                    com.garrettbutchko.minimate.content.tabviews.analytics.charts.HealthRatingChart(
-                        healthReport = healthReport!!,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isTierGated) { showHealthSheet = true }
+                    ) {
+                        HealthRatingChart(
+                            healthReport = healthReport!!,
+                            makeColor = scoreCardColor,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
                 else -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(cardBackground, RoundedCornerShape(25.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.BarChart,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(48.dp)
+                            )
                             Text(
                                 text = "No Health Data Available",
                                 style = MaterialTheme.typography.titleMedium,
@@ -362,13 +374,12 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
             }
         }
 
-        // Tier gate overlay
+        // Tier gate — no background, floats over blurred content matching iOS
         if (isTierGated) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(375.dp)
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.65f), RoundedCornerShape(25.dp)),
+                    .height(375.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -380,6 +391,17 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
                     Text("Unlock Course Health Analytics", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+        }
+    }
+
+    if (showHealthSheet && healthReport != null) {
+        ModalBottomSheet(
+            onDismissRequest = { showHealthSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            dragHandle = null,
+            containerColor = MaterialTheme.colorScheme.background
+        ) {
+            SectionHealthDetailView(healthReport = healthReport!!)
         }
     }
 }

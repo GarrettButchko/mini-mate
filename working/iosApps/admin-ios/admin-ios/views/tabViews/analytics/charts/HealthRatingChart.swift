@@ -23,7 +23,6 @@ struct HealthRatingChart: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.mainOpp)
                 Spacer()
-                InfoButton(infoText: "...")
             }
             
             VStack(alignment: .center, spacing: 20) {

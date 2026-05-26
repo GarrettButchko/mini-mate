@@ -1,7 +1,11 @@
 package com.garrettbutchko.minimate.content.tabviews.analytics.charts
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,9 +32,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -41,6 +45,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
+import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsSection
 import com.garrettbutchko.minimate.viewModels.analytics.CourseHealthReport
 import com.garrettbutchko.minimate.viewModels.analytics.HealthGrade
@@ -85,101 +91,107 @@ private val AnalyticsSection.color: Color
 @Composable
 fun HealthRatingChart(
     healthReport: CourseHealthReport,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    makeColor: Color? = null
 ) {
-    val animatedScore by animateFloatAsState(
-        targetValue = healthReport.overallScore.toFloat(),
-        animationSpec = tween(durationMillis = 1000),
-        label = "health_score"
-    )
+    val scoreAnimatable = remember { Animatable(0f) }
+    LaunchedEffect(healthReport.overallScore) {
+        scoreAnimatable.snapTo(0f)
+        scoreAnimatable.animateTo(
+            targetValue = healthReport.overallScore.toFloat(),
+            animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+        )
+    }
+    val animatedScore = scoreAnimatable.value
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(25.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+    val trackColor = Color.subTwoVsColor(makeColor = makeColor)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(25.dp))
+            .background(Color.subVsColor(makeColor = makeColor))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Course Health Rating",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Course Health Rating",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            Box(
+                modifier = Modifier.size(width = 160.dp, height = 110.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                GaugeCanvas(
+                    score = animatedScore,
+                    trackColor = trackColor
                 )
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Info",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    Text(
+                        text = "${animatedScore.toInt()}",
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = healthReport.overallGrade.color,
+                        lineHeight = 40.sp
+                    )
+                    Text(
+                        text = healthReport.overallGrade.rawValue,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = healthReport.overallGrade.color
+                    )
+                }
             }
 
-            Column(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(
-                    modifier = Modifier.size(width = 160.dp, height = 100.dp),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    GaugeCanvas(score = animatedScore, gradeColor = healthReport.overallGrade.color)
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.align(Alignment.Center)
-                    ) {
-                        Text(
-                            text = "${animatedScore.toInt()}",
-                            fontSize = 40.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = healthReport.overallGrade.color,
-                            lineHeight = 40.sp
-                        )
-                        Text(
-                            text = healthReport.overallGrade.rawValue,
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = healthReport.overallGrade.color
-                        )
-                    }
+                    MiniStatCard(
+                        title = "Growth",
+                        score = healthReport.growthHealth.score,
+                        grade = healthReport.growthHealth.grade,
+                        makeColor = makeColor
+                    )
+                    MiniStatCard(
+                        title = "Operations",
+                        score = healthReport.operationsHealth.score,
+                        grade = healthReport.operationsHealth.grade,
+                        makeColor = makeColor
+                    )
                 }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MiniStatCard(
-                            title = "Growth",
-                            score = healthReport.growthHealth.score,
-                            grade = healthReport.growthHealth.grade
-                        )
-                        MiniStatCard(
-                            title = "Operations",
-                            score = healthReport.operationsHealth.score,
-                            grade = healthReport.operationsHealth.grade
-                        )
-                    }
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MiniStatCard(
-                            title = "Retention",
-                            score = healthReport.retentionHealth.score,
-                            grade = healthReport.retentionHealth.grade
-                        )
-                        MiniStatCard(
-                            title = "Experience",
-                            score = healthReport.experienceHealth.score,
-                            grade = healthReport.experienceHealth.grade
-                        )
-                    }
+                    MiniStatCard(
+                        title = "Retention",
+                        score = healthReport.retentionHealth.score,
+                        grade = healthReport.retentionHealth.grade,
+                        makeColor = makeColor
+                    )
+                    MiniStatCard(
+                        title = "Experience",
+                        score = healthReport.experienceHealth.score,
+                        grade = healthReport.experienceHealth.grade,
+                        makeColor = makeColor
+                    )
                 }
             }
         }
@@ -187,8 +199,7 @@ fun HealthRatingChart(
 }
 
 @Composable
-private fun GaugeCanvas(score: Float, gradeColor: Color) {
-    val trackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
+private fun GaugeCanvas(score: Float, trackColor: Color) {
     val gradientColors = when {
         score >= 85f -> listOf(Color(0xFF34C759), Color(0xFF34C759).copy(alpha = 0.7f))
         score >= 70f -> listOf(Color(0xFF0088FF), Color(0xFF64D2FF))
@@ -199,9 +210,12 @@ private fun GaugeCanvas(score: Float, gradeColor: Color) {
     androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
         val strokeWidth = 12.dp.toPx()
         val cx = size.width / 2f
-        // Center below canvas bottom so only the upper arc portion is visible
-        val cy = size.height + strokeWidth
-        val r = size.width / 2f - strokeWidth / 2f
+        // Mirror iOS: arc ZStack is offset(y: 150) inside a 160×110 frame.
+        // The shape draws with center at (midX, minY), so after the offset the center
+        // sits 150/110 * canvasHeight below the canvas top — i.e. 40dp below the bottom.
+        val cy = size.height * (150f / 110f)
+        // Mirror iOS: radius = min(rect.width, rect.height * 2)
+        val r = minOf(size.width, size.height * 2f)
 
         val startAngle = 200f
         val totalSweep = 140f
@@ -230,41 +244,39 @@ private fun GaugeCanvas(score: Float, gradeColor: Color) {
 }
 
 @Composable
-private fun MiniStatCard(title: String, score: Double, grade: HealthGrade) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface
+private fun MiniStatCard(title: String, score: Double, grade: HealthGrade, makeColor: Color?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.subTwoVsColor(makeColor = makeColor))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            maxLines = 1
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                maxLines = 1
+                text = "${score.toInt()}%",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = grade.color
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            Surface(
+                shape = CircleShape,
+                color = grade.color
             ) {
                 Text(
-                    text = "${score.toInt()}%",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = grade.color
+                    text = grade.rawValue,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                 )
-                Surface(
-                    shape = CircleShape,
-                    color = grade.color
-                ) {
-                    Text(
-                        text = grade.rawValue,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
             }
         }
     }
@@ -277,17 +289,13 @@ fun SectionHealthDetailView(
     healthReport: CourseHealthReport,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = "Health Breakdown",
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-        )
-
+    Box(modifier = modifier.fillMaxSize()) {
+        // Scrollable content — top padding leaves room for the floating header
         Column(
             modifier = Modifier
+                .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(top = 88.dp, start = 16.dp, end = 16.dp, bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             HealthSectionCard(rating = healthReport.growthHealth)
@@ -296,49 +304,88 @@ fun SectionHealthDetailView(
             HealthSectionCard(rating = healthReport.retentionHealth)
 
             if (healthReport.topInsights.isNotEmpty()) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.subTwoVsColor(makeColor = null))
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Key Insights",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                        )
-                        healthReport.topInsights.take(5).forEach { (insight, section) ->
-                            InsightRowView(insight = insight, section = section)
-                        }
+                    Text(
+                        text = "Key Insights",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    healthReport.topInsights.take(5).forEach { (insight, section) ->
+                        InsightRowView(insight = insight, section = section)
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
         }
+
+        // Top fade gradient — sits behind the floating header, matching iOS mask effect
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(104.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // Floating header
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 32.dp, bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Health Breakdown",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+
+        // Bottom fade gradient
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background)
+                    )
+                )
+        )
     }
 }
 
 @Composable
 private fun HealthSectionCard(rating: SectionHealthRating) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+    val subTwoColor = Color.subTwoVsColor(makeColor = null)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(subTwoColor, RoundedCornerShape(12.dp))
+            .border(1.dp, rating.section.color.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            SectionCardHeader(rating = rating)
-            SectionCardProgressBar(score = rating.score, gradeColor = rating.grade.color)
-            if (rating.insights.isNotEmpty()) {
-                SectionCardInsightsList(insights = rating.insights)
-            }
+        SectionCardHeader(rating = rating)
+        SectionCardProgressBar(score = rating.score, gradeColor = rating.grade.color)
+        if (rating.insights.isNotEmpty()) {
+            SectionCardInsightsList(insights = rating.insights)
         }
     }
 }
