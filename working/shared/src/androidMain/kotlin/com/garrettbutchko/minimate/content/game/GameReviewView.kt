@@ -85,7 +85,7 @@ fun GameReviewView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp).padding(bottom = 16.dp)
+            .padding(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -95,8 +95,7 @@ fun GameReviewView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(IntrinsicSize.Min)
-                    .padding(top = 16.dp),
+                    .height(IntrinsicSize.Min),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Left column with title; capture its measured height so the course logo can match it
@@ -416,7 +415,7 @@ fun GameReviewView(
                 if (isInCourseSettings) {
                     val currentCourse = course
                     if (currentCourse?.customAdActive == true) {
-                        Button(
+                        Surface(
                             onClick = {
                                 val link = currentCourse.adLink
                                 if (!link.isNullOrEmpty()) {
@@ -424,20 +423,19 @@ fun GameReviewView(
                                     context.startActivity(intent)
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(16.dp),
-                            shape = RoundedCornerShape(12.dp)
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            color = Color.Transparent
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     currentCourse.adTitle?.let {
-                                        Text(it, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
+                                        Text(it, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = primaryTextColor)
                                     }
                                     currentCourse.adDescription?.let {
-                                        Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f))
+                                        Text(it, fontSize = 12.sp, color = secondaryTextColor)
                                     }
                                 }
                                 currentCourse.adImage?.takeIf { it.isNotEmpty() }?.let { adImage ->
@@ -450,6 +448,7 @@ fun GameReviewView(
                                             .clip(RoundedCornerShape(12.dp))
                                     )
                                 }
+                                Spacer(modifier = Modifier.width(16.dp))
                             }
                         }
                     } else if (currentCourse?.customAdActive == false) {

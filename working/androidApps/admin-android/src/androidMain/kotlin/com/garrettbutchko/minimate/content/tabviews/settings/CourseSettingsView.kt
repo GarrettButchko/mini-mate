@@ -1,6 +1,7 @@
 package com.garrettbutchko.minimate.content.tabviews.settings
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -37,20 +38,24 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -65,6 +70,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.garrettbutchko.minimate.content.helper.ButtonColors
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.content.helper.InfoRow
 import com.garrettbutchko.minimate.content.helper.PhotoPicker
@@ -72,10 +78,14 @@ import com.garrettbutchko.minimate.content.helper.SectionCard
 import com.garrettbutchko.minimate.content.helper.StepperControl
 import com.garrettbutchko.minimate.viewModelsAndroidAddOns.uploadAdImageAndroid
 import com.garrettbutchko.minimate.viewModelsAndroidAddOns.uploadLogoImageAndroid
+import com.garrettbutchko.minimate.content.game.GameReviewView
 import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.toComposeColor
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialLink
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
+import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.dataModels.holeModels.Hole
+import com.garrettbutchko.minimate.dataModels.playerModels.Player
 import com.garrettbutchko.minimate.viewModels.ColorAddTarget
 import com.garrettbutchko.minimate.viewModels.ColorDeleteTarget
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
@@ -125,7 +135,7 @@ fun CourseSettingsView(
             .background(bgColor)
     ) {
         // Header
-        CourseSettingsHeaderView(vm = courseSettingsVM)
+        CourseSettingsHeaderView(vm = courseSettingsVM, courseListVM = courseListVM)
 
         course?.let { currentCourse ->
             Column(
@@ -160,8 +170,13 @@ fun CourseSettingsView(
 // ---------------------------------------------------------------------------
 // Header
 // ---------------------------------------------------------------------------
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CourseSettingsHeaderView(vm: CourseSettingsViewModel) {
+private fun CourseSettingsHeaderView(vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
+    val showReviewSheet by vm.showReviewSheet.collectAsState()
+    val course by courseListVM.selectedCourse.collectAsState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -174,9 +189,43 @@ private fun CourseSettingsHeaderView(vm: CourseSettingsViewModel) {
             color = colorResource(id = ResColor.mainOpp),
             modifier = Modifier.weight(1f)
         )
-        // "User View" button
         TextButton(onClick = { vm.setShowReviewSheet(true) }) {
             Text("User View", color = colorResource(id = ResColor.swiftBlue))
+        }
+    }
+
+    if (showReviewSheet) {
+        course?.let { currentCourse ->
+            val holeCount = if (currentCourse.pars.isEmpty()) 18 else currentCourse.pars.size
+            val holes1 = remember(holeCount) { (1..holeCount).map { n -> Hole(number = n, strokes = (1..6).random()) } }
+            val holes2 = remember(holeCount) { (1..holeCount).map { n -> Hole(number = n, strokes = (1..6).random()) } }
+
+            ModalBottomSheet(
+                onDismissRequest = { vm.setShowReviewSheet(false) },
+                sheetState = sheetState,
+                containerColor = colorResource(id = ResColor.bg)
+            ) {
+                GameReviewView(
+                    game = Game(
+                        id = "EXAMPLE",
+                        hostUserId = "admin",
+                        completed = true,
+                        numberOfHoles = holeCount,
+                        started = true,
+                        dismissed = false,
+                        live = false,
+                        courseID = currentCourse.id,
+                        locationName = currentCourse.name,
+                        players = listOf(
+                            Player(id = "1", userId = "Example 1", name = "Garrett", holes = holes1),
+                            Player(id = "2", userId = "Example 2", name = "Joey", holes = holes2)
+                        )
+                    ),
+                    showBackToStatsButton = true,
+                    isInCourseSettings = true,
+                    onDismiss = { vm.setShowReviewSheet(false) }
+                )
+            }
         }
     }
 }
@@ -310,59 +359,55 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
 // ---------------------------------------------------------------------------
 @Composable
 private fun SocialLinksSectionContent(course: Course, courseListVM: CourseListViewModel) {
-    var removingIds by remember { mutableStateOf(setOf<String>()) }
+    val links = course.socialLinks
+    var visibleIds by remember { mutableStateOf(links.map { it.id }.toSet()) }
 
-    course.socialLinks.forEachIndexed { index, link ->
-        val isRemoving = link.id in removingIds
-        val visibleState = remember(link.id) {
-            MutableTransitionState(false).apply { targetState = true }
-        }
-
-        // Trigger exit animation when marked for removal
-        if (isRemoving) visibleState.targetState = false
-
-        // Once exit animation finishes, do the real deletion
-        LaunchedEffect(visibleState.isIdle, isRemoving) {
-            if (isRemoving && visibleState.isIdle && !visibleState.currentState) {
-                val updatedLinks = course.socialLinks.toMutableList()
-                val idx = updatedLinks.indexOfFirst { it.id == link.id }
-                if (idx >= 0) updatedLinks.removeAt(idx)
-                courseListVM.updateCourseField { it.copy(socialLinks = updatedLinks) }
-                removingIds = removingIds - link.id
-            }
-        }
-
-        AnimatedVisibility(
-            visibleState = visibleState,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            SocialLinkRow(
-                index = index,
-                platform = link.platform,
-                url = link.url,
-                onPlatformChange = { courseListVM.updateSocialPlatform(index, it) },
-                onUrlChange = { url ->
-                    val updatedLinks = course.socialLinks.toMutableList()
-                    updatedLinks[index] = updatedLinks[index].copy(url = url)
-                    courseListVM.updateCourseField(debounce = true) { it.copy(socialLinks = updatedLinks) }
-                },
-                onDelete = { removingIds = removingIds + link.id }
-            )
+    LaunchedEffect(links) {
+        val currentIds = links.map { it.id }.toSet()
+        if (visibleIds != currentIds) {
+            visibleIds = currentIds
         }
     }
 
-    if (course.socialLinks.size < 5) {
-        val swiftBlue = colorResource(id = ResColor.swiftBlue)
-        Button(
-            onClick = {
-                val updatedLinks = course.socialLinks + SocialLink(id = generateUUID(), platform = SocialPlatform.DEFAULT, url = "")
-                courseListVM.updateCourseField { it.copy(socialLinks = updatedLinks) }
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = null)
-            Text("Add Social Link")
+    Column(
+        modifier = Modifier.animateContentSize()
+    ) {
+        links.forEachIndexed { index, link ->
+            key(link.id) {
+                AnimatedVisibility(
+                    visible = link.id in visibleIds,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    SocialLinkRow(
+                        index = index,
+                        platform = link.platform,
+                        url = link.url,
+                        onPlatformChange = { courseListVM.updateSocialPlatform(index, it) },
+                        onUrlChange = { url -> courseListVM.updateSocialLinkUrl(index, url) },
+                        onDelete = {
+                            visibleIds = visibleIds - link.id
+                            courseListVM.removeSocialLink(link.id, delayMs = 300)
+                        }
+                    )
+                    if (index != (links.size - 1)) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+        }
+
+        if (course.socialLinks.size < 5) {
+            val swiftBlue = colorResource(id = ResColor.swiftBlue)
+            Button(
+                onClick = {
+                    courseListVM.addSocialLink(SocialLink(id = generateUUID(), platform = SocialPlatform.DEFAULT, url = ""))
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Text("Add Social Link")
+            }
         }
     }
 }
@@ -795,6 +840,7 @@ private fun ParConfigurationSectionContent(
     val swiftRed = colorResource(id = ResColor.swiftRed)
     val swiftBlue = colorResource(id = ResColor.swiftBlue)
     val subThree = colorResource(id = ResColor.subThree)
+    val sub      = colorResource(id = ResColor.sub)
 
     // ── "Par Configuration" section ──────────────────────────────────────────
     SectionCard(title = "Par Configuration") {
@@ -905,11 +951,12 @@ private fun ParConfigurationSectionContent(
                         modifier = Modifier.weight(2f)
                     )
                     StepperControl(
+                        modifier = Modifier.weight(1.5f),
                         value = pars.size,
                         onDecrement = { if (pars.size > 9) courseListVM.updateNumHoles(pars.size - 1) },
                         onIncrement = { if (pars.size < 21) courseListVM.updateNumHoles(pars.size + 1) },
                         textColor = mainOpp,
-                        modifier = Modifier.weight(1.5f)
+                        buttonColors = ButtonColors.DIFFERENT(minus = colorResource(id = ResColor.swiftRed), plus = colorResource(id = ResColor.swiftGreen))
                     )
                 }
 
@@ -928,11 +975,12 @@ private fun ParConfigurationSectionContent(
                             modifier = Modifier.weight(2f)
                         )
                         StepperControl(
+                            modifier = Modifier.weight(1.5f),
                             value = par,
                             onDecrement = { if (par > 0) courseListVM.updatePar(index = index, newPar = par - 1) },
                             onIncrement = { if (par < 10) courseListVM.updatePar(index = index, newPar = par + 1) },
                             textColor = mainOpp,
-                            modifier = Modifier.weight(1.5f)
+                            buttonColors = ButtonColors.DIFFERENT(minus = colorResource(id = ResColor.swiftRed), plus = colorResource(id = ResColor.swiftGreen))
                         )
                     }
                     if (index < pars.lastIndex) {

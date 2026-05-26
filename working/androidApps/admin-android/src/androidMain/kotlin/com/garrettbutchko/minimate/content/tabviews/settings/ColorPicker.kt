@@ -66,7 +66,7 @@ fun ColorPickerView(
                         color = color,
                         disabled = isDisabled && notScoreCard,
                         onClick = {
-                            if (!isDisabled) {
+                            if (!(isDisabled && notScoreCard)) {
                                 onColorSelected(color)
                                 onDismiss()
                             }

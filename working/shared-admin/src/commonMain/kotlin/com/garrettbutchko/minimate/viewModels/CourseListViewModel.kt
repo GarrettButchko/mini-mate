@@ -1,6 +1,7 @@
 package com.garrettbutchko.minimate.viewModels
 
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
+import com.garrettbutchko.minimate.dataModels.courseModels.SocialLink
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
 import com.garrettbutchko.minimate.repositories.CourseLeaderboardRepository
 import com.garrettbutchko.minimate.repositories.CourseRepository
@@ -284,6 +285,34 @@ open class CourseListViewModel(
         
         _selectedCourse.value = currentCourse.copy(socialLinks = updatedLinks)
         if (debounce) debouncedSave() else immediateSave()
+    }
+
+    fun updateSocialLinkUrl(index: Int, url: String, debounce: Boolean = true) {
+        val currentCourse = _selectedCourse.value ?: return
+        if (index !in currentCourse.socialLinks.indices) return
+        
+        val updatedLinks = currentCourse.socialLinks.toMutableList()
+        updatedLinks[index] = updatedLinks[index].copy(url = url)
+        
+        _selectedCourse.value = currentCourse.copy(socialLinks = updatedLinks)
+        if (debounce) debouncedSave() else immediateSave()
+    }
+
+    fun addSocialLink(link: SocialLink) {
+        val currentCourse = _selectedCourse.value ?: return
+        val updatedLinks = currentCourse.socialLinks + link
+        _selectedCourse.value = currentCourse.copy(socialLinks = updatedLinks)
+        immediateSave()
+    }
+
+    fun removeSocialLink(id: String, delayMs: Long = 0) {
+        coroutineScope.launch {
+            if (delayMs > 0) delay(delayMs)
+            val currentCourse = _selectedCourse.value ?: return@launch
+            val updatedLinks = currentCourse.socialLinks.filter { it.id != id }
+            _selectedCourse.value = currentCourse.copy(socialLinks = updatedLinks)
+            immediateSave()
+        }
     }
 
     fun updateLimitedCourseField(

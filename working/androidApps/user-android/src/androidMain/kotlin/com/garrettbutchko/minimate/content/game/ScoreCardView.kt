@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
@@ -377,22 +378,29 @@ fun ScoreCardGameView(
                     }
 
                     if (currentCourse?.customAdActive == true) {
-                        Button(
+                        Surface(
                             onClick = {
                                 val link = currentCourse.adLink
                                 if (!link.isNullOrBlank()) {
                                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            color = Color.Transparent
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                currentCourse.adTitle?.let { Text(it, fontWeight = FontWeight.SemiBold) }
-                                currentCourse.adDescription?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
-                            }
-                            currentCourse.adImage?.takeIf { it.isNotBlank() }?.let {
-                                AsyncImage(model = it, contentDescription = "Ad", modifier = Modifier.size(48.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    currentCourse.adTitle?.let { Text(it, fontWeight = FontWeight.SemiBold, color = primaryTextColor) }
+                                    currentCourse.adDescription?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = secondaryTextColor) }
+                                }
+                                currentCourse.adImage?.takeIf { it.isNotBlank() }?.let {
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    AsyncImage(model = it, contentDescription = "Ad", modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp)))
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
                             }
                         }
                     } else if (logic.shouldShowAds(NetworkChecker.shared.isConnected, isGuest, user?.isPro)) {
