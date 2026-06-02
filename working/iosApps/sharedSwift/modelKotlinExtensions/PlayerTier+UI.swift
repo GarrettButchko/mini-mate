@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+
+#if MANAGER
 import shared_admin
 
 extension PlayerTier {
+    
     var color: Color {
         colorKey.toColor() ?? .mainOpp
     }
@@ -21,4 +24,6 @@ extension PlayerTier {
     var description: String {
         tierDescription
     }
+    
 }
+#endif

@@ -237,21 +237,11 @@ struct LeaderBoardView: View {
             BouncingBallsView(topThreePlayers: Array(data.wrappedValue.prefix(3)))
             ScrollView{
                 VStack{
-                    ForEach(data) { player in
+                    ForEach(data, id: \.id) { player in
                         let rank = data.firstIndex(where: { $0.id == player.id })! + 1
                         if rank <= 25 && rank >= 4{
-                            GeometryReader { proxy in
-                                HStack(alignment: .center){
-                                    PlayerRow(player: player.wrappedValue, rank: rank)
-                                        .frame(width: proxy.size.width)
-                                        .transition(.opacity.combined(with: .blurReplace))
-                                        .swipeMod(editingID: $editingPlayerID, id: String(rank), buttonPressFunction: {}) {
-                                            guard let selectedCourse = courseVM.selectedCourse else { return }
-                                            VM.kotlin.deletePlayerEntry(courseID: selectedCourse.id, playerID: player.id)
-                                        }
-                                }
-                            }
-                            .frame(height: 40)
+                            
+                            PlayerRow(editingPlayerID: $editingPlayerID, player: player.wrappedValue, rank: rank)
                             
                             if rank != 25 {
                                 Divider().background(.mainOpp.opacity(0.1))
@@ -291,6 +281,33 @@ struct LeaderBoardView: View {
 }
 
 struct PlayerRow: View {
+    
+    @EnvironmentObject var VM: LeaderBoardViewModelSwift
+    @EnvironmentObject var courseVM: CourseListViewModelSwift
+    
+    @Binding var editingPlayerID: String?
+    
+    let player: LeaderboardEntry
+    let rank: Int
+    
+    var body: some View {
+        GeometryReader { proxy in
+            HStack(alignment: .center){
+                PlayerGridRow(player: player, rank: rank)
+                    .frame(width: proxy.size.width)
+                    .transition(.opacity.combined(with: .blurReplace))
+                    .swipeMod(editingID: $editingPlayerID, id: String(rank), buttonPressFunction: {}) {
+                        guard let selectedCourse = courseVM.selectedCourse else { return }
+                        VM.kotlin.deletePlayerEntry(courseID: selectedCourse.id, playerID: player.id)
+                        editingPlayerID = nil
+                    }
+            }
+        }
+        .frame(height: 40)
+    }
+}
+
+struct PlayerGridRow: View {
     let player: LeaderboardEntry
     let rank: Int
 

@@ -3,6 +3,7 @@ package com.garrettbutchko.minimate.content.tabviews.leaderboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -23,15 +23,14 @@ import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SportsScore
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import com.garrettbutchko.minimate.admin.BuildConfig
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.garrettbutchko.minimate.content.helper.modifiers.SwipeableRow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -106,6 +106,10 @@ fun LeaderBoardView(
                         courseId = course.id
                     )
                 }
+
+                if (BuildConfig.DEBUG) {
+                    LeaderboardDebugTools(vm = vm, courseId = course.id)
+                }
             }
         }
     }
@@ -135,16 +139,28 @@ private fun LeaderboardContent(
 
         // Rows 4–25 in a scrollable list
         val listEntries = entries.drop(3).take(22) // ranks 4..25
+        var editingPlayerID by remember { mutableStateOf<String?>(null) }
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(25.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
-            LazyColumn(modifier = Modifier.padding(16.dp)) {
+            LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
                 itemsIndexed(listEntries) { idx, player ->
                     val rank = idx + 4 // ranks start at 4 after the podium
-                    PlayerRow(player = player, rank = rank)
+                    SwipeableRow(
+                        editingID = editingPlayerID,
+                        onEditingIDChange = { editingPlayerID = it },
+                        id = player.id,
+                        buttonPressFunction = {},
+                        deleteFunction = {
+                            vm.deletePlayerEntry(courseID = courseId, playerID = player.id)
+                            editingPlayerID = null
+                        }
+                    ) {
+                        PlayerRow(player = player, rank = rank)
+                    }
                     if (idx < listEntries.lastIndex) {
                         HorizontalDivider(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
@@ -214,7 +230,7 @@ private fun PlayerRow(player: LeaderboardEntry, rank: Int) {
 
 @Composable
 private fun LeaderboardNotEnoughDataView() {
-    LeaderboardStateScaffold {
+    InfoStateScaffold {
         Icon(
             imageVector = Icons.Default.SportsScore,
             contentDescription = null,
@@ -238,16 +254,16 @@ private fun LeaderboardNotEnoughDataView() {
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            LeaderboardFeatureItem(icon = Icons.Default.QrCode, title = "Share Course", description = "Give players your course QR code to start tracking scores.")
-            LeaderboardFeatureItem(icon = Icons.AutoMirrored.Filled.TrendingUp, title = "Live Monitoring", description = "Once play begins, rankings will appear here in real-time.")
-            LeaderboardFeatureItem(icon = Icons.Default.Shield, title = "Score Validation", description = "Scores are automatically verified by the MiniMate system.")
+            InfoStateFeatureItem(icon = Icons.Default.QrCode, title = "Share Course", description = "Give players your course QR code to start tracking scores.")
+            InfoStateFeatureItem(icon = Icons.AutoMirrored.Filled.TrendingUp, title = "Live Monitoring", description = "Once play begins, rankings will appear here in real-time.")
+            InfoStateFeatureItem(icon = Icons.Default.Shield, title = "Score Validation", description = "Scores are automatically verified by the MiniMate system.")
         }
     }
 }
 
 @Composable
 private fun LeaderboardInactiveView() {
-    LeaderboardStateScaffold {
+    InfoStateScaffold {
         Icon(
             imageVector = Icons.Default.PauseCircle,
             contentDescription = null,
@@ -275,7 +291,7 @@ private fun LeaderboardInactiveView() {
 
 @Composable
 private fun LeaderboardUpgradeView() {
-    LeaderboardStateScaffold {
+    InfoStateScaffold {
         // Icon with lock overlay
         Box(
             modifier = Modifier
@@ -307,43 +323,38 @@ private fun LeaderboardUpgradeView() {
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            LeaderboardFeatureItem(icon = Icons.Default.EmojiEvents, title = "All-Time Rankings", description = "Automated leaderboards for every player.")
-            LeaderboardFeatureItem(icon = Icons.Default.Shield, title = "Profanity Free", description = "Name filtering and score validation to keep your course family-friendly.")
+            InfoStateFeatureItem(icon = Icons.Default.EmojiEvents, title = "All-Time Rankings", description = "Automated leaderboards for every player.")
+            InfoStateFeatureItem(icon = Icons.Default.Shield, title = "Profanity Free", description = "Name filtering and score validation to keep your course family-friendly.")
         }
-        // CTA — upgrade action stubbed; link to billing when available
-        Surface(
+        Button(
+            onClick = { },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
+                .height(50.dp)
+                .background(
+                    Brush.horizontalGradient(listOf(Color(0xFFFF9800), Color(0xFFFFCC00))),
+                    RoundedCornerShape(12.dp)
+                ),
             shape = RoundedCornerShape(12.dp),
-            color = Color.Transparent
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = Color.White
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(Color(0xFFFF9800), Color(0xFFFFCC00))
-                        ),
-                        RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Upgrade to Tier 2",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White
-                )
-            }
+            Text(
+                text = "Upgrade to Tier 2",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+            )
         }
     }
 }
 
 /** Shared scaffold for the various leaderboard gate states. */
 @Composable
-private fun LeaderboardStateScaffold(content: @Composable () -> Unit) {
+fun InfoStateScaffold(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -354,7 +365,7 @@ private fun LeaderboardStateScaffold(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun LeaderboardFeatureItem(
+fun InfoStateFeatureItem(
     icon: ImageVector,
     title: String,
     description: String
@@ -389,6 +400,44 @@ private fun LeaderboardFeatureItem(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Debug tools — only rendered in DEBUG builds
+// ---------------------------------------------------------------------------
+@Composable
+private fun LeaderboardDebugTools(vm: LeaderBoardViewModel, courseId: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "⚙ Debug",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { vm.seedDebugData(courseId) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF34C759))
+            ) {
+                Text("Seed 25 Players")
+            }
+            Button(
+                onClick = { vm.clearDebugData(courseId) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30))
+            ) {
+                Text("Clear All")
+            }
         }
     }
 }

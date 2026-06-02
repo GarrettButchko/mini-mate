@@ -68,6 +68,9 @@ import com.garrettbutchko.minimate.viewModels.JoinViewModel
 import com.garrettbutchko.minimate.viewModels.signInWithGoogle
 import kotlinx.coroutines.launch
 import org.koin.core.context.GlobalContext
+import androidx.compose.ui.graphics.Color
+import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
+import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 import com.garrettbutchko.minimate.content.courseScreen.CourseScreen
 import com.garrettbutchko.minimate.content.game.HostGameView
 import com.garrettbutchko.minimate.content.game.ScoreCardGameView
@@ -375,8 +378,12 @@ private fun MainTabView(
         }
     }
 
+    val selectedCourse by courseViewModel.selectedCourse.collectAsState()
+    val scoreCardColor = selectedCourse?.scoreCardColorDT?.toColor()
+    val subColor = Color.subVsColor(makeColor = scoreCardColor)
+
     val customNavColors = NavigationBarItemDefaults.colors(
-        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+        indicatorColor = subColor,
         selectedIconColor = MaterialTheme.colorScheme.onPrimary,
         unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -392,7 +399,7 @@ private fun MainTabView(
                         NavigationBarItem(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                                label = { Text("Stats" ,color = MaterialTheme.colorScheme.onSurface) },
+                            label = { Text("Stats", color = MaterialTheme.colorScheme.onSurface) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.QueryStats,
@@ -400,12 +407,12 @@ private fun MainTabView(
                                     tint = MaterialTheme.colorScheme.onSurface
                                 )
                             },
-                            colors = customNavColors // Apply here
+                            colors = customNavColors
                         )
                         NavigationBarItem(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
-                                label = { Text("Home" ,color = MaterialTheme.colorScheme.onSurface) },
+                            label = { Text("Home", color = MaterialTheme.colorScheme.onSurface) },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Filled.Home,
@@ -419,12 +426,12 @@ private fun MainTabView(
                             NavigationBarItem(
                                 selected = selectedTab == 2,
                                 onClick = { selectedTab = 2 },
-                                label = { Text("Courses" ,color = MaterialTheme.colorScheme.onSurface) },
+                                label = { Text("Courses", color = MaterialTheme.colorScheme.onSurface) },
                                 icon = {
                                     Icon(
                                         imageVector = Icons.Filled.Directions,
                                         contentDescription = "Courses",
-                                            tint = MaterialTheme.colorScheme.onSurface
+                                        tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 },
                                 colors = customNavColors

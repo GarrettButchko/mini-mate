@@ -1,5 +1,6 @@
 package com.garrettbutchko.minimate.content.tabviews.leaderboard
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,7 +28,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.garrettbutchko.minimate.shared.R as SharedR
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -141,7 +146,7 @@ private fun PodiumColumn(
         val bubbleSize = bubbleSize(rank)
         val podiumColor = podiumColor(rank)
 
-        // Avatar bubble
+        // Avatar bubble — matches iOS ZStack with Circle + Image("logoOpp")
         Box(
             modifier = Modifier
                 .size(bubbleSize)
@@ -149,11 +154,11 @@ private fun PodiumColumn(
                 .background(podiumColor.copy(alpha = 0.16f)),
             contentAlignment = Alignment.Center
         ) {
-            // Placeholder avatar — iOS uses "logoOpp" asset
-            Text(
-                text = player.name.take(1).uppercase(),
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = podiumColor
+            Image(
+                painter = painterResource(id = SharedR.drawable.logo_image),
+                contentDescription = null,
+                modifier = Modifier.size(bubbleSize * 0.82f),
+                contentScale = ContentScale.Fit
             )
         }
 
@@ -195,24 +200,36 @@ private fun PodiumColumn(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 4.dp)
             ) {
-                Text(
-                    text = "#$rank",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = rankTitle(rank),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 11.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                Spacer(modifier = Modifier.weight(0.1f)) // Fixed 'modifier' to 'Modifier'
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally, // Centers the Text views horizontally
+                    verticalArrangement = Arrangement.Center           // Centers the Text views vertically within the weight space
+                ) {
+                    Text(
+                        text = "#$rank",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center // Ensures the text block itself is centered
+                    )
+                    Text(
+                        text = rankTitle(rank),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center // Ensures the text block itself is centered
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(0.2f)) // Fixed 'modifier' to 'Modifier'
             }
         }
     }

@@ -218,17 +218,28 @@ struct SwipeableRowModifier: ViewModifier {
             .onEnded { value in
                 defer { isDragging = false }
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    if offsetX < deletePoint {
-                        deleteFunction?()
-                        offsetX = resetPoint
-                        editingID = nil
-                    } else if offsetX < commitPoint {
-                        offsetX = pausePoint
-                    } else {
-                        offsetX = resetPoint
-                        editingID = nil
+                if offsetX < deletePoint {
+                    // 1. Instantly reset layout positions locally so it doesn't break animations
+                    let currentDeleteFunction = deleteFunction
+                    offsetX = resetPoint
+                    lastOffsetX = resetPoint
+                    editingID = nil
+                    
+                    // 2. Safely call the delete function on the next run loop cycle
+                    DispatchQueue.saveAsync {
+                        currentDeleteFunction?()
                     }
-                    lastOffsetX = offsetX
+                } else {
+                    // Normal spring animation for non-destructive actions
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        if offsetX < commitPoint {
+                            offsetX = pausePoint
+                        } else {
+                            offsetX = resetPoint
+                            editingID = nil
+                        }
+                        lastOffsetX = offsetX
+                    }
                 }
             }
     }
@@ -255,3 +266,13 @@ extension View {
         ))
     }
 }
+
+extension DispatchQueue {
+    static func saveAsync(_ block: @escaping () -> Void) {
+        DispatchQueue.main.async {
+            block()
+        }
+    }
+}
+
+

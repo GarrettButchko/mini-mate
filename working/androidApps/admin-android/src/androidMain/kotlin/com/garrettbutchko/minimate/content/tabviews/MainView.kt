@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -197,9 +198,10 @@ fun MainView(
         ModalBottomSheet(
             onDismissRequest = { showTournamentSheet = false },
             sheetState = tournamentSheetState,
-            containerColor = colorResource(id = ResColor.bg)
+            containerColor = colorResource(id = ResColor.bg),
+            modifier = Modifier.fillMaxHeight()
         ) {
-            TournamentView(modifier = Modifier.height(500.dp))
+            TournamentView(modifier = Modifier.fillMaxSize())
         }
     }
 }
@@ -305,7 +307,8 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(375.dp)
-                .then(if (isTierGated) Modifier.blur(6.dp) else Modifier)
+                .clip(RoundedCornerShape(25.dp))
+                .then(if (isTierGated) Modifier.blur(20.dp) else Modifier)
         ) {
             when {
                 isLoadingHealth -> {

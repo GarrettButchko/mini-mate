@@ -16,10 +16,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,10 +34,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,7 +45,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -182,15 +185,14 @@ private fun AnalyticsHeader(
             }
         }
 
-        // Segmented picker: "Day Range" vs "Retention"
-        // iOS SegmentedPickerStyle → M3 SingleChoiceSegmentedButtonRow
         val sections = vm.pickerSections
+        @OptIn(ExperimentalMaterial3Api::class)
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             sections.forEachIndexed { index, section ->
                 SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = sections.size),
+                    selected = section == pickedSection,
                     onClick = { vm.setPickedSection(section) },
-                    selected = pickedSection == section,
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = sections.size),
                     label = { Text(section) }
                 )
             }
@@ -380,36 +382,40 @@ fun TierLockView(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(28.dp)
         ) {
             // Icon stack — chart + lock
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF007AFF).copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PieChart,
-                    contentDescription = null,
-                    modifier = Modifier.size(60.dp),
-                    tint = Color(0xFF007AFF)
-                )
-                // Lock badge offset bottom-right
-                Box(
+            Box(modifier = Modifier.size(120.dp)) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = CircleShape,
+                    color = Color(0xFF007AFF).copy(alpha = 0.15f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.PieChart,
+                            contentDescription = null,
+                            modifier = Modifier.size(60.dp),
+                            tint = Color(0xFF007AFF)
+                        )
+                    }
+                }
+                // Lock badge — drawn last so it sits on top
+                Surface(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.background),
-                    contentAlignment = Alignment.Center
+                        .size(36.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
+
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -434,24 +440,21 @@ fun TierLockView(modifier: Modifier = Modifier) {
 
             // Feature list
             Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                TierLockFeatureItem(title = "Day Range Analysis", description = "Track performance over custom time periods.")
-                TierLockFeatureItem(title = "Retention Tracking", description = "See how many players return to your course.")
-                TierLockFeatureItem(title = "Data Export", description = "Download CSV reports for your business records.")
+                TierLockFeatureItem(icon = Icons.Default.DateRange, title = "Day Range Analysis", description = "Track performance over custom time periods.")
+                TierLockFeatureItem(icon = Icons.Default.Group, title = "Retention Tracking", description = "See how many players return to your course.")
+                TierLockFeatureItem(icon = Icons.Default.FileDownload, title = "Data Export", description = "Download CSV reports for your business records.")
             }
 
-            // Upgrade CTA — stubbed
-            Surface(
+            Button(
+                onClick = { },
                 modifier = Modifier.fillMaxWidth().height(54.dp),
                 shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF007AFF)
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF))
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Upgrade to Tier 3",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White
-                    )
-                }
+                Text(
+                    text = "Upgrade to Tier 3",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                )
             }
 
             Text(
@@ -464,7 +467,7 @@ fun TierLockView(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TierLockFeatureItem(title: String, description: String) {
+private fun TierLockFeatureItem(icon: ImageVector, title: String, description: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -476,7 +479,12 @@ private fun TierLockFeatureItem(title: String, description: String) {
             color = Color(0xFF007AFF).copy(alpha = 0.15f)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text("✓", color = Color(0xFF007AFF), fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = Color(0xFF007AFF)
+                )
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

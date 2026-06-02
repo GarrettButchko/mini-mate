@@ -39,9 +39,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -238,34 +239,21 @@ fun StatsView(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SectionPicker(
     sections: List<String>,
     selected: String,
     onSelected: (String) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        sections.forEach { section ->
-            val isSelected = section == selected
-            Button(
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        sections.forEachIndexed { index, section ->
+            SegmentedButton(
+                selected = section == selected,
                 onClick = { onSelected(section) },
-                modifier = Modifier
-                    .weight(1f)
-                    .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(25.dp)
-                ),
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Text(section)
-            }
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = sections.size),
+                label = { Text(section) }
+            )
         }
     }
 }

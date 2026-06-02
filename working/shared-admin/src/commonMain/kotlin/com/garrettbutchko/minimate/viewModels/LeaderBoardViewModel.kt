@@ -42,6 +42,19 @@ open class LeaderBoardViewModel(
 
     // MARK: - Actions
     
+    fun seedDebugData(courseID: String) {
+        coroutineScope.launch {
+            lbRepo.deleteAllEntries(courseID)
+            lbRepo.seedDebugEntries(courseID)
+        }
+    }
+
+    fun clearDebugData(courseID: String) {
+        coroutineScope.launch {
+            lbRepo.deleteAllEntries(courseID)
+        }
+    }
+
     fun deletePlayerEntry(courseID: String, playerID: String) {
         coroutineScope.launch {
             lbRepo.deleteEntry(courseID, playerID)

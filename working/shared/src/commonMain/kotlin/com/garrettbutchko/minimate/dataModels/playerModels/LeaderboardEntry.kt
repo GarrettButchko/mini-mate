@@ -1,5 +1,8 @@
 package com.garrettbutchko.minimate.dataModels.playerModels
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class LeaderboardEntry(
     var id: String,
     var userId: String,

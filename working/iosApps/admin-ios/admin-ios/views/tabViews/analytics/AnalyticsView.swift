@@ -67,9 +67,9 @@ struct AnalyticsView: View {
                 refreshButton
 
                 
-                #if DEBUG
+                //#if DEBUG
                     debugMenu
-                #endif
+                //#endif
             }
             
             Picker("Section", selection: $VM.pickedSection) {
@@ -102,7 +102,7 @@ struct AnalyticsView: View {
         .opacity(canManualRefresh ? 1 : 0.45)
     }
     
-    #if DEBUG
+    //#if DEBUG
     private var debugMenu: some View {
         Menu {
             Button {
@@ -135,7 +135,7 @@ struct AnalyticsView: View {
                 .foregroundStyle(.secondary)
         }
     }
-    #endif
+    //#endif
     
     var dayRangecontent: some View {
         ScrollViewReader { proxy in

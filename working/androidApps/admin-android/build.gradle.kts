@@ -46,6 +46,10 @@ android {
     namespace = "com.garrettbutchko.minimate.admin"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.garrettbutchko.minimate.admin"
         minSdk = libs.versions.android.minSdk.get().toInt()

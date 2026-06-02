@@ -145,14 +145,18 @@ struct MainView: View {
                                     .allowsHitTesting(false)
                             } else if let report = analyticsVM.healthReport {
                                 Button{
-                                    showHealthRatingSheet = true
+                                    if viewModel.selectedCourse?.tier ?? 0 >= 3 {
+                                        showHealthRatingSheet = true
+                                    }
                                 } label: {
                                     HealthRatingChart(healthReport: report)
                                         .frame(height: 375)
                                 }
                                 .sheet(isPresented: $showHealthRatingSheet){
-                                    SectionHealthDetailView(healthReport: report)
-                                        .presentationDragIndicator(.visible)
+                                    
+                                        SectionHealthDetailView(healthReport: report)
+                                            .presentationDragIndicator(.visible)
+                                    
                                 }
                             } else {
                                 VStack(spacing: 12) {
@@ -178,7 +182,7 @@ struct MainView: View {
                                 .allowsHitTesting(false)
                             }
                         }
-                        .blur(radius: viewModel.selectedCourse?.tier ?? 0 >= 3 ? 0 : 6)
+                        .blur(radius: viewModel.selectedCourse?.tier ?? 0 >= 3 ? 0 : 20)
                         
                         
                         if (viewModel.selectedCourse?.tier ?? 0) < 3 {

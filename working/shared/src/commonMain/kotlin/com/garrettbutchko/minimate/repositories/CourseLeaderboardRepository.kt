@@ -91,6 +91,42 @@ class CourseLeaderboardRepository {
         }
     }
 
+    // MARK: - Debug
+
+    suspend fun seedDebugEntries(courseID: String): Result<Boolean> {
+        val names = listOf(
+            "Alice Johnson", "Bob Smith", "Charlie Brown", "Diana Prince", "Ethan Hunt",
+            "Fiona Green", "George King", "Hannah White", "Ivan Black", "Julia Roberts",
+            "Kevin Hart", "Laura Palmer", "Mike Tyson", "Nina Simone", "Oscar Wilde",
+            "Paula Abdul", "Quinn Hughes", "Rachel Green", "Steve Jobs", "Tina Turner",
+            "Uma Thurman", "Victor Stone", "Wendy Williams", "Xander Harris", "Yara Greyjoy"
+        )
+        val ballColors = listOf("red", "blue", "green", "yellow", "purple", "orange", "pink", "mint")
+        val strokePool = listOf(20, 24, 27, 29, 31, 33, 35, 36, 38, 40, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 70)
+
+        return try {
+            val batch = db.batch()
+            val ref = allTimeEntriesRef(courseID)
+            names.forEachIndexed { index, name ->
+                val entry = LeaderboardEntry(
+                    id = "debug_player_$index",
+                    userId = "debug_user_$index",
+                    name = name,
+                    photoURL = null,
+                    ballColorDT = ballColors[index % ballColors.size],
+                    totalStrokes = strokePool[index % strokePool.size],
+                    email = "debug$index@test.com"
+                )
+                batch.set(ref.document(entry.id), entry, merge = true)
+            }
+            batch.commit()
+            Result.success(true)
+        } catch (e: Exception) {
+            log.e(e) { "❌ Failed to seed debug entries for course: $courseID" }
+            Result.failure(e)
+        }
+    }
+
     // MARK: - Bulk Delete
 
     suspend fun deleteAllEntries(courseID: String): Result<Boolean> {

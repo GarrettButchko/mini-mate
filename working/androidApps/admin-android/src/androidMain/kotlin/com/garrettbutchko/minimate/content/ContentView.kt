@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -319,6 +321,17 @@ private fun CourseTabView(
         analyticsVM.loadHealthData(course = courseListVM.selectedCourse.value)
     }
 
+    val scoreCardColor = selectedCourse?.scoreCardColorDT?.toComposeColor()
+    val subColor = androidx.compose.ui.graphics.Color.subVsColor(makeColor = scoreCardColor)
+
+    val customNavColors = NavigationBarItemDefaults.colors(
+        indicatorColor = subColor,
+        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        selectedTextColor = MaterialTheme.colorScheme.primary,
+        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -327,20 +340,23 @@ private fun CourseTabView(
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        icon = { Icon(Icons.Default.BarChart, contentDescription = "Stats") },
-                        label = { Text("Stats") }
+                        icon = { Icon(Icons.Filled.BarChart, contentDescription = "Stats", tint = MaterialTheme.colorScheme.onSurface) },
+                        label = { Text("Stats", color = MaterialTheme.colorScheme.onSurface) },
+                        colors = customNavColors
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                        label = { Text("Home") }
+                        icon = { Icon(Icons.Filled.Home, contentDescription = "Home", tint = MaterialTheme.colorScheme.onSurface) },
+                        label = { Text("Home", color = MaterialTheme.colorScheme.onSurface) },
+                        colors = customNavColors
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings") }
+                        icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface) },
+                        label = { Text("Settings", color = MaterialTheme.colorScheme.onSurface) },
+                        colors = customNavColors
                     )
                 }
             }
