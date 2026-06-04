@@ -53,7 +53,6 @@ import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.admin.R as AdminR
-import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.toComposeColor
 
 /**
  * ContentView — root composable
@@ -109,7 +108,6 @@ fun ContentView(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(vertical = 16.dp)
     ) {
         AnimatedContent(
             targetState = viewState,
@@ -321,7 +319,7 @@ private fun CourseTabView(
         analyticsVM.loadHealthData(course = courseListVM.selectedCourse.value)
     }
 
-    val scoreCardColor = selectedCourse?.scoreCardColorDT?.toComposeColor()
+    val scoreCardColor = selectedCourse?.scoreCardColorDT?.toColor()
     val subColor = androidx.compose.ui.graphics.Color.subVsColor(makeColor = scoreCardColor)
 
     val customNavColors = NavigationBarItemDefaults.colors(
@@ -395,7 +393,7 @@ private fun CourseTabView(
         // Color Picker Overlay
         ColorPickerView(
             visible = showColor,
-            disabledColors = selectedCourse?.courseColorsDT?.mapNotNull { it.toComposeColor() }?.toSet() ?: emptySet(),
+            disabledColors = selectedCourse?.courseColorsDT?.mapNotNull { it.toColor() }?.toSet() ?: emptySet(),
             onColorSelected = { color ->
                 val colorStr = color.toColorName()
                 courseListVM.updateCourseField { course ->

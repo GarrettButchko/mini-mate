@@ -20,6 +20,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.coil.compose)
+            implementation(libs.androidx.ui.text.google.fonts)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)

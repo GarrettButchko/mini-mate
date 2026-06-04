@@ -31,9 +31,8 @@ struct ExpierenceTab: View {
                         .id(VM.rangeDailyDocs.count)
                     
                     HStack{
-                        DataCard(data: VM.getEasiestHole(), title: "Easiest", infoText: "The hole which has the the lowest average strokes per plays", color: .subTwo, cornerRadius: 17)
-                        
-                        DataCard(data: VM.getHardestHole(), title: "Hardest", infoText: "The hole which has the the highest average strokes per plays", color: .subTwo, cornerRadius: 17)
+                        DataCard(data: VM.getEasiestHole(), color: .subTwo, cornerRadius: 17)
+                        DataCard(data: VM.getHardestHole(), color: .subTwo, cornerRadius: 17)
                     }
                 }
                 .padding()
@@ -52,9 +51,8 @@ struct ExpierenceTab: View {
                     }
                     
                     HStack{
-                        DataCard(data: VM.getAvgRelativeToPar(), title: "Avg vs Par", infoText: "Average strokes above or below par across all holes played.", color: .subTwo, cornerRadius: 17)
-                        
-                        DataCard(data: VM.getMostBeatenPar(), title: "Best Hole", infoText: "Hole where players most frequently beat par.", color: .subTwo, cornerRadius: 17)
+                        DataCard(data: VM.getAvgRelativeToPar(), color: .subTwo, cornerRadius: 17)
+                        DataCard(data: VM.getMostBeatenPar(), color: .subTwo, cornerRadius: 17)
                     }
                     
                     
@@ -79,12 +77,11 @@ struct ExpierenceTab: View {
                     }
                     
                     HStack{
-                        DataCard(data: VM.getUnderParPercentage(), title: "Under Par", infoText: "Percentage of holes completed under par.", color: .subTwo, cornerRadius: 17)
-                        
-                        DataCard(data: VM.getOverParPercentage(), title: "Over Par", infoText: "Percentage of holes completed over par.", color: .subTwo, cornerRadius: 17)
+                        DataCard(data: VM.getUnderParPercentage(), color: .subTwo, cornerRadius: 17)
+                        DataCard(data: VM.getOverParPercentage(), color: .subTwo, cornerRadius: 17)
                     }
-                    
-                    DataCard(data: VM.getHoleInOneCount(), title: "Total Holes-in-One", infoText: "Total number of holes completed in one stroke during this period.", color: .subTwo, cornerRadius: 17)
+
+                    DataCard(data: VM.getHoleInOneCount(), color: .subTwo, cornerRadius: 17)
                 }
                 .padding()
                 .background {

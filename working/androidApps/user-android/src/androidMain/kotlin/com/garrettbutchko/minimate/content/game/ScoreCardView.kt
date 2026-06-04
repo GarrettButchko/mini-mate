@@ -48,7 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -199,7 +199,7 @@ fun ScoreCardGameView(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .shadow(8.dp, RoundedCornerShape(25.dp))
+                    .subtleShadow()
                     .background(gridBgColor, RoundedCornerShape(25.dp))
             }
 

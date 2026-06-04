@@ -21,18 +21,14 @@ struct RetentionView: View {
                 } else {
                     HStack(spacing: 16) {
                         DataCard(
-                            data: DataPointObject(value: "\(VM.cachedAvgTimeToReturn)", delta: nil, deltaColor: nil),
-                            title: "Avg Days, Return",
-                            infoText: "Average number of days between first visit and returning players' second visit.",
+                            data: VM.getAvgTimeToReturn(),
                             color: .sub,
                             cornerRadius: 16
                         )
                         .cardShadow()
-                        
+
                         DataCard(
-                            data: DataPointObject(value: String(format: "%.0f%%", VM.cached30DayRetention * 100), delta: nil, deltaColor: nil),
-                            title: "30-Day Retention",
-                            infoText: "Percentage of new players in the date range who returned within 30 days.",
+                            data: VM.get30DayRetention(),
                             color: .sub,
                             cornerRadius: 16
                         )

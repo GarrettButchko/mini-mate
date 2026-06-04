@@ -30,8 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import com.garrettbutchko.minimate.content.JetBrainsMono
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.viewModels.analytics.HoleDifficultyData
@@ -104,14 +104,14 @@ fun HoleHardnessRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(contentAlignment = Alignment.Center) {
             Surface(
                 modifier = Modifier.size(32.dp),
                 shape = CircleShape,
-                color = hardnessColor.copy(alpha = 0.2f)
+                color = hardnessColor.copy(alpha = 0.1f)
             ) {}
             Text(
                 text = "${hole.holeNumber}",
@@ -130,17 +130,21 @@ fun HoleHardnessRow(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Column(horizontalAlignment = Alignment.End) {
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
             Text(
                 text = String.format("%.2f", hole.averageStrokes),
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium
+                fontFamily = JetBrainsMono,
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.bodySmall.copy(lineHeight = 14.sp)
             )
             Text(
                 text = "avg strokes",
                 fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                lineHeight = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f)
             )
         }
     }

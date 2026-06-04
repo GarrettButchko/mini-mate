@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,7 +36,7 @@ fun SectionCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)
-                .shadow(8.dp, RoundedCornerShape(25.dp)),
+                .subtleShadow(),
             shape = RoundedCornerShape(25.dp),
             color = subColor
         ) {

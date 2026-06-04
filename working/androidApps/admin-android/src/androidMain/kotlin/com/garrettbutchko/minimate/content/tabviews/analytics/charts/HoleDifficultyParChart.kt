@@ -14,12 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.garrettbutchko.minimate.content.helper.InfoButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,8 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import com.garrettbutchko.minimate.content.JetBrainsMono
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.viewModels.analytics.HoleHeatmapData
@@ -64,12 +64,7 @@ fun HoleDifficultyParChart(
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
             )
             Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = "Purple (Under Par) | Blue (Little Under Par) | Green (Par) | Orange (Just Over Par) | Red (Over Par)",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
+            InfoButton(infoText = "Purple (Under Par) | Blue (Little Under Par) | Green (Par) | Orange (Just Over Par) | Red (Over Par)")
         }
 
         Row(
@@ -168,14 +163,14 @@ fun HoleStatusRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(contentAlignment = Alignment.Center) {
             Surface(
                 modifier = Modifier.size(32.dp),
                 shape = CircleShape,
-                color = diffColor.copy(alpha = 0.15f)
+                color = diffColor.copy(alpha = 0.1f)
             ) {}
             Text(
                 text = "${data.holeNumber}",
@@ -197,12 +192,15 @@ fun HoleStatusRow(
         Text(
             text = "Par ${data.holePar}",
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f)
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Column(horizontalAlignment = Alignment.End) {
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
             val relStr = if (data.relativeToPar >= 0)
                 "+${String.format("%.1f", data.relativeToPar)}"
             else
@@ -210,15 +208,16 @@ fun HoleStatusRow(
 
             Text(
                 text = relStr,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
+                fontFamily = JetBrainsMono,
+                fontWeight = FontWeight.ExtraBold,
                 color = diffColor,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodySmall.copy(lineHeight = 14.sp)
             )
             Text(
                 text = "vs Par",
                 fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                lineHeight = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f)
             )
         }
     }

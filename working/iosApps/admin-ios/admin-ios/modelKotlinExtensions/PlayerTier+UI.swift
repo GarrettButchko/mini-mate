@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-#if MANAGER
 import shared_admin
 
 extension PlayerTier {
@@ -26,4 +25,3 @@ extension PlayerTier {
     }
     
 }
-#endif

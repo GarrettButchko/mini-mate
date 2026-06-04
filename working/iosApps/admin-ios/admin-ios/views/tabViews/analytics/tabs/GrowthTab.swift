@@ -22,11 +22,11 @@ struct GrowthTab: View {
                     Spacer()
                 }
                 
-                DataCard(data: VM.activeUsersPrime(), title: "Total Visits", infoText: "Total player visits during the selected date range. (Counts a player once per day. If a player visits on multiple days, each day is counted.)", color: .subTwo, cornerRadius: 16)
-                
+                DataCard(data: VM.activeUsersPrime(), color: .subTwo, cornerRadius: 16)
+
                 HStack{
-                    DataCard(data: VM.firstTimePrime(), title: "First Time", infoText: "Players who visited this course for the first time during the selected date range.", color: .subTwo, cornerRadius: 16)
-                    DataCard(data: VM.returningPrime(), title: "Returning", infoText: "Players who had previously visited and played again during the selected date range.", color: .subTwo, cornerRadius: 16)
+                    DataCard(data: VM.firstTimePrime(), color: .subTwo, cornerRadius: 16)
+                    DataCard(data: VM.returningPrime(), color: .subTwo, cornerRadius: 16)
                 }
                 
                 if VM.returningPercOfTotal() == 0 && VM.firstTimePercOfTotal() == 0 {

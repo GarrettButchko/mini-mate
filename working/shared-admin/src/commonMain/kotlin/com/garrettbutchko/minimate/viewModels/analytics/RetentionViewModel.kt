@@ -101,6 +101,8 @@ open class RetentionViewModel {
         val avgDays = avgTimeToReturn()
         return DataPointObject(
             value = avgDays.toString(),
+            title = "Avg Days, Return",
+            infoText = "Average number of days between first visit and returning players' second visit.",
             delta = null,
             deltaColor = null
         )
@@ -133,6 +135,8 @@ open class RetentionViewModel {
         val retentionPercentage = calculate30DayRetention() * 100.0
         return DataPointObject(
             value = "${retentionPercentage.format(0)}%",
+            title = "30-Day Retention",
+            infoText = "Percentage of new players in the date range who returned within 30 days.",
             delta = null,
             deltaColor = null
         )

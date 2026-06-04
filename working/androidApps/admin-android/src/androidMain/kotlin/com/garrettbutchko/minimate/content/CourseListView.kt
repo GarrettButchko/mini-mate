@@ -52,7 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
@@ -225,7 +225,7 @@ private fun MultiCourseView(
                     shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorResource(id = ResColor.swiftBlue),
-                        contentColor = Color.White
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     enabled = timeRemaining <= 0
                 ) {
@@ -291,7 +291,7 @@ private fun FirstCourseView(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, RoundedCornerShape(25.dp)),
+                    .subtleShadow(),
                 shape = RoundedCornerShape(25.dp),
                 color = colorResource(id = ResColor.sub)
             ) {
@@ -310,7 +310,7 @@ private fun FirstCourseView(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, RoundedCornerShape(25.dp)),
+                    .subtleShadow(),
                 shape = RoundedCornerShape(25.dp),
                 color = colorResource(id = ResColor.sub)
             ) {
@@ -353,7 +353,7 @@ private fun FirstCourseView(
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorResource(id = ResColor.swiftBlue),
-                    contentColor = Color.White
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 enabled = timeRemaining <= 0
             ) {
@@ -367,7 +367,7 @@ private fun FirstCourseView(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(8.dp, RoundedCornerShape(25.dp)),
+                        .subtleShadow(),
                     shape = RoundedCornerShape(25.dp),
                     color = colorResource(id = ResColor.sub)
                 ) {
@@ -410,7 +410,7 @@ private fun UserAvatar(photoURL: String?, onClick: () -> Unit) {
         Surface(
             modifier = Modifier
                 .size(40.dp)
-                .shadow(4.dp, CircleShape)
+                .subtleShadow(elevation = 4.dp, shape = CircleShape)
                 .clickable { onClick() },
             shape = CircleShape,
             color = colorResource(id = ResColor.sub)
@@ -462,7 +462,7 @@ private fun GetPasswordButton() {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(18.dp)),
+            .subtleShadow(shape = RoundedCornerShape(18.dp)),
         shape = RoundedCornerShape(18.dp),
         color = colorResource(id = ResColor.sub),
         onClick = { /* TODO: open web URL for course password */ }

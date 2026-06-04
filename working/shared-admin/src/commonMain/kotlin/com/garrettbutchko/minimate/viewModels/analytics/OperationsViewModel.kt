@@ -38,10 +38,16 @@ open class OperationsViewModel {
         val rangeData = avgGamesPerDay(rangeDailyDocs)
         val deltaData = avgGamesPerDay(deltaDailyDocs)
         val delta = calcDelta(deltaData, rangeData)
-        
+
         val data = deltaErrorCalc(delta, true)
-        
-        return DataPointObject(value = rangeData.format(2), delta = data.first, deltaColor = data.second)
+
+        return DataPointObject(
+            value = rangeData.format(2),
+            title = "Avg Games Per Day",
+            infoText = "The average number of games played per day.",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
     
     fun avgPlayersPerGame(docs: List<DailyDoc>): Double {
@@ -55,17 +61,23 @@ open class OperationsViewModel {
         val rangeUsers = avgPlayersPerGame(rangeDailyDocs)
         val deltaUsers = avgPlayersPerGame(deltaDailyDocs)
         val delta = calcDelta(deltaUsers, rangeUsers)
-        
+
         val data = deltaErrorCalc(delta, true)
-        
-        return DataPointObject(value = "${rangeUsers.format(2)} / 1", delta = data.first, deltaColor = data.second)
+
+        return DataPointObject(
+            value = "${rangeUsers.format(2)} / 1",
+            title = "Avg Players Per Game",
+            infoText = "The number of total plays divided by the number of total visits. (Counts a player once per day. If a player visits on multiple days, each day is counted.)",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
     
     fun getBusiestHour(): DataPointObject {
         val fragments = rangeDailyDocs.map { it.hourlyCounts }
 
         if (fragments.isEmpty()) {
-            return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Busiest Hour", infoText = "Based on the number of games played that hour.", delta = null, deltaColor = "MAIN_OPP")
         }
 
         val combinedCounts = (0..23).associate { it.toString() to 0 }.toMutableMap()
@@ -78,7 +90,7 @@ open class OperationsViewModel {
 
         val busiest = combinedCounts.maxByOrNull { it.value }
         if (busiest == null || busiest.value <= 0) {
-            return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Busiest Hour", infoText = "Based on the number of games played that hour.", delta = null, deltaColor = "MAIN_OPP")
         }
 
         val busiestHour = busiest.key.toIntOrNull() ?: 0
@@ -100,17 +112,23 @@ open class OperationsViewModel {
                 displayHour = busiestHour - 12
                 suffix = "pm"
             }
-            else -> return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+            else -> return DataPointObject(value = "N/A", title = "Busiest Hour", infoText = "Based on the number of games played that hour.", delta = null, deltaColor = "MAIN_OPP")
         }
 
         val valueString = "$displayHour$suffix"
 
-        return DataPointObject(value = valueString, delta = null, deltaColor = "MAIN_OPP")
+        return DataPointObject(
+            value = valueString,
+            title = "Busiest Hour",
+            infoText = "Based on the number of games played that hour.",
+            delta = null,
+            deltaColor = "MAIN_OPP"
+        )
     }
 
     fun getBusiestDay(): DataPointObject {
         if (rangeDailyDocs.isEmpty()) {
-            return DataPointObject(value = "N/A", deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Busiest Day", infoText = "Based on the number of games played that day.", deltaColor = "MAIN_OPP")
         }
 
         val weeklyVolume = mutableMapOf<Int, Int>()
@@ -120,15 +138,20 @@ open class OperationsViewModel {
 
         val busiestDay = weeklyVolume.maxByOrNull { it.value }
         if (busiestDay == null || busiestDay.value <= 0) {
-            return DataPointObject(value = "N/A", deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Busiest Day", infoText = "Based on the number of games played that day.", deltaColor = "MAIN_OPP")
         }
 
         val dayLabels = listOf("", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
         if (busiestDay.key !in 1..7) {
-            return DataPointObject(value = "N/A", deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Busiest Day", infoText = "Based on the number of games played that day.", deltaColor = "MAIN_OPP")
         }
 
-        return DataPointObject(value = dayLabels[busiestDay.key], deltaColor = "MAIN_OPP")
+        return DataPointObject(
+            value = dayLabels[busiestDay.key],
+            title = "Busiest Day",
+            infoText = "Based on the number of games played that day.",
+            deltaColor = "MAIN_OPP"
+        )
     }
     
     suspend fun prepareChartData(): List<HourData> = withContext(Dispatchers.Default) {
@@ -182,52 +205,58 @@ open class OperationsViewModel {
         val totalSeconds = rangeDailyDocs.sumOf { it.totalRoundSeconds }
         val totalGamesDelta = deltaDailyDocs.sumOf { it.gamesPlayed }
         val totalSecondsDelta = deltaDailyDocs.sumOf { it.totalRoundSeconds }
-        
+
         if (totalGames <= 0) {
-            return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Avg Duration", infoText = "Average time players spend per game.", delta = null, deltaColor = "MAIN_OPP")
         }
-        
+
         val avgSeconds = totalSeconds.toDouble() / totalGames.toDouble()
         val minutes = (avgSeconds / 60).toInt()
-        
+
         if (totalGamesDelta <= 0) {
-            return DataPointObject(value = "$minutes min", delta = null, deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "$minutes min", title = "Avg Duration", infoText = "Average time players spend per game.", delta = null, deltaColor = "MAIN_OPP")
         }
-        
+
         val avgSecondsDelta = totalSecondsDelta.toDouble() / totalGamesDelta.toDouble()
         val minutesDelta = (avgSecondsDelta / 60).toInt()
-        
+
         val delta = calcDelta(minutes, minutesDelta)
         val data = deltaErrorCalc(delta, false)
-        
-        return DataPointObject(value = "$minutes min", delta = data.first, deltaColor = data.second)
+
+        return DataPointObject(
+            value = "$minutes min",
+            title = "Avg Duration",
+            infoText = "Average time players spend per game.",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
-    
+
     fun getTotalPlayTime(): DataPointObject {
         val totalSeconds = rangeDailyDocs.sumOf { it.totalRoundSeconds }
         val totalSecondsDelta = deltaDailyDocs.sumOf { it.totalRoundSeconds }
-        
+
         val hours = (totalSeconds / 3600).toInt()
         val hoursDelta = (totalSecondsDelta / 3600).toInt()
-        
+
         val delta = calcDelta(hours, hoursDelta)
         val data = deltaErrorCalc(delta, false)
-        
+
         return if (hours < 1) {
             val minutes = (totalSeconds / 60).toInt()
-            DataPointObject(value = "$minutes min", delta = data.first, deltaColor = data.second)
+            DataPointObject(value = "$minutes min", title = "Total Time", infoText = "Total play time across all games in this period.", delta = data.first, deltaColor = data.second)
         } else if (hours < 24) {
-            DataPointObject(value = "$hours hrs", delta = data.first, deltaColor = data.second)
+            DataPointObject(value = "$hours hrs", title = "Total Time", infoText = "Total play time across all games in this period.", delta = data.first, deltaColor = data.second)
         } else {
             val days = hours / 24
             val remainingHours = hours % 24
-            DataPointObject(value = "${days}d ${remainingHours}h", delta = data.first, deltaColor = data.second)
+            DataPointObject(value = "${days}d ${remainingHours}h", title = "Total Time", infoText = "Total play time across all games in this period.", delta = data.first, deltaColor = data.second)
         }
     }
-    
+
     fun getFastestGameTime(): DataPointObject {
         var fastestSeconds: Long = Long.MAX_VALUE
-        
+
         for (doc in rangeDailyDocs) {
             if (doc.gamesPlayed <= 0) continue
             val avgForDay = doc.totalRoundSeconds / doc.gamesPlayed.toLong()
@@ -235,9 +264,9 @@ open class OperationsViewModel {
                 fastestSeconds = avgForDay
             }
         }
-        
+
         var fastestSecondsDelta: Long = Long.MAX_VALUE
-        
+
         for (doc in deltaDailyDocs) {
             if (doc.gamesPlayed <= 0) continue
             val avgForDay = doc.totalRoundSeconds / doc.gamesPlayed.toLong()
@@ -245,21 +274,27 @@ open class OperationsViewModel {
                 fastestSecondsDelta = avgForDay
             }
         }
-        
+
         val delta = calcDelta(fastestSeconds, fastestSecondsDelta)
         val data = deltaErrorCalc(delta, false)
-        
+
         if (fastestSeconds == Long.MAX_VALUE || fastestSeconds <= 0) {
-            return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Fastest Game", infoText = "Shortest game duration recorded.", delta = null, deltaColor = "MAIN_OPP")
         }
-        
+
         val minutes = (fastestSeconds / 60).toInt()
-        return DataPointObject(value = "$minutes min", delta = data.first, deltaColor = data.second)
+        return DataPointObject(
+            value = "$minutes min",
+            title = "Fastest Game",
+            infoText = "Shortest game duration recorded.",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
-    
+
     fun getSlowestGameTime(): DataPointObject {
         var slowestSeconds: Long = 0
-        
+
         for (doc in rangeDailyDocs) {
             if (doc.gamesPlayed <= 0) continue
             val avgForDay = doc.totalRoundSeconds / doc.gamesPlayed.toLong()
@@ -267,9 +302,9 @@ open class OperationsViewModel {
                 slowestSeconds = avgForDay
             }
         }
-        
+
         var slowestSecondsDelta: Long = 0
-        
+
         for (doc in deltaDailyDocs) {
             if (doc.gamesPlayed <= 0) continue
             val avgForDay = doc.totalRoundSeconds / doc.gamesPlayed.toLong()
@@ -277,16 +312,22 @@ open class OperationsViewModel {
                 slowestSecondsDelta = avgForDay
             }
         }
-        
+
         val delta = calcDelta(slowestSeconds, slowestSecondsDelta)
         val data = deltaErrorCalc(delta, false)
-        
+
         if (slowestSeconds <= 0) {
-            return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+            return DataPointObject(value = "N/A", title = "Longest Game", infoText = "Longest game duration recorded.", delta = null, deltaColor = "MAIN_OPP")
         }
-        
+
         val minutes = (slowestSeconds / 60).toInt()
-        return DataPointObject(value = "$minutes min", delta = data.first, deltaColor = data.second)
+        return DataPointObject(
+            value = "$minutes min",
+            title = "Longest Game",
+            infoText = "Longest game duration recorded.",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
     
     suspend fun getDataForDurationTrend(): List<GameDurationActivity> = withContext(Dispatchers.Default) {

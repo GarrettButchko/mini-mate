@@ -10,18 +10,16 @@ import shared_admin
 
 struct DataCard: View {
     var data: DataPointObject
-    var title: String
-    var infoText: String = "No Text Yet"
     var color: Color = .sub
     var cornerRadius: CGFloat = 12
     var fontStyle: UIFont.TextStyle = .subheadline
-    
+
     var body: some View {
-        
+
         VStack(spacing: 8) {
             HStack{
                 MarqueeText(
-                    text: title,
+                    text: data.title,
                     font: UIFont.preferredFont(forTextStyle: fontStyle),
                     leftFade: 16,
                     rightFade: 16,
@@ -29,10 +27,10 @@ struct DataCard: View {
                     alignment: .leading
                 )
                 .foregroundStyle(.mainOpp)
-        
+
                 Spacer()
-                
-                InfoButton(infoText: infoText)
+
+                InfoButton(infoText: data.infoText)
             }
             
             HStack{

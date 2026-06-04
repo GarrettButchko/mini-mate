@@ -39,7 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -195,7 +195,7 @@ fun CourseDirectionsButton(viewModel: CourseViewModel) {
 fun CourseSupportedLocationCard(locationName: String?) {
     Row(modifier = Modifier
         .fillMaxWidth()
-        .shadow(4.dp, RoundedCornerShape(12.dp))
+        .subtleShadow(elevation = 4.dp, shape = RoundedCornerShape(12.dp))
         .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
         .padding(14.dp), verticalAlignment = Alignment.Top) {
         Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFFEEE5FF))) {
@@ -226,10 +226,10 @@ fun CourseSocialMediaCard(course: Course) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .subtleShadow(elevation = 4.dp, shape = RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.background,
-        shadowElevation = 4.dp
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -303,10 +303,10 @@ fun CourseContactInfoCard(mapItem: MapItemDTO?) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .subtleShadow(elevation = 4.dp, shape = RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = 4.dp
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -389,10 +389,10 @@ fun CourseLocationInfoCard(mapItem: MapItemDTO?) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .subtleShadow(elevation = 4.dp, shape = RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = 4.dp
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -439,10 +439,10 @@ fun CourseClaimButton(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .subtleShadow(elevation = 4.dp, shape = RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = 4.dp
     ) {
         Row(
             modifier = Modifier

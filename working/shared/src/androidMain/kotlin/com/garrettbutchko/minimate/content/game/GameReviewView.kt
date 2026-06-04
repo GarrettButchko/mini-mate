@@ -18,7 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -155,7 +155,7 @@ fun GameReviewView(
                     Modifier
                         .fillMaxWidth()
                         .weight(0.3f)
-                        .shadow(8.dp, RoundedCornerShape(25.dp))
+                        .subtleShadow()
                         .background(gridBgColor, RoundedCornerShape(25.dp))
                 }
                 Box(modifier = chartModifier) {
@@ -177,7 +177,7 @@ fun GameReviewView(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .shadow(8.dp, RoundedCornerShape(25.dp))
+                    .subtleShadow()
                     .background(gridBgColor, RoundedCornerShape(25.dp))
             }
             Column(

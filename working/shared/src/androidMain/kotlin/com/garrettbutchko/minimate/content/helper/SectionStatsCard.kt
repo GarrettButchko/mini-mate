@@ -1,4 +1,4 @@
-package com.garrettbutchko.minimate.content.stats
+package com.garrettbutchko.minimate.content.helper
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,46 +11,45 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 
 @Composable
 fun SectionStatsCard(
     title: String,
-    spacing: Dp,
+    isBigTitle: Boolean = false,
     makeColor: Color? = null,
-    content: @Composable () -> Unit
+    spacing: Dp = 8.dp,
+    content: @Composable () -> Unit,
 ) {
+    val subColor = Color.subVsColor(makeColor)
 
     val myModifier = if (makeColor != null) {
         Modifier.fillMaxSize()
     } else {
-        Modifier .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(25.dp)
-            )
+        Modifier.fillMaxWidth()
+            .subtleShadow()
     }
-        Column(
-            modifier = myModifier
-                .background(
-                    color = Color.subVsColor(makeColor),
-                    shape = RoundedCornerShape(25.dp)
-                )
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(spacing)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+    Column(
+        modifier = myModifier
+            .background(
+                color = subColor,
+                shape = RoundedCornerShape(25.dp),
             )
-            content()
-        }
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+    ) {
+        Text(
+            text = title,
+            style = if (isBigTitle) MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold) else MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        content()
+    }
 }
 

@@ -82,6 +82,8 @@ data class AnalyticsObject(
 
 data class DataPointObject(
     val value: String,
+    val title: String = "",
+    val infoText: String = "",
     val delta: String? = null,
     val deltaColor: String? = null
 )

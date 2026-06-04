@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,12 +35,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import com.garrettbutchko.minimate.content.JetBrainsMono
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.viewModels.analytics.PlayerTier
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
 val PlayerTier.composeColor: Color
@@ -69,7 +73,7 @@ fun ExpandedPlayerTierContent(
     // Reset the "Copied!" state after 2 seconds
     LaunchedEffect(showCopiedCheck) {
         if (showCopiedCheck) {
-            delay(2_000)
+            delay(2.seconds)
             showCopiedCheck = false
         }
     }
@@ -111,7 +115,7 @@ fun ExpandedPlayerTierContent(
                         Text(
                             text = email,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = JetBrainsMono
                             ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1
@@ -145,12 +149,10 @@ fun ExpandedPlayerTierContent(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
-                        painter = painterResource(
-                            id = if (showCopiedCheck)
-                                android.R.drawable.checkbox_on_background
-                            else
-                                android.R.drawable.ic_menu_save
-                        ),
+                        imageVector = if (showCopiedCheck)
+                            Icons.Default.CheckCircle
+                        else
+                            Icons.Default.ContentCopy,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -187,7 +189,7 @@ fun ExpandedPlayerTierContent(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
-                            painter = painterResource(id = android.R.drawable.ic_menu_share),
+                            imageVector = Icons.Default.Share,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )

@@ -19,26 +19,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.garrettbutchko.minimate.content.helper.InfoButton
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 import com.garrettbutchko.minimate.viewModels.analytics.DataPointObject
-
-// Parses named colors ("red", "blue", etc.) or "#RRGGBB"/"#AARRGGBB" hex strings into a Compose Color.
-fun String.toComposeColor(): Color? {
-    this.toColor()?.let { return it }
-    val hex = this.trimStart('#')
-    return when (hex.length) {
-        6 -> hex.toLongOrNull(16)?.let { Color(it.or(0xFF000000L).toInt()) }
-        8 -> hex.toLongOrNull(16)?.let { Color(it.toInt()) }
-        else -> null
-    }
-}
 
 @Composable
 fun DataCard(
     data: DataPointObject,
-    title: String,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.surfaceVariant,
+    backgroundColor: Color = MaterialTheme.colorScheme.secondary,
     cornerRadius: Dp = 12.dp,
     fontStyle: TextStyle = MaterialTheme.typography.bodyMedium
 ) {
@@ -47,35 +36,32 @@ fun DataCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(cornerRadius),
-        color = color
+        color = backgroundColor
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Title row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = title,
+                    text = data.title,
                     style = fontStyle,
                     color = onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                // InfoButton omitted — placeholder until Android InfoButton is implemented
-                Spacer(modifier = Modifier.padding(start = 8.dp))
+                InfoButton(infoText = data.infoText)
             }
 
-            // Value + delta row
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                val valueColor = data.deltaColor?.toComposeColor() ?: onSurface
+                val valueColor = data.deltaColor?.toColor() ?: onSurface
                 Text(
                     text = data.value,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
@@ -84,7 +70,7 @@ fun DataCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 if (data.delta != null && data.deltaColor != null) {
-                    val deltaColor = data.deltaColor!!.toComposeColor() ?: onSurface
+                    val deltaColor = data.deltaColor!!.toColor() ?: onSurface
                     Text(
                         text = data.delta!!,
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),

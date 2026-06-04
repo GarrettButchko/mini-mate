@@ -2,7 +2,6 @@ package com.garrettbutchko.minimate.content.tabviews.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,7 +63,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -79,7 +76,6 @@ import com.garrettbutchko.minimate.content.helper.StepperControl
 import com.garrettbutchko.minimate.viewModelsAndroidAddOns.uploadAdImageAndroid
 import com.garrettbutchko.minimate.viewModelsAndroidAddOns.uploadLogoImageAndroid
 import com.garrettbutchko.minimate.content.game.GameReviewView
-import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.toComposeColor
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialLink
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialPlatform
@@ -90,8 +86,8 @@ import com.garrettbutchko.minimate.viewModels.ColorAddTarget
 import com.garrettbutchko.minimate.viewModels.ColorDeleteTarget
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
 import com.garrettbutchko.minimate.viewModels.CourseSettingsViewModel
-import com.garrettbutchko.minimate.viewModels.analytics.CourseHealthReport // just in case
 import com.garrettbutchko.minimate.generateUUID
+import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 
 @Composable
 private fun appSwitchColors(swiftBlue: Color, mainOpp: Color) = SwitchDefaults.colors(
@@ -283,7 +279,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
 
     Button(
         onClick = { showChangeDialog = true },
-        colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
+        colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = MaterialTheme.colorScheme.onPrimary)
     ) {
         Text("Change Password")
     }
@@ -341,7 +337,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                         showChangeDialog = false
                     },
                     enabled = isValidPassword,
-                    colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = MaterialTheme.colorScheme.onPrimary)
                 ) { Text("Save") }
             },
             dismissButton = {
@@ -403,7 +399,7 @@ private fun SocialLinksSectionContent(course: Course, courseListVM: CourseListVi
                 onClick = {
                     courseListVM.addSocialLink(SocialLink(id = generateUUID(), platform = SocialPlatform.DEFAULT, url = ""))
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = MaterialTheme.colorScheme.onPrimary)
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Text("Add Social Link")
@@ -529,7 +525,7 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
                 Box(
                     modifier = Modifier
                         .size(24.dp)
-                        .background(Color.Red, CircleShape)
+                        .background(MaterialTheme.colorScheme.error, CircleShape)
                         .clip(CircleShape)
                         .clickable { vm.deleteLogoImage(course) { courseListVM.setCourse(it) } },
                     contentAlignment = Alignment.Center,
@@ -537,7 +533,7 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Remove logo",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onError,
                         modifier = Modifier.size(14.dp),
                     )
                 }
@@ -566,7 +562,7 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
         Text("Scorecard Color:", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
         Spacer(modifier = Modifier.weight(1f))
         ColorHolderView(
-            color = course.scoreCardColorDT?.toComposeColor(),
+            color = course.scoreCardColorDT?.toColor(),
             showFunction = {
                 courseListVM.setAddTarget(ColorAddTarget.SCORE_CARD_COLOR)
                 courseListVM.setShowColor(true)
@@ -588,7 +584,7 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
         ) {
             course.courseColorsDT?.forEachIndexed { index, dt ->
                 ColorHolderView(
-                    color = dt.toComposeColor(),
+                    color = dt.toColor(),
                     showFunction = {},
                     deleteFunction = { vm.deleteColor(ColorDeleteTarget.CourseColor(index), course) { courseListVM.setCourse(it) } },
                 )
@@ -738,7 +734,7 @@ private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, course
                     Box(
                         modifier = Modifier
                             .size(24.dp)
-                            .background(Color.Red, CircleShape)
+                            .background(MaterialTheme.colorScheme.error, CircleShape)
                             .clip(CircleShape)
                             .clickable { vm.deleteAdImage(course) { courseListVM.setCourse(it) } },
                         contentAlignment = Alignment.Center,
@@ -746,7 +742,7 @@ private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, course
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Remove ad image",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onError,
                             modifier = Modifier.size(14.dp),
                         )
                     }

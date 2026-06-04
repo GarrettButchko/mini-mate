@@ -1,5 +1,8 @@
 package com.garrettbutchko.minimate.content.tabviews.analytics.charts
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +16,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -22,6 +27,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -40,15 +46,23 @@ fun GameDurationTrendChart(
     data: List<GameDurationActivity>,
     modifier: Modifier = Modifier
 ) {
+    val drawProgress = remember(data) { Animatable(0f) }
+    LaunchedEffect(data) {
+        drawProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+        )
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(17.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.secondary
     ) {
         if (data.isEmpty() || data.all { it.avgMinutes == 0.0 }) {
             GameDurationEmptyState()
         } else {
-            GameDurationContent(data = data)
+            GameDurationContent(data = data, drawProgress = drawProgress.value)
         }
     }
 }
@@ -77,7 +91,7 @@ private fun GameDurationEmptyState() {
 }
 
 @Composable
-private fun GameDurationContent(data: List<GameDurationActivity>) {
+private fun GameDurationContent(data: List<GameDurationActivity>, drawProgress: Float = 1f) {
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
     val textMeasurer = rememberTextMeasurer()
@@ -150,24 +164,29 @@ private fun GameDurationContent(data: List<GameDurationActivity>) {
                 lineTo(points.last().x, chartTop + chartHeight)
                 close()
             }
-            drawPath(
-                path = areaPath,
-                brush = Brush.verticalGradient(
-                    colors = listOf(durationLineColor.copy(alpha = 0.3f), Color.Transparent),
-                    startY = chartTop,
-                    endY = chartTop + chartHeight
-                )
-            )
 
             val linePath = Path().apply {
                 moveTo(points.first().x, points.first().y)
                 for (i in 1 until points.size) lineTo(points[i].x, points[i].y)
             }
-            drawPath(
-                path = linePath,
-                color = durationLineColor,
-                style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-            )
+
+            // Left-to-right reveal driven by drawProgress — matches iOS Chart entrance animation.
+            val revealRight = chartLeft + chartWidth * drawProgress
+            clipRect(left = 0f, top = 0f, right = revealRight, bottom = size.height) {
+                drawPath(
+                    path = areaPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(durationLineColor.copy(alpha = 0.3f), Color.Transparent),
+                        startY = chartTop,
+                        endY = chartTop + chartHeight
+                    )
+                )
+                drawPath(
+                    path = linePath,
+                    color = durationLineColor,
+                    style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                )
+            }
 
             val xLabelIndices = getGameDurationXLabelIndices(data.size)
             for (idx in xLabelIndices) {

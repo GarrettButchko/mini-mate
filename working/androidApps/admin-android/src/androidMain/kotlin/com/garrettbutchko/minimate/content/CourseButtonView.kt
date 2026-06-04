@@ -22,7 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +54,7 @@ fun CourseButtonView(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(25.dp)),
+            .subtleShadow(),
         shape = RoundedCornerShape(25.dp),
         color = colorResource(id = color.sub),
         onClick = onClick

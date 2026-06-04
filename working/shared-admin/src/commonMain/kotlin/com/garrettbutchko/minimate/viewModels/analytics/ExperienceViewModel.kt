@@ -19,14 +19,26 @@ open class ExperienceViewModel {
         val avgStrokesPerHole = getHoleCombined()
         val hardestHoleID = avgStrokesPerHole.maxByOrNull { it.value }?.key ?: "N/A"
         val valueStr = if (hardestHoleID != "N/A") "Hole $hardestHoleID" else "N/A"
-        return DataPointObject(value = valueStr, delta = null, deltaColor = "MAIN_OPP")
+        return DataPointObject(
+            value = valueStr,
+            title = "Hardest",
+            infoText = "The hole which has the the highest average strokes per plays",
+            delta = null,
+            deltaColor = "MAIN_OPP"
+        )
     }
 
     fun getEasiestHole(): DataPointObject {
         val avgStrokesPerHole = getHoleCombined()
         val easiestHoleID = avgStrokesPerHole.minByOrNull { it.value }?.key ?: "N/A"
         val valueStr = if (easiestHoleID != "N/A") "Hole $easiestHoleID" else "N/A"
-        return DataPointObject(value = valueStr, delta = null, deltaColor = "MAIN_OPP")
+        return DataPointObject(
+            value = valueStr,
+            title = "Easiest",
+            infoText = "The hole which has the the lowest average strokes per plays",
+            delta = null,
+            deltaColor = "MAIN_OPP"
+        )
     }
 
     fun getHoleCombined(): Map<String, Double> {
@@ -75,7 +87,7 @@ open class ExperienceViewModel {
     }
 
     fun getAvgRelativeToPar(): DataPointObject {
-        val course = currentCourse ?: return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+        val course = currentCourse ?: return DataPointObject(value = "N/A", title = "Avg vs Par", infoText = "Average strokes above or below par across all holes played.", delta = null, deltaColor = "MAIN_OPP")
         val holeCombined = getHoleCombined()
         var totalOffset = 0.0
         var validHoleCount = 0
@@ -89,7 +101,7 @@ open class ExperienceViewModel {
             validHoleCount += 1
         }
 
-        if (validHoleCount <= 0) return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+        if (validHoleCount <= 0) return DataPointObject(value = "N/A", title = "Avg vs Par", infoText = "Average strokes above or below par across all holes played.", delta = null, deltaColor = "MAIN_OPP")
 
         val avgOffset = totalOffset / validHoleCount.toDouble()
         val sign = if (avgOffset > 0) "+" else ""
@@ -97,11 +109,17 @@ open class ExperienceViewModel {
         val roundedOffset = round(avgOffset * 100) / 100.0
         val valueString = "$sign$roundedOffset"
 
-        return DataPointObject(value = valueString, delta = null, deltaColor = if (avgOffset <= 0) "GREEN" else "RED")
+        return DataPointObject(
+            value = valueString,
+            title = "Avg vs Par",
+            infoText = "Average strokes above or below par across all holes played.",
+            delta = null,
+            deltaColor = if (avgOffset <= 0) "GREEN" else "RED"
+        )
     }
 
     fun getMostBeatenPar(): DataPointObject {
-        val course = currentCourse ?: return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+        val course = currentCourse ?: return DataPointObject(value = "N/A", title = "Best Hole", infoText = "Hole where players most frequently beat par.", delta = null, deltaColor = "MAIN_OPP")
         val holeCombined = getHoleCombined()
         var bestHole = 0
         var bestOffset = Double.MAX_VALUE
@@ -119,12 +137,18 @@ open class ExperienceViewModel {
             }
         }
 
-        if (bestHole <= 0) return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
-        return DataPointObject(value = "Hole $bestHole", delta = null, deltaColor = "MAIN_OPP")
+        if (bestHole <= 0) return DataPointObject(value = "N/A", title = "Best Hole", infoText = "Hole where players most frequently beat par.", delta = null, deltaColor = "MAIN_OPP")
+        return DataPointObject(
+            value = "Hole $bestHole",
+            title = "Best Hole",
+            infoText = "Hole where players most frequently beat par.",
+            delta = null,
+            deltaColor = "MAIN_OPP"
+        )
     }
 
     fun getUnderParPercentage(): DataPointObject {
-        val course = currentCourse ?: return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+        val course = currentCourse ?: return DataPointObject(value = "N/A", title = "Under Par", infoText = "Percentage of holes completed under par.", delta = null, deltaColor = "MAIN_OPP")
         var totalHolesPlayed = 0
         var underParCount = 0
 
@@ -144,15 +168,21 @@ open class ExperienceViewModel {
             }
         }
 
-        if (totalHolesPlayed <= 0) return DataPointObject(value = "0%", delta = null, deltaColor = "MAIN_OPP")
+        if (totalHolesPlayed <= 0) return DataPointObject(value = "0%", title = "Under Par", infoText = "Percentage of holes completed under par.", delta = null, deltaColor = "MAIN_OPP")
 
         val percentage = (underParCount.toDouble() / totalHolesPlayed.toDouble()) * 100.0
         val formatted = if (percentage == 0.0) "0%" else "${percentage.format(1)}%"
-        return DataPointObject(value = formatted, delta = null, deltaColor = "MAIN_OPP")
+        return DataPointObject(
+            value = formatted,
+            title = "Under Par",
+            infoText = "Percentage of holes completed under par.",
+            delta = null,
+            deltaColor = "MAIN_OPP"
+        )
     }
 
     fun getOverParPercentage(): DataPointObject {
-        val course = currentCourse ?: return DataPointObject(value = "N/A", delta = null, deltaColor = "MAIN_OPP")
+        val course = currentCourse ?: return DataPointObject(value = "N/A", title = "Over Par", infoText = "Percentage of holes completed over par.", delta = null, deltaColor = "MAIN_OPP")
         var totalHolesPlayed = 0
         var overParCount = 0
 
@@ -172,11 +202,17 @@ open class ExperienceViewModel {
             }
         }
 
-        if (totalHolesPlayed <= 0) return DataPointObject(value = "0%", delta = null, deltaColor = "MAIN_OPP")
+        if (totalHolesPlayed <= 0) return DataPointObject(value = "0%", title = "Over Par", infoText = "Percentage of holes completed over par.", delta = null, deltaColor = "MAIN_OPP")
 
         val percentage = (overParCount.toDouble() / totalHolesPlayed.toDouble()) * 100.0
         val formatted = if (percentage == 0.0) "0%" else "${percentage.format(1)}%"
-        return DataPointObject(value = formatted, delta = null, deltaColor = "MAIN_OPP")
+        return DataPointObject(
+            value = formatted,
+            title = "Over Par",
+            infoText = "Percentage of holes completed over par.",
+            delta = null,
+            deltaColor = "MAIN_OPP"
+        )
     }
 
     fun getHoleInOneCount(): DataPointObject {
@@ -191,6 +227,12 @@ open class ExperienceViewModel {
             }
         }
 
-        return DataPointObject(value = holeInOneCount.toString(), delta = null, deltaColor = "YELLOW")
+        return DataPointObject(
+            value = holeInOneCount.toString(),
+            title = "Total Holes-in-One",
+            infoText = "Total number of holes completed in one stroke during this period.",
+            delta = null,
+            deltaColor = "YELLOW"
+        )
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.Dp
@@ -17,16 +18,28 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Color.Companion.subVsColor(makeColor: Color?): Color {
-    return makeColor?.copy(alpha = 0.40f) ?: colorResource(id = com.garrettbutchko.minimate.shared.R.color.sub)
+    return makeColor?.copy(alpha = 0.20f) ?: colorResource(id = com.garrettbutchko.minimate.shared.R.color.sub)
 }
 
 @Composable
 fun Color.Companion.subTwoVsColor(makeColor: Color?): Color {
     val subTwo = colorResource(id = com.garrettbutchko.minimate.shared.R.color.subTwo)
-    return makeColor?.copy(alpha = 0.40f)?.mix(with = subTwo, by = 0.7f) ?: subTwo
+    return makeColor?.copy(alpha = 0.2f)?.mix(with = subTwo, by = 0.95f) ?: subTwo
 }
 
 fun Color.mix(with: Color, by: Float): Color {
     return lerp(this, with, by.coerceIn(0f, 1f))
+}
+
+fun Modifier.subtleShadow(
+    elevation: Dp = 8.dp,
+    shape: Shape = RoundedCornerShape(25.dp),
+    alpha: Float = 0.25f
+): Modifier = this.graphicsLayer {
+    this.shadowElevation = elevation.toPx()
+    this.shape = shape
+    this.clip = false
+    this.spotShadowColor = Color.Black.copy(alpha = alpha)
+    this.ambientShadowColor = Color.Black.copy(alpha = alpha)
 }
 

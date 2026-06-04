@@ -28,6 +28,12 @@ val MiniMateLightColorScheme = lightColorScheme(
     surfaceVariant         = Color(0xFFFFFFFF), // sub
     onSurfaceVariant       = Color(0xFF1C1C1F), // subOpp
 
+    surfaceContainerLowest  = Color(0xFFFFFFFF),
+    surfaceContainerLow     = Color(0xFFF4F5F5),
+    surfaceContainer        = Color(0xFFEEEEEE),
+    surfaceContainerHigh    = Color(0xFFE8E8E8),
+    surfaceContainerHighest = Color(0xFFE0E0E0),
+
     outline                = Color(0xFFE0DFE6), // textField
 
     error                  = SwiftRed,
@@ -54,6 +60,12 @@ val MiniMateDarkColorScheme = darkColorScheme(
     onSurface              = Color(0xFFF2F2F7), // mainOpp (dark)
     surfaceVariant         = Color(0xFF1C1C1E), // sub (dark)
     onSurfaceVariant       = Color(0xFFEEEEEF), // subOpp (dark)
+
+    surfaceContainerLowest  = Color(0xFF0A0A0A),
+    surfaceContainerLow     = Color(0xFF111111),
+    surfaceContainer        = Color(0xFF1C1C1E),
+    surfaceContainerHigh    = Color(0xFF242424),
+    surfaceContainerHighest = Color(0xFF2C2C2C),
 
     outline                = Color(0xFF3A3A3C), // textField (dark)
 

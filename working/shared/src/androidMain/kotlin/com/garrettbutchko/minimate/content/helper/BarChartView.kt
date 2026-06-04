@@ -11,12 +11,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.res.colorResource
@@ -31,7 +34,7 @@ import me.bytebeats.views.charts.bar.BarChartData
 import me.bytebeats.views.charts.bar.render.label.SimpleLabelDrawer
 import me.bytebeats.views.charts.bar.render.xaxis.SimpleXAxisDrawer
 import me.bytebeats.views.charts.bar.render.yaxis.IYAxisDrawer
-import me.bytebeats.views.charts.bar.render.bar.SimpleBarDrawer
+import me.bytebeats.views.charts.bar.render.bar.IBarDrawer
 import me.bytebeats.views.charts.toLegacyInt
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -86,7 +89,7 @@ fun BarChartView(
                 labelTextColor = axisColor,
                 gridLineColor = gridColor
             ),
-            barDrawer = SimpleBarDrawer(),
+            barDrawer = RoundedBarDrawer(),
             labelDrawer = SimpleLabelDrawer(
                 drawLocation = SimpleLabelDrawer.DrawLocation.XAxis,
                 labelTextColor = axisColor
@@ -126,8 +129,36 @@ private class IntegerYAxisDrawer(
         isAntiAlias = true
     }
 
+    // Cached from the previous drawAxisLabels call so grid lines can be drawn
+    // in drawAxisLine, which runs before bars in the library's draw order.
+    private var cachedMin = 0f
+    private var cachedMax = 1f
+    private var cachedArea: Rect? = null
+    private var cachedCanvasWidth = 0f
+
     override fun drawAxisLine(drawScope: DrawScope, canvas: Canvas, drawableArea: Rect) {
         with(drawScope) {
+            // Draw grid lines behind bars using values cached from the previous frame.
+            val area = cachedArea
+            if (area != null) {
+                val range = cachedMax - cachedMin
+                if (range > 0f) {
+                    val start = floor(cachedMin.toDouble()).toInt()
+                    val end = ceil(cachedMax.toDouble()).toInt()
+                    for (value in start..end) {
+                        val v = value.toFloat()
+                        if (v !in cachedMin..cachedMax) continue
+                        val ratio = (v - cachedMin) / range
+                        val y = area.bottom - ratio * area.height
+                        canvas.drawLine(
+                            p1 = Offset(x = area.right, y = y),
+                            p2 = Offset(x = cachedCanvasWidth, y = y),
+                            paint = mGridLinePaint.apply { strokeWidth = 1.dp.toPx() }
+                        )
+                    }
+                }
+            }
+
             val lineThickness = 0.dp.toPx()
             val x = drawableArea.right - lineThickness / 2f
             canvas.drawLine(
@@ -146,6 +177,12 @@ private class IntegerYAxisDrawer(
         maxValue: Float
     ) {
         with(drawScope) {
+            // Cache for the next frame's drawAxisLine call.
+            cachedMin = minValue
+            cachedMax = maxValue
+            cachedArea = drawableArea
+            cachedCanvasWidth = size.width
+
             val labelPaint = mTextPaint.apply {
                 color = labelTextColor.toLegacyInt()
                 textSize = labelTextSize.toPx()
@@ -165,23 +202,40 @@ private class IntegerYAxisDrawer(
                 val ratio = (valueFloat - minValue) / range
                 val y = drawableArea.bottom - ratio * drawableArea.height
 
-                // Draw grid line across the chart
-                canvas.drawLine(
-                    p1 = Offset(x = drawableArea.right, y = y),
-                    p2 = Offset(x = size.width, y = y),
-                    paint = mGridLinePaint.apply { strokeWidth = 1.dp.toPx() }
-                )
-
-                // Draw label
                 val label = labelValueFormatter(value.toFloat())
                 val x = drawableArea.right - 4.dp.toPx()
 
                 val fontMetrics = labelPaint.fontMetrics
                 val textY = y + (fontMetrics.descent - fontMetrics.ascent) / 2f - fontMetrics.descent
-                
+
                 canvas.nativeCanvas.drawText(label, x, textY, labelPaint)
             }
         }
+    }
+}
+
+private class RoundedBarDrawer(private val cornerRadius: Float = 12f) : IBarDrawer {
+    private val mBarPaint = Paint().apply { isAntiAlias = true }
+    private val mPath = Path()
+
+    override fun drawBar(
+        drawScope: DrawScope,
+        canvas: Canvas,
+        barArea: Rect,
+        bar: BarChartData.Bar
+    ) {
+        val r = minOf(cornerRadius, barArea.width / 2f)
+        mPath.reset()
+        mPath.addRoundRect(
+            RoundRect(
+                rect = barArea,
+                topLeft = CornerRadius(r, r),
+                topRight = CornerRadius(r, r),
+                bottomLeft = CornerRadius(0f, 0f),
+                bottomRight = CornerRadius(0f, 0f)
+            )
+        )
+        canvas.drawPath(mPath, mBarPaint.apply { color = bar.color })
     }
 }
 

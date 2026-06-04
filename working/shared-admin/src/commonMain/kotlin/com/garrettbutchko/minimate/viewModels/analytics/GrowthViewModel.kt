@@ -56,40 +56,64 @@ open class GrowthViewModel {
         val rangeUsers = getActiveUsers(rangeDailyDocs)
         val deltaUsers = getActiveUsers(deltaDailyDocs)
         val delta = calcDelta(deltaUsers, rangeUsers)
-        
+
         val data = deltaErrorCalc(delta, true)
-        
-        return DataPointObject(value = rangeUsers.toString(), delta = data.first, deltaColor = data.second)
+
+        return DataPointObject(
+            value = rangeUsers.toString(),
+            title = "Total Visits",
+            infoText = "Total player visits during the selected date range. (Counts a player once per day. If a player visits on multiple days, each day is counted.)",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
-    
+
     fun firstTimePrime(): DataPointObject {
         val rangeUsers = getFirstTimeUsers(rangeDailyDocs)
         val deltaUsers = getFirstTimeUsers(deltaDailyDocs)
         val delta = calcDelta(deltaUsers, rangeUsers)
-        
+
         val data = deltaErrorCalc(delta, true)
-        
-        return DataPointObject(value = rangeUsers.toString(), delta = data.first, deltaColor = data.second)
+
+        return DataPointObject(
+            value = rangeUsers.toString(),
+            title = "First Time",
+            infoText = "Players who visited this course for the first time during the selected date range.",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
-    
+
     fun returningPrime(): DataPointObject {
         val rangeUsers = getReturningUsers(rangeDailyDocs)
         val deltaUsers = getReturningUsers(deltaDailyDocs)
         val delta = calcDelta(deltaUsers, rangeUsers)
-        
+
         val data = deltaErrorCalc(delta, true)
-        
-        return DataPointObject(value = rangeUsers.toString(), delta = data.first, deltaColor = data.second)
+
+        return DataPointObject(
+            value = rangeUsers.toString(),
+            title = "Returning",
+            infoText = "Players who had previously visited and played again during the selected date range.",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
-    
+
     fun avgPlayersPerGamePrime(): DataPointObject {
         val rangeUsers = avgPlayersPerGame(rangeDailyDocs)
         val deltaUsers = avgPlayersPerGame(deltaDailyDocs)
         val delta = calcDelta(deltaUsers, rangeUsers)
-        
+
         val data = deltaErrorCalc(delta, true)
-        
-        return DataPointObject(value = "${rangeUsers.format(2)} / 1", delta = data.first, deltaColor = data.second)
+
+        return DataPointObject(
+            value = "${rangeUsers.format(2)} / 1",
+            title = "Avg Players Per Game",
+            infoText = "The number of total plays divided by the number of total visits. (Counts a player once per day. If a player visits on multiple days, each day is counted.)",
+            delta = data.first,
+            deltaColor = data.second
+        )
     }
     
     // MARK: - Chart Data

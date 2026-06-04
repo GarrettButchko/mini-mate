@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -16,7 +15,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,12 +57,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.garrettbutchko.minimate.content.helper.SectionStatsCard
 import com.garrettbutchko.minimate.content.helper.BannerAdView
 import com.garrettbutchko.minimate.content.helper.BarChartView
 import com.garrettbutchko.minimate.content.helper.LogoDefault
@@ -138,10 +137,7 @@ fun StatsView(
                 Row(
                     modifier = Modifier
                         .size(30.dp)
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = RoundedCornerShape(25.dp)
-                        )
+                        .subtleShadow()
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable { latestFirst = !latestFirst },
@@ -362,10 +358,7 @@ private fun PromoCard(content: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(25.dp)
-            )
+            .subtleShadow()
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(25.dp))
             .padding(14.dp)
     ) {
@@ -386,52 +379,49 @@ private fun OverviewSection(
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(vertical = 8.dp).padding(bottom = 14.dp)) {
         SectionStatsCard(
             title = "Basic Stats",
-            spacing = spacing
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                StatCard(
-                    title = "Players Faced",
-                    value = gameManager.totalPlayersFaced().toString(),
-                    infoText = "Number of players other than yourself you played with.",
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    title = "Holes Played",
-                    value = gameManager.totalHolesPlayed().toString(),
-                    infoText = "Total holes played (including unfinished holes).",
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            content = {
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    StatCard(
+                        title = "Players Faced",
+                        value = gameManager.totalPlayersFaced().toString(),
+                        infoText = "Number of players other than yourself you played with.",
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatCard(
+                        title = "Holes Played",
+                        value = gameManager.totalHolesPlayed().toString(),
+                        infoText = "Total holes played (including unfinished holes).",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-            StatCard(
-                title = "Games Played",
-                value = gameManager.totalGamesPlayed().toString(),
-                infoText = "Total games played."
-            )
+                StatCard(
+                    title = "Games Played",
+                    value = gameManager.totalGamesPlayed().toString(),
+                    infoText = "Total games played."
+                )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                StatCard(
-                    title = "Strokes/Game",
-                    value = String.format(Locale.US, "%.1f", averagePerGame),
-                    infoText = "Average strokes per game.",
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    title = "Strokes/Hole",
-                    value = String.format(Locale.US, "%.1f", averagePerHole),
-                    infoText = "Average strokes per hole.",
-                    modifier = Modifier.weight(1f)
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    StatCard(
+                        title = "Strokes/Game",
+                        value = String.format(Locale.US, "%.1f", averagePerGame),
+                        infoText = "Average strokes per game.",
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatCard(
+                        title = "Strokes/Hole",
+                        value = String.format(Locale.US, "%.1f", averagePerHole),
+                        infoText = "Average strokes per hole.",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
-        }
+        )
 
         BannerAdView(adUnitID = "ca-app-pub-8261962597301587/1525588861",
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(25.dp)
-                )
+                .subtleShadow()
                 .height(80.dp)
                 .background(
                     color = MaterialTheme.colorScheme.surfaceVariant,
@@ -441,67 +431,67 @@ private fun OverviewSection(
 
         SectionStatsCard(
             title = "Average 18-Hole Game",
-            spacing = spacing
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .height(150.dp)
-            ) {
-                BarChartView(
-                    data = gameManager.averageHoles18(),
-                    title = "Average Strokes"
-                )
+            content = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.secondary)
+                        .height(150.dp)
+                ) {
+                    BarChartView(
+                        data = gameManager.averageHoles18(),
+                        title = "Average Strokes"
+                    )
+                }
             }
-        }
+        )
 
         SectionStatsCard(
             title = "Misc Stats",
-            spacing = spacing
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+            content = {
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    StatCard(
+                        title = "Best Game",
+                        value = bestGame,
+                        color = Color(0xFF2E7D32),
+                        infoText = "Lowest total strokes in a game.",
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatCard(
+                        title = "Worst Game",
+                        value = worstGame,
+                        color = Color(0xFFC62828),
+                        infoText = "Highest total strokes in a game.",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 StatCard(
-                    title = "Best Game",
-                    value = bestGame,
-                    color = Color(0xFF2E7D32),
-                    infoText = "Lowest total strokes in a game.",
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    title = "Worst Game",
-                    value = worstGame,
-                    color = Color(0xFFC62828),
-                    infoText = "Highest total strokes in a game.",
-                    modifier = Modifier.weight(1f)
+                    title = "Holes-in-One",
+                    value = gameManager.holeInOneCount().toString(),
+                    infoText = "Number of holes with one stroke."
                 )
             }
-
-            StatCard(
-                title = "Holes-in-One",
-                value = gameManager.holeInOneCount().toString(),
-                infoText = "Number of holes with one stroke."
-            )
-        }
+        )
 
         SectionStatsCard(
             title = "Average 9-Hole Game",
-            spacing = spacing
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.secondary)
-                    .height(150.dp)
-            ) {
-                BarChartView(
-                    data = gameManager.averageHoles9(),
-                    title = "Average Strokes"
-                )
+            content = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.secondary)
+                        .height(150.dp)
+                ) {
+                    BarChartView(
+                        data = gameManager.averageHoles9(),
+                        title = "Average Strokes"
+                    )
+                }
             }
-        }
+        )
     }
 }
 
@@ -522,10 +512,7 @@ private fun GameSummaryCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(25.dp)
-            )
+            .subtleShadow()
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(25.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)

@@ -1,5 +1,8 @@
 package com.garrettbutchko.minimate.content.tabviews.analytics.charts
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,6 +14,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -21,6 +26,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -39,15 +45,23 @@ fun GamesPerDayChart(
     data: List<PlayerActivity>,
     modifier: Modifier = Modifier
 ) {
+    val drawProgress = remember(data) { Animatable(0f) }
+    LaunchedEffect(data) {
+        drawProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+        )
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(17.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.secondary
     ) {
         if (data.isEmpty() || data.all { it.count == 0 }) {
             GamesPerDayEmptyState()
         } else {
-            GamesPerDayContent(data = data)
+            GamesPerDayContent(data = data, drawProgress = drawProgress.value)
         }
     }
 }
@@ -76,7 +90,7 @@ private fun GamesPerDayEmptyState() {
 }
 
 @Composable
-private fun GamesPerDayContent(data: List<PlayerActivity>) {
+private fun GamesPerDayContent(data: List<PlayerActivity>, drawProgress: Float = 1f) {
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
     val textMeasurer = rememberTextMeasurer()
@@ -148,14 +162,6 @@ private fun GamesPerDayContent(data: List<PlayerActivity>) {
                 lineTo(points.last().x, chartTop + chartHeight)
                 close()
             }
-            drawPath(
-                path = areaPath,
-                brush = Brush.verticalGradient(
-                    colors = listOf(lineColor.copy(alpha = 0.4f), Color.Transparent),
-                    startY = chartTop,
-                    endY = chartTop + chartHeight
-                )
-            )
 
             // Line
             val linePath = Path().apply {
@@ -164,15 +170,28 @@ private fun GamesPerDayContent(data: List<PlayerActivity>) {
                     lineTo(points[i].x, points[i].y)
                 }
             }
-            drawPath(
-                path = linePath,
-                color = lineColor,
-                style = Stroke(
-                    width = 2.dp.toPx(),
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
+
+            // Left-to-right reveal driven by drawProgress — matches iOS Chart entrance animation.
+            val revealRight = chartLeft + chartWidth * drawProgress
+            clipRect(left = 0f, top = 0f, right = revealRight, bottom = size.height) {
+                drawPath(
+                    path = areaPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(lineColor.copy(alpha = 0.4f), Color.Transparent),
+                        startY = chartTop,
+                        endY = chartTop + chartHeight
+                    )
                 )
-            )
+                drawPath(
+                    path = linePath,
+                    color = lineColor,
+                    style = Stroke(
+                        width = 2.dp.toPx(),
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
+                    )
+                )
+            }
 
             // X-axis date labels
             val xLabelIndices = getXLabelIndices(data.size)

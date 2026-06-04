@@ -41,7 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -176,7 +176,7 @@ fun CourseScreen(
                         fontWeight = FontWeight.Bold,
                         color = colorResource(id = color.mainOpp),
                         modifier = Modifier
-                            .shadow(8.dp, CircleShape)
+                            .subtleShadow(shape = CircleShape)
                             .background(
                                 colorResource(id = color.bg),
                                 RoundedCornerShape(25.dp)
@@ -210,7 +210,7 @@ fun CourseScreen(
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .shadow(8.dp, RoundedCornerShape(25.dp))
+                                .subtleShadow()
                                 .height(250.dp)
                                 .clip(RoundedCornerShape(25.dp)),
                             color = colorResource(id = color.bg).copy(alpha = 0.96f)
@@ -377,7 +377,7 @@ private fun LocationButton(
     Box(
         modifier = Modifier
             .size(42.dp)
-            .shadow(8.dp, CircleShape)
+            .subtleShadow(shape = CircleShape)
             .background(
                 color = colorResource(id = com.garrettbutchko.minimate.shared.R.color.bg),
                 shape = CircleShape

@@ -1,5 +1,8 @@
 package com.garrettbutchko.minimate.content.tabviews.analytics.charts
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -46,10 +51,18 @@ fun VisitorDonutChart(
         else -> VisitorSegment("Equal", returningInt, segments[0].color)
     }
 
+    val drawProgress = remember(returningPerc, firstTimePerc) { Animatable(0f) }
+    LaunchedEffect(returningPerc, firstTimePerc) {
+        drawProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 900, easing = FastOutSlowInEasing)
+        )
+    }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(17.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.secondary
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -66,7 +79,7 @@ fun VisitorDonutChart(
                     .height(200.dp),
                 contentAlignment = Alignment.Center
             ) {
-                DonutCanvas(segments = segments)
+                DonutCanvas(segments = segments, drawProgress = drawProgress.value)
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -94,7 +107,7 @@ fun VisitorDonutChart(
 }
 
 @Composable
-private fun DonutCanvas(segments: List<VisitorSegment>) {
+private fun DonutCanvas(segments: List<VisitorSegment>, drawProgress: Float = 1f) {
     val total = segments.sumOf { it.count }.toFloat().coerceAtLeast(1f)
 
     Canvas(modifier = Modifier.size(200.dp)) {
@@ -103,17 +116,19 @@ private fun DonutCanvas(segments: List<VisitorSegment>) {
         var startAngle = -90f
 
         for (segment in segments) {
-            val sweepAngle = (segment.count / total) * 360f - gapAngle
+            // Full sweep if progress were 1f, then scale by drawProgress for the reveal.
+            val fullSweep = (segment.count / total) * 360f - gapAngle
+            val animatedSweep = (fullSweep * drawProgress).coerceAtLeast(0f)
             drawArc(
                 color = segment.color,
                 startAngle = startAngle + gapAngle / 2f,
-                sweepAngle = sweepAngle.coerceAtLeast(0f),
+                sweepAngle = animatedSweep,
                 useCenter = false,
                 topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f),
                 size = Size(size.width - strokeWidth, size.height - strokeWidth),
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
-            startAngle += sweepAngle + gapAngle
+            startAngle += fullSweep + gapAngle
         }
     }
 }

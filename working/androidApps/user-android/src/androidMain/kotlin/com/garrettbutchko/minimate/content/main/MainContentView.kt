@@ -39,16 +39,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -73,7 +70,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.shadow
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -96,6 +93,7 @@ import com.garrettbutchko.minimate.content.game.GameReviewView
 import com.garrettbutchko.minimate.content.game.HostGameView
 import com.garrettbutchko.minimate.content.game.JoinGameView
 import com.garrettbutchko.minimate.content.helper.BannerAdView
+import com.garrettbutchko.minimate.content.helper.InfoButton
 import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.BarChartView
 import com.garrettbutchko.minimate.helper.IAPManager
@@ -115,7 +113,7 @@ import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
-import com.garrettbutchko.minimate.content.stats.SectionStatsCard
+import com.garrettbutchko.minimate.content.helper.SectionStatsCard
 import com.garrettbutchko.minimate.content.stats.StatCard
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
@@ -141,7 +139,6 @@ fun MainContentView(
     val hasLocationAccess by locationHandler.hasLocationAccess.collectAsState()
 
     var isOnlineMode by remember { mutableStateOf(false) }
-    val showInfoState = remember { mutableStateOf(false) }
     val showProfileSheetState = remember { mutableStateOf(false) }
     val showProSheetState = remember { mutableStateOf(false) }
     var showPromoStage by remember { mutableStateOf(false) }
@@ -271,10 +268,7 @@ fun MainContentView(
                         } else {
                             Modifier
                                 .fillMaxWidth()
-                                .shadow(
-                                    elevation = 8.dp,
-                                    shape = RoundedCornerShape(25.dp)
-                                )
+                                .subtleShadow()
                         }
 
                         BannerAdView(adUnitID = "ca-app-pub-8261962597301587/9726040339",
@@ -368,7 +362,6 @@ fun MainContentView(
                 infoText = logic.getInfoMessage(isOnlineMode = isOnlineMode),
                 title = logic.getHeaderTitle(isOnlineMode = isOnlineMode),
                 onBackToOffline = { isOnlineMode = false },
-                onInfo = { showInfoState.value = true },
                 onQuick = {
                     if (disablePlaying) {
                         showProSheetState.value = true
@@ -404,7 +397,7 @@ fun MainContentView(
                     Box(
                         modifier = Modifier
                             .height(50.dp)
-                            .shadow(10.dp, RoundedCornerShape(25.dp))
+                            .subtleShadow(elevation = 10.dp)
                             .background(
                                 Color(0xFF7B1FA2).copy(alpha = 0.78f),
                                 RoundedCornerShape(25.dp)
@@ -441,17 +434,6 @@ fun MainContentView(
                 }
             }
         }
-    }
-
-    if (showInfoState.value) {
-        AlertDialog(
-            onDismissRequest = { showInfoState.value = false },
-            confirmButton = {
-                TextButton(onClick = { showInfoState.value = false }) { Text("OK") }
-            },
-            title = { Text("Info") },
-            text = { Text(logic.getInfoMessage(isOnlineMode = isOnlineMode)) }
-        )
     }
 
     if (showProfileSheetState.value) {
@@ -685,7 +667,6 @@ private fun MainActionCard(
     title: String,
     infoText: String,
     onBackToOffline: () -> Unit,
-    onInfo: () -> Unit,
     onQuick: () -> Unit,
     onConnect: () -> Unit,
     onHost: () -> Unit,
@@ -698,10 +679,7 @@ private fun MainActionCard(
         modifier
             .padding(bottom = 16.dp)
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(25.dp)
-            )
+            .subtleShadow()
     }
 
     Column(
@@ -777,9 +755,7 @@ private fun MainActionCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            IconButton(onClick = onInfo, modifier = Modifier.size(30.dp)) {
-                Icon(Icons.Default.Info, contentDescription = infoText, tint = MaterialTheme.colorScheme.onSurface)
-            }
+            InfoButton(infoText = infoText)
         }
 
         AnimatedContent(
@@ -893,10 +869,7 @@ private fun LocationCard(
     } else {
         Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(25.dp)
-            )
+            .subtleShadow()
     }
 
     Column(
@@ -1090,7 +1063,6 @@ private fun LastGameCard(
         Box(modifier = Modifier.clickable(onClick = onOpenStats).padding(bottom = 14.dp)) {
             SectionStatsCard(
                 title = "Last Game",
-                spacing = 12.dp,
                 makeColor = tintColor,
                 content = {
                     Row(
@@ -1160,7 +1132,7 @@ private fun NoticeCard(message: String, makeColor: Color?) {
     val cardModifier = if (makeColor != null) {
         Modifier.fillMaxWidth()
     } else {
-        Modifier.fillMaxWidth().shadow(8.dp, RoundedCornerShape(25.dp))
+        Modifier.fillMaxWidth().subtleShadow()
     }
     Column(
         modifier = cardModifier

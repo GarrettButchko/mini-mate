@@ -37,7 +37,7 @@ fun BusiestTimesChart(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(17.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.secondary
     ) {
         if (data.all { it.count == 0 }) {
             BusiestTimesEmptyState()

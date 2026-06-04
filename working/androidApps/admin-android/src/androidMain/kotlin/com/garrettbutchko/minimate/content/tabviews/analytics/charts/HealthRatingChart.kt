@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.garrettbutchko.minimate.shared.R
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -308,7 +310,7 @@ fun SectionHealthDetailView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.subTwoVsColor(makeColor = null))
+                        .background(colorResource(id = R.color.sub))
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -372,11 +374,10 @@ fun SectionHealthDetailView(
 
 @Composable
 private fun HealthSectionCard(rating: SectionHealthRating) {
-    val subTwoColor = Color.subTwoVsColor(makeColor = null)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(subTwoColor, RoundedCornerShape(12.dp))
+            .background(colorResource(id = R.color.sub), RoundedCornerShape(12.dp))
             .border(1.dp, rating.section.color.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .padding(16.dp),

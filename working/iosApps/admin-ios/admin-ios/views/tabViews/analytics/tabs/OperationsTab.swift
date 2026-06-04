@@ -23,7 +23,7 @@ struct OperationsTab: View {
                     Spacer()
                 }
                 
-                DataCard(data: VM.avgGamesPerDayPrime(), title: "Avg Games Per Day", infoText: "The average number of games played per day.", color: .subTwo, cornerRadius: 17)
+                DataCard(data: VM.avgGamesPerDayPrime(), color: .subTwo, cornerRadius: 17)
             
                 GamesPerDayChart()
             }
@@ -34,7 +34,7 @@ struct OperationsTab: View {
                     .cardShadow()
             }
             
-            DataCard(data: VM.avgPlayersPerGamePrime(), title: "Avg Players Per Game", infoText: "The number of total plays divided by the number of total visits. (Counts a player once per day. If a player visits on multiple days, each day is counted.)", color: .sub, cornerRadius: 25)
+            DataCard(data: VM.avgPlayersPerGamePrime(), color: .sub, cornerRadius: 25)
                 .cardShadow()
             
             VStack(spacing: 8){
@@ -46,9 +46,8 @@ struct OperationsTab: View {
                 }
                 
                 HStack{
-                    DataCard(data: VM.getBusiestHour(), title: "Busiest Hour", infoText: "Based on the number of games played that hour.", color: .subTwo, cornerRadius: 17)
-                    
-                    DataCard(data: VM.getBusiestDay(), title: "Busiest Day", infoText: "Based on the number of games played that day.", color: .subTwo, cornerRadius: 17)
+                    DataCard(data: VM.getBusiestHour(), color: .subTwo, cornerRadius: 17)
+                    DataCard(data: VM.getBusiestDay(), color: .subTwo, cornerRadius: 17)
                 }
                 
                 
@@ -71,15 +70,13 @@ struct OperationsTab: View {
                 }
                 
                 HStack{
-                    DataCard(data: VM.getAvgGameDuration(), title: "Avg Duration", infoText: "Average time players spend per game.", color: .subTwo, cornerRadius: 17)
-                    
-                    DataCard(data: VM.getTotalPlayTime(), title: "Total Time", infoText: "Total play time across all games in this period.", color: .subTwo, cornerRadius: 17)
+                    DataCard(data: VM.getAvgGameDuration(), color: .subTwo, cornerRadius: 17)
+                    DataCard(data: VM.getTotalPlayTime(), color: .subTwo, cornerRadius: 17)
                 }
-                
+
                 HStack{
-                    DataCard(data: VM.getFastestGameTime(), title: "Fastest Game", infoText: "Shortest game duration recorded.", color: .subTwo, cornerRadius: 17)
-                    
-                    DataCard(data: VM.getSlowestGameTime(), title: "Longest Game", infoText: "Longest game duration recorded.", color: .subTwo, cornerRadius: 17)
+                    DataCard(data: VM.getFastestGameTime(), color: .subTwo, cornerRadius: 17)
+                    DataCard(data: VM.getSlowestGameTime(), color: .subTwo, cornerRadius: 17)
                 }   
                 GameDurationTrendChart(VM: VM)
             }

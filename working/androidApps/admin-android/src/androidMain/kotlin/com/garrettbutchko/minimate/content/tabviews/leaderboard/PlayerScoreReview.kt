@@ -24,10 +24,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.toComposeColor
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.holeModels.HoleDTO
 import com.garrettbutchko.minimate.dataModels.playerModels.PlayerDTO
+import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 
 /**
  * PlayerScoreReview
@@ -88,7 +88,7 @@ private fun PlayerScoreHeader(playerName: String) {
 // ---------------------------------------------------------------------------
 @Composable
 private fun ScoreGrid(player: PlayerDTO, course: Course) {
-    val scoreCardColor: Color = course.scoreCardColorDT?.toComposeColor()
+    val scoreCardColor: Color = course.scoreCardColorDT?.toColor()
         ?: MaterialTheme.colorScheme.surfaceVariant
 
     Surface(

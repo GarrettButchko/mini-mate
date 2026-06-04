@@ -44,8 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import com.garrettbutchko.minimate.content.JetBrainsMono
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -211,7 +211,7 @@ private fun PlayerRow(player: LeaderboardEntry, rank: Int) {
             Text(
                 text = "${player.totalStrokes}",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = JetBrainsMono,
                     fontWeight = FontWeight.Bold
                 )
             )

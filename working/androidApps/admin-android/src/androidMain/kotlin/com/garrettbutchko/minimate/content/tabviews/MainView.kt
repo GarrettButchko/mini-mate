@@ -58,7 +58,6 @@ import com.garrettbutchko.minimate.content.tabviews.tournament.TournamentView
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
-import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.toComposeColor
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -69,6 +68,7 @@ import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.HealthRatingChart
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.SectionHealthDetailView
 import com.garrettbutchko.minimate.modelKotlinExtensions.courseColors
+import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 
 /**
  * MainView
@@ -102,7 +102,7 @@ fun MainView(
     val leaderboardSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val tournamentSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    val scoreCardColor = course?.scoreCardColorDT?.toComposeColor()
+    val scoreCardColor = course?.scoreCardColorDT?.toColor()
     val subColor = Color.subVsColor(makeColor = scoreCardColor)
 
     Column(
@@ -297,7 +297,7 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
     val isTierGated = (course?.tier ?: 0) < 3
     val isLoadingHealth by analyticsVM.isLoadingHealth.collectAsState()
     val healthReport by analyticsVM.healthReport.collectAsState()
-    val scoreCardColor = course?.scoreCardColorDT?.toComposeColor()
+    val scoreCardColor = course?.scoreCardColorDT?.toColor()
     val cardBackground = Color.subVsColor(makeColor = scoreCardColor)
     var showHealthSheet by remember { mutableStateOf(false) }
 

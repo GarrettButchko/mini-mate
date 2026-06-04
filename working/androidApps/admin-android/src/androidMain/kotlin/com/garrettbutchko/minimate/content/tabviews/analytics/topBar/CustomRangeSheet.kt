@@ -24,7 +24,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
@@ -133,7 +132,7 @@ fun CustomRangeSheet(
                 shape = RoundedCornerShape(25.dp),
                 border = androidx.compose.foundation.BorderStroke(
                     2.dp,
-                    Color(0xFF007AFF).copy(alpha = 0.3f)
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                 )
             ) {
                 Text(text = "Cancel", fontWeight = FontWeight.SemiBold)
@@ -148,7 +147,8 @@ fun CustomRangeSheet(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(25.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF007AFF)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 Text(text = "Apply", fontWeight = FontWeight.SemiBold)
