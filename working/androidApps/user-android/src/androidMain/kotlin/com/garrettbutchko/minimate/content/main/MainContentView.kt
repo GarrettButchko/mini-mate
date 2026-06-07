@@ -46,7 +46,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -116,6 +116,7 @@ import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import com.garrettbutchko.minimate.content.helper.SectionStatsCard
 import com.garrettbutchko.minimate.content.stats.StatCard
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.extensions.formatted
 import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
 
 
@@ -953,11 +954,7 @@ private fun LocationCard(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             if (loading) {
-                                                CircularProgressIndicator(
-                                                    modifier = Modifier.size(16.dp),
-                                                    strokeWidth = 2.dp,
-                                                    color = Color.White
-                                                )
+                                                LogoLoadingView(size = 16.dp)
                                                 Text("Searching...", color = Color.White)
                                             } else {
                                                 Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
@@ -1060,9 +1057,11 @@ private fun LastGameCard(
 
     if (latestGame != null) {
 
+        val subtitle = latestGame.locationName ?: latestGame.date.formatted()
         Box(modifier = Modifier.clickable(onClick = onOpenStats).padding(bottom = 14.dp)) {
             SectionStatsCard(
                 title = "Last Game",
+                subtitle = subtitle,
                 makeColor = tintColor,
                 content = {
                     Row(
@@ -1111,7 +1110,7 @@ private fun LastGameCard(
                     ) {
                         BarChartView(
                             data = holes,
-                            title = "Recap of Game"
+                            title = "Your Recap"
                         )
                     }
                 }

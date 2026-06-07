@@ -4,8 +4,6 @@ import com.garrettbutchko.minimate.dataModels.courseModels.DailyDoc
 import com.garrettbutchko.minimate.extensions.format
 import com.garrettbutchko.minimate.generateUUID
 import com.garrettbutchko.minimate.repositories.analytics.AnalyticsRange
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.plus
 import kotlinx.datetime.atStartOfDayIn
@@ -154,48 +152,48 @@ open class OperationsViewModel {
         )
     }
     
-    suspend fun prepareChartData(): List<HourData> = withContext(Dispatchers.Default) {
+    fun prepareChartData(): List<HourData> {
         val rangeDocs = rangeDailyDocs
         val chartData = mutableListOf<HourData>()
-        
+
         for (day in 1..7) {
             val dayDocs = rangeDocs.filter { it.weekDay == day }
-            
+
             for (hour in 0..23) {
                 val totalForHour = dayDocs.sumOf { it.hourlyCounts[hour.toString()] ?: 0 }
                 chartData.add(HourData(weekday = day, hour = hour, count = totalForHour))
             }
         }
-        chartData
+        return chartData
     }
     
-    suspend fun getDataForGamesPerDay(): List<PlayerActivity> = withContext(Dispatchers.Default) {
+    fun getDataForGamesPerDay(): List<PlayerActivity> {
         val rangeDocs = rangeDailyDocs
         val rangeObj = range
-        
+
         val sortedDocs = rangeDocs.sortedBy { it.dayID }
         val docsByDateString = sortedDocs.associateBy { it.dayID }
-        
+
         val result = mutableListOf<PlayerActivity>()
-        
+
         val dates = rangeObj.dates()
         var currentDate = dates.start
         val endDate = dates.end
-        
+
         while (currentDate <= endDate) {
             val dateString = currentDate.toString()
-            
+
             val doc = docsByDateString[dateString]
             if (doc != null) {
                 result.add(PlayerActivity(id = "", date = currentDate.atStartOfDayIn(TimeZone.currentSystemDefault()).toLocalDateTime(TimeZone.currentSystemDefault()), count = doc.gamesPlayed))
             } else {
                 result.add(PlayerActivity(id = "", date = currentDate.atStartOfDayIn(TimeZone.currentSystemDefault()).toLocalDateTime(TimeZone.currentSystemDefault()), count = 0))
             }
-            
+
             currentDate = currentDate.plus(1, DateTimeUnit.DAY)
         }
-        
-        result
+
+        return result
     }
     
     // MARK: - Game Duration Metrics
@@ -330,22 +328,22 @@ open class OperationsViewModel {
         )
     }
     
-    suspend fun getDataForDurationTrend(): List<GameDurationActivity> = withContext(Dispatchers.Default) {
+    fun getDataForDurationTrend(): List<GameDurationActivity> {
         val rangeDocs = rangeDailyDocs
         val rangeObj = range
-        
+
         val sortedDocs = rangeDocs.sortedBy { it.dayID }
         val docsByDateString = sortedDocs.associateBy { it.dayID }
-        
+
         val result = mutableListOf<GameDurationActivity>()
-        
+
         val dates = rangeObj.dates()
         var currentDate = dates.start
         val endDate = dates.end
-        
+
         while (currentDate <= endDate) {
             val dateString = currentDate.toString()
-            
+
             val doc = docsByDateString[dateString]
             if (doc != null && doc.gamesPlayed > 0) {
                 val avgSeconds = doc.totalRoundSeconds.toDouble() / doc.gamesPlayed.toDouble()
@@ -354,11 +352,11 @@ open class OperationsViewModel {
             } else {
                 result.add(GameDurationActivity(id = "", date = currentDate.atStartOfDayIn(TimeZone.currentSystemDefault()).toLocalDateTime(TimeZone.currentSystemDefault()), avgMinutes = 0.0))
             }
-            
+
             currentDate = currentDate.plus(1, DateTimeUnit.DAY)
         }
-        
-        result
+
+        return result
     }
     
     // MARK: - Helper Functions

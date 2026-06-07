@@ -41,11 +41,7 @@ struct BusiestTimesChart: View {
             .padding()
             .background(RoundedRectangle(cornerRadius: 17).fill(.subTwo))
             .task{
-                do {
-                    try data =  await VM.prepareChartData()
-                } catch {
-                    print("Error preparing chart data: \(error)")
-                }
+                data = VM.prepareChartData()
             }
         } else {
             GeometryReader { geometry in
@@ -65,11 +61,7 @@ struct BusiestTimesChart: View {
                     }
                 }
                 .task{
-                    do {
-                        try data =  await VM.prepareChartData()
-                    } catch {
-                        print("Error preparing chart data: \(error)")
-                    }
+                    data = VM.prepareChartData()
                 }
                 // 1. Color Scale (Light green to Dark green)
                 .chartForegroundStyleScale(

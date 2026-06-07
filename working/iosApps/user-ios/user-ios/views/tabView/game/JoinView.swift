@@ -355,8 +355,7 @@ struct JoinView: View {
                         PlayerIconView(player: player, isRemovable: false) {}
                     }
                     VStack {
-                        ProgressView()
-                            .scaleEffect(1.5)
+                        LogoLoadingView()
                             .frame(width: 40, height: 40)
                         Text("Waiting...").font(.caption)
                     }.padding(.horizontal)

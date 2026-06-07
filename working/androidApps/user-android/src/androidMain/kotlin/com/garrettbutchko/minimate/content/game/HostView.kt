@@ -50,6 +50,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -76,6 +77,7 @@ import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.helper.AddLocalPlayerView
 import com.garrettbutchko.minimate.content.helper.NumberPickerView
 import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.SectionCard
 import com.garrettbutchko.minimate.di.KoinHelper
 import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.interfaces.LocationFinding
@@ -142,7 +144,10 @@ fun HostGameView(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .clickable { hostVM.resetTimer() }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { hostVM.resetTimer() }
     ) {
         // Main scrollable content
         Column(
@@ -331,78 +336,65 @@ private fun PlayersSection(
 ) {
     val game by gameModel.game.collectAsState()
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    SectionCard(title = logic.getPlayersHeaderText(playerCount = game.players.size)) {
+        Row(
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = logic.getPlayersHeaderText(playerCount = game.players.size),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                game.players.forEach { player ->
-                    HostPlayerIconView(
-                        player = player,
-                        isRemovable = player.userId.length == 6,
-                        onTap = {
-                            hostVM.setPlayerToDelete(player.userId)
-                            hostVM.resetTimer()
-                            hostVM.setShowDeleteAlert(true)
-                        }
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .clickable {
-                            hostVM.setShowAddLocalPlayer(true)
-                            hostVM.resetTimer()
-                        },
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(MaterialTheme.colorScheme.secondary, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add Player",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(30.dp)
-                        )
+            game.players.forEach { player ->
+                HostPlayerIconView(
+                    player = player,
+                    isRemovable = player.userId.length == 6,
+                    onTap = {
+                        hostVM.setPlayerToDelete(player.userId)
+                        hostVM.resetTimer()
+                        hostVM.setShowDeleteAlert(true)
                     }
-                    Spacer(modifier = Modifier.height(0.5.dp))
-                    Text(
-                        text = "Add Player",
-                        style = LocalTextStyle.current.copy(
-                            fontSize = with(LocalDensity.current) { 9.dp.toSp() },
-                            platformStyle = PlatformTextStyle(includeFontPadding = false)
-                        ),
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                )
+            }
 
-                if (onlineGame) {
-                    WaitingIndicatorView(
-                        label = "Searching..."
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .clickable {
+                        hostVM.setShowAddLocalPlayer(true)
+                        hostVM.resetTimer()
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(MaterialTheme.colorScheme.secondary, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Player",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(30.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(0.5.dp))
+                Text(
+                    text = "Add Player",
+                    style = LocalTextStyle.current.copy(
+                        fontSize = with(LocalDensity.current) { 9.dp.toSp() },
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            if (onlineGame) {
+                WaitingIndicatorView(
+                    label = "Searching..."
+                )
             }
         }
     }
@@ -427,21 +419,10 @@ private fun GameInfoSection(
     val timerSeconds = timeRemaining.toInt()
     val timerString = "${timerSeconds / 60}:${(timerSeconds % 60).let { if (it < 10) "0$it" else "$it" }}"
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
+    SectionCard(title = "Game Info") {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                "Game Info",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = mainOppColor
-            )
-
             if (onlineGame) {
                 InfoRow(
                     label = "Game Code",
@@ -512,7 +493,12 @@ private fun GameInfoSection(
             val currentCourse = course
             if (currentCourse != null) {
                 if (currentCourse.customPar) {
-                    InfoRow(label = "Holes", value = currentCourse.numHoles.toString(), mainOppColor = mainOppColor, subOppColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    InfoRow(
+                        label = "Holes",
+                        value = currentCourse.numHoles.toString(),
+                        mainOppColor = mainOppColor,
+                        subOppColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 } else {
                     HolesPickerRow(gameModel, hostVM, game.numberOfHoles, mainOppColor)
                 }

@@ -95,9 +95,7 @@ struct ExpandedPlayerTierContent: View {
                 } else {
                     // Disabled placeholder if URL is not ready
                     HStack(spacing: 8) {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                            .tint(.white)
+                        LogoLoadingView(size: 20)
                         Text("Preparing CSV...")
                             .font(.subheadline)
                             .fontWeight(.medium)

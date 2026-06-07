@@ -37,7 +37,7 @@ struct CourseButtonView: View {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .empty:
-                            ProgressView()
+                            LogoLoadingView()
                                 .frame(height: 50)
                             
                         case .success(let image):

@@ -75,7 +75,7 @@ class GrowthViewModelSwift: ObservableObject {
         return kotlin.avgPlayersPerGamePrime()
     }
     
-    func getDataForGrowthTrend() async throws -> [PlayerActivity] {
-        return try await kotlin.getDataForGrowthTrend()
+    func getDataForGrowthTrend() -> [PlayerActivity] {
+        return kotlin.getDataForGrowthTrend()
     }
 }

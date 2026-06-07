@@ -19,7 +19,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -85,7 +85,7 @@ fun CourseSearchResultsView(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                    CircularProgressIndicator()
+                    LogoLoadingView()
                     Text(
                         text = "Trying to find nearby courses...",
                         style = MaterialTheme.typography.bodyMedium,

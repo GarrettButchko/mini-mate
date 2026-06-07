@@ -25,7 +25,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SportsScore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,6 +64,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.garrettbutchko.minimate.content.TitleView
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.res.colorResource
+import com.garrettbutchko.minimate.content.helper.modifiers.colorCardLayout
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.HealthRatingChart
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.SectionHealthDetailView
@@ -151,10 +153,9 @@ fun MainView(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.colorCardLayout(scoreCardColor),
                     shape = RoundedCornerShape(25.dp),
                     color = subColor,
-                    tonalElevation = 4.dp
                 ) {
                     Row(
                         modifier = Modifier
@@ -301,12 +302,12 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
     val cardBackground = Color.subVsColor(makeColor = scoreCardColor)
     var showHealthSheet by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = Modifier.colorCardLayout(scoreCardColor)) {
         // Content — blurred when tier-gated, matching iOS .blur(radius: 6)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(375.dp)
+                .height(350.dp)
                 .clip(RoundedCornerShape(25.dp))
                 .then(if (isTierGated) Modifier.blur(20.dp) else Modifier)
         ) {
@@ -322,7 +323,7 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            CircularProgressIndicator()
+                            LogoLoadingView()
                             Text(
                                 "Analyzing course health...",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -334,7 +335,7 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
                 healthReport != null -> {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .fillMaxSize()
                             .clickable(enabled = !isTierGated) { showHealthSheet = true }
                     ) {
                         HealthRatingChart(

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -275,20 +277,24 @@ private fun PlayerStandingCard(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             PhotoIconView(
                 photoURL = player.photoURL,
                 name = logic.formatPlayerName(player.name, place, onlyPlayer),
                 ballColor = player.ballColor,
                 imageSize = logic.getImageSize(place).dp,
                 backgroundColor = if (place != null && !onlyPlayer) medalColor.copy(alpha = 0.45f) else null,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).wrapContentWidth(Alignment.Start)
             )
-            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = player.totalStrokes.toString(),
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                textAlign = TextAlign.End
             )
         }
         AddToLeaderBoardButton(course = course, player = player)

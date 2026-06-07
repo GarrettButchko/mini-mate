@@ -5,6 +5,8 @@
 //  Created by Garrett Butchko on 6/3/26.
 //
 
+import SwiftUI
+
 
 struct InfoButton: View {
     @State var showInfo: Bool = false

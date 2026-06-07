@@ -17,6 +17,7 @@ fun String?.toColor(): Color? {
         "purple" -> return Color(0xFFCB30E0)
         "pink" -> return Color(0xFFFF2D55)
         "brown" -> return Color(0xFFAC7F5E)
+        "gray", "grey" -> return Color(0xFF8E8E93)
     }
     val hex = this.trimStart('#')
     return when (hex.length) {

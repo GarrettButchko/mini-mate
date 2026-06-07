@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +37,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.garrettbutchko.minimate.content.tabviews.analytics.ChartEmptyState
 import com.garrettbutchko.minimate.viewModels.analytics.GameDurationActivity
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.number
@@ -46,47 +49,27 @@ fun GameDurationTrendChart(
     data: List<GameDurationActivity>,
     modifier: Modifier = Modifier
 ) {
-    val drawProgress = remember(data) { Animatable(0f) }
-    LaunchedEffect(data) {
+    val drawProgress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
         drawProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
         )
     }
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(17.dp),
-        color = MaterialTheme.colorScheme.secondary
-    ) {
-        if (data.isEmpty() || data.all { it.avgMinutes == 0.0 }) {
-            GameDurationEmptyState()
-        } else {
+    if (data.isEmpty() || data.all { it.avgMinutes == 0.0 }) {
+        ChartEmptyState(
+            message = "Game duration trends will appear here once players start completing games.",
+            icon = Icons.Default.Schedule
+        )
+    } else {
+        Surface(
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(17.dp),
+            color = MaterialTheme.colorScheme.secondary
+        ) {
             GameDurationContent(data = data, drawProgress = drawProgress.value)
         }
-    }
-}
-
-@Composable
-private fun GameDurationEmptyState() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = "Not enough data yet",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-        )
-        Text(
-            text = "Game duration trends will appear here once players start completing games.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 12.dp)
-        )
     }
 }
 

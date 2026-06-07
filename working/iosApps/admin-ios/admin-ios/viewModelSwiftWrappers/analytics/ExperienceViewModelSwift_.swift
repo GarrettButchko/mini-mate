@@ -36,12 +36,12 @@ class ExperienceViewModelSwift: ObservableObject {
         return kotlin.getHoleCombined()
     }
 
-    func getHoleDifficultyData() async throws -> [HoleDifficultyData] {
-        return try await kotlin.getHoleDifficultyData()
+    func getHoleDifficultyData() -> [HoleDifficultyData] {
+        return kotlin.getHoleDifficultyData()
     }
 
-    func getHoleHeatmapForParData(course: Course) async throws -> [HoleHeatmapData] {
-        return try await kotlin.getHoleHeatmapForParData(course: course)
+    func getHoleHeatmapForParData(course: Course) -> [HoleHeatmapData] {
+        return kotlin.getHoleHeatmapForParData(course: course)
     }
 
     func getAvgRelativeToPar() -> DataPointObject {

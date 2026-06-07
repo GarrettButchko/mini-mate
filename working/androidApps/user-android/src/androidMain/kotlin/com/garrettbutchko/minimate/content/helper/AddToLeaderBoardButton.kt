@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.playerModels.Player
 import com.garrettbutchko.minimate.repositories.CourseLeaderboardRepository
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -110,11 +111,7 @@ fun AddToLeaderBoardButton(
                     modifier = Modifier.size(120.dp, 20.dp)
                 ) {
                     if (isSubmitting) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(12.dp)
-                        )
+                        LogoLoadingView(size = 12.dp)
                     } else {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

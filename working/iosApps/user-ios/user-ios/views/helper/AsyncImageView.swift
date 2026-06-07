@@ -18,7 +18,7 @@ struct AsyncImageView: View {
             AsyncImage(url: URL(string: image)) { phase in
                 switch phase {
                 case .empty:
-                    ProgressView()
+                    LogoLoadingView()
                         .frame(height: height)
                 case .success(let image):
                     image

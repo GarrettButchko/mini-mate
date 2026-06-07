@@ -46,9 +46,7 @@ struct AddToLeaderBoardButton: View {
                             
                             HStack {
                                 if isSubmitting {
-                                    ProgressView()
-                                        .controlSize(.mini)
-                                        .tint(.white)
+                                    LogoLoadingView()
                                 } else {
                                     Image(systemName: "plus")
                                     Text("Leaderboard")

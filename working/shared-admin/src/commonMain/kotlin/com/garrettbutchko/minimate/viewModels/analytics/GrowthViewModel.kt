@@ -3,8 +3,6 @@ package com.garrettbutchko.minimate.viewModels.analytics
 import com.garrettbutchko.minimate.dataModels.courseModels.DailyDoc
 import com.garrettbutchko.minimate.extensions.format
 import com.garrettbutchko.minimate.repositories.analytics.AnalyticsRange
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.plus
 import kotlinx.datetime.atStartOfDayIn
@@ -118,23 +116,23 @@ open class GrowthViewModel {
     
     // MARK: - Chart Data
     
-    suspend fun getDataForGrowthTrend(): List<PlayerActivity> = withContext(Dispatchers.Default) {
+    fun getDataForGrowthTrend(): List<PlayerActivity> {
         val rangeDocs = rangeDailyDocs
         val rangeObj = range
         val chartTopic = growthChartTopic
-        
+
         val sortedDocs = rangeDocs.sortedBy { it.dayID }
         val docsByDateString = sortedDocs.associateBy { it.dayID }
-        
+
         val result = mutableListOf<PlayerActivity>()
-        
+
         val dates = rangeObj.dates()
         var currentDate = dates.start
         val endDate = dates.end
-        
+
         while (currentDate <= endDate) {
             val dateString = currentDate.toString()
-            
+
             val count = if (docsByDateString.containsKey(dateString)) {
                 val doc = docsByDateString[dateString]!!
                 when (chartTopic) {
@@ -145,12 +143,12 @@ open class GrowthViewModel {
             } else {
                 0
             }
-            
+
             result.add(PlayerActivity(id = "", date = currentDate.atStartOfDayIn(TimeZone.currentSystemDefault()).toLocalDateTime(TimeZone.currentSystemDefault()), count = count))
             currentDate = currentDate.plus(1, DateTimeUnit.DAY)
         }
-        
-        result
+
+        return result
     }
     
     // MARK: - Helper Functions

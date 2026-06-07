@@ -346,7 +346,7 @@ fun ScoreCardGameView(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    "${player.totalStrokes}",
+                                    "Total: ${player.totalStrokes}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = primaryTextColor

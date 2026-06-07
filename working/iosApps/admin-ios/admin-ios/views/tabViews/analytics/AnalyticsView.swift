@@ -477,11 +477,7 @@ struct HoleDifficultyCharts: View {
     }
     
     private func loadData() async {
-        do {
-            difficultyData = try await VM.getHoleDifficultyData()
-        } catch {
-            print("Error fetching hole difficulty data: \(error)")
-        }
+        difficultyData = VM.getHoleDifficultyData()
     }
 }
 
@@ -528,11 +524,7 @@ struct HoleDifficultyParCharts: View {
     }
     
     private func loadData() async {
-        do {
-            difficultyData = try await VM.getHoleHeatmapForParData(course: course)
-        } catch {
-            print("Error fetching hole heatmap data: \(error)")
-        }
+        difficultyData = VM.getHoleHeatmapForParData(course: course)
     }
 }
 

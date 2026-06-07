@@ -90,8 +90,7 @@ struct EmailPasswordView: View {
                                             .frame(width: 150, height: 50)
                                             .foregroundColor(.green)
                                         if isLoading {
-                                            ProgressView()
-                                                .tint(.white)
+                                            LogoLoadingView()
                                         } else {
                                             Text(showSignUp ? "Sign Up" : "Login")
                                                 .foregroundColor(.white)

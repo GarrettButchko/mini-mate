@@ -256,8 +256,7 @@ struct HostView: View {
                         }
                         if gameModel.onlineGame {
                             VStack {
-                                ProgressView()
-                                    .scaleEffect(1.5)
+                                LogoLoadingView()
                                     .frame(width: 40, height: 40)
                                 Text("Searching...").font(.caption)
                             }.padding(.horizontal)

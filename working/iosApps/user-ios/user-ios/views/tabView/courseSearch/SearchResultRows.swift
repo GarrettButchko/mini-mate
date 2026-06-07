@@ -45,8 +45,7 @@ struct CourseSearchResultsView: View {
         ZStack {
             if courseVM.isLoadingCourses || courseSearch.mapItems.isEmpty {
                 VStack(spacing: 15) {
-                    ProgressView()
-                        .scaleEffect(1.5)
+                    LogoLoadingView()
                     Text("Trying to find nearby courses...")
                         .font(.subheadline)
                         .foregroundColor(.secondary)

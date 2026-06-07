@@ -40,15 +40,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
+import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsSection
 import com.garrettbutchko.minimate.viewModels.analytics.CourseHealthReport
 import com.garrettbutchko.minimate.viewModels.analytics.HealthGrade
@@ -89,6 +92,7 @@ private val AnalyticsSection.color: Color
         AnalyticsSection.EXPERIENCE -> Color(0xFFBF5AF2)
         AnalyticsSection.RETENTION -> Color(0xFFFF9500)
     }
+
 
 @Composable
 fun HealthRatingChart(
@@ -131,7 +135,7 @@ fun HealthRatingChart(
         ) {
             Box(
                 modifier = Modifier.size(width = 160.dp, height = 110.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 GaugeCanvas(
                     score = animatedScore,
@@ -140,19 +144,25 @@ fun HealthRatingChart(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = "${animatedScore.toInt()}",
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = healthReport.overallGrade.color,
-                        lineHeight = 40.sp
+                        style = TextStyle(
+                            fontSize = 40.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = healthReport.overallGrade.color,
+                            lineHeight = 40.sp
+                        )
                     )
                     Text(
                         text = healthReport.overallGrade.rawValue,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = healthReport.overallGrade.color
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = healthReport.overallGrade.color
+                        )
                     )
                 }
             }

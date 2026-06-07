@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -199,11 +200,7 @@ fun EmailPasswordView(
                         .align(Alignment.CenterHorizontally)
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
+                        LogoLoadingView(size = 20.dp)
                     } else {
                         Text(
                             text = if (showSignUp) "Sign Up" else "Login",

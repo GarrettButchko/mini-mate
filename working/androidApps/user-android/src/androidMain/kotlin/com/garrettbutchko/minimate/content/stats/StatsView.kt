@@ -37,7 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -116,7 +116,7 @@ fun StatsView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 16.dp)
             .padding(top = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -242,12 +242,24 @@ private fun SectionPicker(
     selected: String,
     onSelected: (String) -> Unit
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .subtleShadow(shape = RoundedCornerShape(50))
+    ) {
         sections.forEachIndexed { index, section ->
             SegmentedButton(
                 selected = section == selected,
                 onClick = { onSelected(section) },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = sections.size),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.secondary,
+                    activeContentColor = MaterialTheme.colorScheme.onSecondary,
+                    activeBorderColor = MaterialTheme.colorScheme.secondary,
+                    inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                    inactiveContentColor = MaterialTheme.colorScheme.onSurface,
+                    inactiveBorderColor = MaterialTheme.colorScheme.secondary
+                ),
                 label = { Text(section) }
             )
         }
@@ -620,7 +632,7 @@ private fun LoadingState() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        CircularProgressIndicator()
+        LogoLoadingView()
         Text(
             text = "Loading Games...",
             style = MaterialTheme.typography.bodyMedium,

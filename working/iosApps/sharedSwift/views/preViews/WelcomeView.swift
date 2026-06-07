@@ -53,8 +53,7 @@ struct WelcomeView: View {
                         Text("Trying to reconnect...")
                             .foregroundStyle(.white)
 
-                        ProgressView()
-                            .scaleEffect(1.5)
+                        LogoLoadingView()
                     }
                 }
             }

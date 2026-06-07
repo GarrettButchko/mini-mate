@@ -127,11 +127,7 @@ struct GamesPerDayChart: View {
     }
     
     private func fetchData() async {
-        do {
-            data = try await VM.getDataForGamesPerDay()
-        } catch {
-            print("Error fetching games per day data: \(error)")
-        }
+        data = VM.getDataForGamesPerDay()
     }
     
     func getStrideValues(from data: [PlayerActivity]) -> [Date] {

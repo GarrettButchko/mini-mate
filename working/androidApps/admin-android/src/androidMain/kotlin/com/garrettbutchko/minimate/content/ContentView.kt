@@ -149,7 +149,13 @@ fun ContentView(
                 }
 
                 is ViewState.Welcome -> {
-                    WelcomeView(welcomeText = "Mini Mate Manager")
+                    WelcomeView(
+                        welcomeText = "Mini Mate Manager",
+                        gradientColors = listOf(
+                            Color(0xFF1F4073),
+                            Color(0xFF2E7361)
+                        )
+                    )
                 }
 
                 is ViewState.SignIn -> {

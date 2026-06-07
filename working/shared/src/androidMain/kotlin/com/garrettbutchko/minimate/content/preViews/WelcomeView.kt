@@ -3,7 +3,7 @@ package com.garrettbutchko.minimate.content.preViews
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -89,11 +89,7 @@ fun WelcomeView(
                         fontSize = 16.sp
                     )
 
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(60.dp), // Replicates scaleEffect(1.5)
-                        strokeWidth = 4.dp
-                    )
+                    LogoLoadingView(size = 60.dp)
                 }
             }
         }

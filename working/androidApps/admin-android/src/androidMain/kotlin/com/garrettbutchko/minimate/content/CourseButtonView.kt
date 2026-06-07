@@ -14,7 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -94,11 +94,7 @@ fun CourseButtonView(
                     modifier = Modifier.height(50.dp),
                     contentScale = ContentScale.Fit,
                     loading = {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = colorResource(id = color.swiftBlue)
-                        )
+                        LogoLoadingView(size = 24.dp)
                     },
                     error = {
                         Icon(

@@ -2,6 +2,7 @@ package com.garrettbutchko.minimate.content.helper.modifiers
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -30,6 +31,10 @@ fun Color.Companion.subTwoVsColor(makeColor: Color?): Color {
 fun Color.mix(with: Color, by: Float): Color {
     return lerp(this, with, by.coerceIn(0f, 1f))
 }
+
+fun Modifier.colorCardLayout(makeColor: Color?, typeFill: Modifier = Modifier.fillMaxWidth()): Modifier =
+    if (makeColor != null) this.then(typeFill)
+    else this.then(typeFill).subtleShadow()
 
 fun Modifier.subtleShadow(
     elevation: Dp = 8.dp,

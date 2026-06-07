@@ -144,7 +144,7 @@ struct CourseListView: View {
             if viewModel.loadingCourse {
                 VStack{
                     Spacer()
-                    ProgressView()
+                    LogoLoadingView()
                     Spacer()
                 }
             } else {

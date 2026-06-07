@@ -34,11 +34,7 @@ struct PlayerTrendChart: View {
             }
         }
         .task {
-            do {
-                 data = try await VM.getDataForGrowthTrend()
-            } catch {
-                print("Error fetching Growth trend data: \(error)")
-            }
+            data = VM.getDataForGrowthTrend()
         }
     }
     
@@ -165,11 +161,7 @@ struct GameDurationTrendChart: View {
             }
         }
         .task {
-            do {
-                 data = try await VM.getDataForDurationTrend()
-            } catch {
-                print("Error fetching duration trend data: \(error)")
-            }
+            data = VM.getDataForDurationTrend()
         }
         .id(VM.rangeDailyDocs.count) // Force redraw when data changes
     }

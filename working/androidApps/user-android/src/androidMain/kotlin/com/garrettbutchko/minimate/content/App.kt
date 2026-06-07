@@ -23,7 +23,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -75,6 +75,7 @@ import com.garrettbutchko.minimate.content.courseScreen.CourseScreen
 import com.garrettbutchko.minimate.content.game.HostGameView
 import com.garrettbutchko.minimate.content.game.ScoreCardGameView
 import com.garrettbutchko.minimate.content.helper.InterstitialAdView
+import com.garrettbutchko.minimate.content.helper.SplashLoadingView
 import com.garrettbutchko.minimate.content.main.MainContentView
 import com.garrettbutchko.minimate.content.preViews.SignInView
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
@@ -125,6 +126,8 @@ fun App() {
     val deps = rememberAppDependencies()
 
     val currentView by deps.viewManager.currentView.collectAsState()
+    val isLoadingUser by deps.authModel.isLoadingUser.collectAsState()
+    val currentUserModel by deps.authModel.userModel.collectAsState()
     var guestGameDate by remember { mutableStateOf<String?>(null) }
     val guestGame = remember { mutableStateOf<Game?>(null) }
 
@@ -180,17 +183,32 @@ fun App() {
                 label = "user-root-navigation"
             ) { targetView ->
                 when (targetView) {
-                    is ViewType.Main -> MainTabView(
-                        initialSelectedTab = targetView.tab,
-                        viewManager = deps.viewManager,
-                        authModel = deps.authModel,
-                        gameModel = deps.gameModel,
-                        gameManager = deps.gameManager,
-                        localGameRepo = deps.localGameRepo,
-                        locationHandler = deps.locationHandler,
-                        statsViewModel = deps.statsViewModel,
-                        courseViewModel = deps.courseViewModel
-                    )
+                    is ViewType.Main -> {
+                        val showSplash = isLoadingUser && currentUserModel == null
+                        AnimatedContent(
+                            targetState = showSplash,
+                            transitionSpec = {
+                                fadeIn(tween(300)).togetherWith(fadeOut(tween(200)))
+                            },
+                            label = "splash-to-main"
+                        ) { splashing ->
+                            if (splashing) {
+                                SplashLoadingView()
+                            } else {
+                                MainTabView(
+                                    initialSelectedTab = targetView.tab,
+                                    viewManager = deps.viewManager,
+                                    authModel = deps.authModel,
+                                    gameModel = deps.gameModel,
+                                    gameManager = deps.gameManager,
+                                    localGameRepo = deps.localGameRepo,
+                                    locationHandler = deps.locationHandler,
+                                    statsViewModel = deps.statsViewModel,
+                                    courseViewModel = deps.courseViewModel
+                                )
+                            }
+                        }
+                    }
 
                     ViewType.Welcome -> WelcomeView()
 
@@ -514,7 +532,7 @@ private fun LazyTabContent(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            LogoLoadingView()
         }
     }
 }
@@ -534,7 +552,7 @@ private fun LoadingOverlay() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                CircularProgressIndicator()
+                LogoLoadingView()
                 Text("Loading your Mini Mate data...")
             }
         }

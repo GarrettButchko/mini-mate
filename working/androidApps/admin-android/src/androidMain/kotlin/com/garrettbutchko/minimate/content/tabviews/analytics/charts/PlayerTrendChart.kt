@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,6 +36,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.garrettbutchko.minimate.content.tabviews.analytics.ChartEmptyState
 import com.garrettbutchko.minimate.viewModels.analytics.PlayerActivity
 
 @Composable
@@ -42,47 +45,27 @@ fun PlayerTrendChart(
     lineColor: Color,
     modifier: Modifier = Modifier
 ) {
-    val drawProgress = remember(data) { Animatable(0f) }
-    LaunchedEffect(data) {
+    val drawProgress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
         drawProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
         )
     }
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(17.dp),
-        color = MaterialTheme.colorScheme.secondary
-    ) {
-        if (data.isEmpty() || data.all { it.count == 0 }) {
-            PlayerTrendEmptyState()
-        } else {
+    if (data.isEmpty() || data.all { it.count == 0 }) {
+        ChartEmptyState(
+            message = "Player trend data will appear here once players start visiting your course.",
+            icon = Icons.AutoMirrored.Filled.TrendingUp
+        )
+    } else {
+        Surface(
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(17.dp),
+            color = MaterialTheme.colorScheme.secondary
+        ) {
             PlayerTrendContent(data = data, lineColor = lineColor, drawProgress = drawProgress.value)
         }
-    }
-}
-
-@Composable
-private fun PlayerTrendEmptyState() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Text(
-            text = "Not enough data yet",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-        )
-        Text(
-            text = "Player trend data will appear here once players start visiting your course.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 12.dp)
-        )
     }
 }
 

@@ -25,7 +25,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -213,11 +213,7 @@ fun ProView(
             shape = RoundedCornerShape(27.dp)
         ) {
             if (isPurchasing) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = Color.White
-                )
+                LogoLoadingView(size = 20.dp)
             } else {
                 Text(
                     "Upgrade Now",

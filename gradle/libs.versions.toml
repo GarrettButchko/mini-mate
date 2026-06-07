@@ -44,6 +44,7 @@ uiGraphics = "1.10.6"
 ui = "1.11.1"
 uiTextGoogleFonts = "1.8.0"
 foundation = "1.11.1"
+foundationLayoutVersion = "1.11.2"
 
 [libraries]
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
@@ -113,6 +114,7 @@ androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", ve
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

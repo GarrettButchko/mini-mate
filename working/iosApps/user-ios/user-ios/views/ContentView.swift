@@ -1,6 +1,5 @@
 import SwiftUI
 import MapKit
-import FirebaseAuth
 import UIKit
 import shared_user
 
@@ -31,6 +30,7 @@ struct ContentView: View {
         .environmentObject(locationHandler)
         
         .animation(.easeInOut(duration: 0.4), value: viewManager.currentView)
+        .animation(.easeInOut(duration: 0.35), value: authModel.isLoading)
         .onAppear {
             locationHandler.requestLocationAccess()
         }
@@ -57,7 +57,13 @@ struct ContentView: View {
     private var viewContent: some View {
         switch onEnum(of: viewManager.currentView) {
         case .main(tab: let main):
-            MainTabView(selectedTab: Int(main.tab))
+            if authModel.isLoading && authModel.userModel == nil {
+                SplashLoadingView()
+                    .transition(.opacity)
+            } else {
+                MainTabView(selectedTab: Int(main.tab))
+                    .transition(.opacity)
+            }
         case .welcome:
             WelcomeView()
         case .scoreCard(let scorecard):
@@ -180,9 +186,7 @@ struct MainTabView: View {
             Color.black.opacity(0.2)
                 .ignoresSafeArea()
                 .overlay(
-                    ProgressView()
-                        .scaleEffect(1.2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    LogoLoadingView()
                 )
                 .transition(.opacity)
         }

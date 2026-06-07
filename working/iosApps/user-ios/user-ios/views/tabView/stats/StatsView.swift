@@ -188,7 +188,7 @@ struct StatsView: View {
                     
                     
                     if statModel.isRefreshing {
-                        ProgressView()
+                        LogoLoadingView()
                     } else if !games.isEmpty {
                             ForEach(games, id: \.id) { game in // Explicitly use .id to help transitions
                                 GameRow(
@@ -212,8 +212,8 @@ struct StatsView: View {
                     } else if !authModel.userModel!.gameIDs.isEmpty && games.isEmpty {
                         // Game IDs exist but SwiftData hasn't loaded them yet - show loading state
                         VStack(spacing: 16) {
-                            ProgressView()
-                            
+                            LogoLoadingView()
+
                             Text("Loading Games...")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)

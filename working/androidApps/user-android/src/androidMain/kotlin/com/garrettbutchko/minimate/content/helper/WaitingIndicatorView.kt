@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,11 +29,7 @@ fun WaitingIndicatorView(
         modifier = Modifier.padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier.padding(5.dp).size(size),
-            strokeWidth = 2.5.dp,
-            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.5f)
-        )
+        LogoLoadingView(size = size)
         Spacer(modifier = Modifier.height(0.5.dp))
         Text(
             text = label,

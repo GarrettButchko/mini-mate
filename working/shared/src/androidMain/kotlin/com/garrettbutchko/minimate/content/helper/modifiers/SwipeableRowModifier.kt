@@ -1,8 +1,8 @@
 package com.garrettbutchko.minimate.content.helper.modifiers
 
 import android.content.Intent
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -42,72 +42,46 @@ data class ButtonSkim(
     val isShared: Boolean get() = function == null && string != null
 }
 
+private val rowSnapSpec = spring<Float>(
+    dampingRatio = Spring.DampingRatioLowBouncy,
+    stiffness = Spring.StiffnessMediumLow
+)
+
 @Composable
 fun SkimButtonView(buttonSkim: ButtonSkim, offsetX: Float, modifier: Modifier = Modifier) {
-    val density = LocalDensity.current
-    val showThresholdPx = with(density) { -35.dp.toPx() }
-    val fullyVisiblePx = with(density) { -50.dp.toPx() }
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(25.dp))
-            .background(buttonSkim.color)
-            .clickable { buttonSkim.function?.invoke() },
-        contentAlignment = Alignment.Center
-    ) {
-        if (offsetX < showThresholdPx) {
-            Icon(
-                imageVector = buttonSkim.icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.alpha(if (offsetX < fullyVisiblePx) 1f else 0f)
-            )
-        }
-    }
-}
-
-@Composable
-fun SkimShareLinkView(buttonSkim: ButtonSkim, offsetX: Float, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    val showThresholdPx = with(density) { -35.dp.toPx() }
-    val fullyVisiblePx = with(density) { -50.dp.toPx() }
-
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(25.dp))
             .background(buttonSkim.color)
             .clickable {
-                buttonSkim.string?.let { shareString ->
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, shareString)
+                if (buttonSkim.isShared) {
+                    buttonSkim.string?.let {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, it)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Share"))
                     }
-                    context.startActivity(Intent.createChooser(intent, "Share"))
+                } else {
+                    buttonSkim.function?.invoke()
                 }
             },
         contentAlignment = Alignment.Center
     ) {
-        if (offsetX < showThresholdPx) {
+        if (offsetX < with(density) { -35.dp.toPx() }) {
             Icon(
                 imageVector = buttonSkim.icon,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.alpha(if (offsetX < fullyVisiblePx) 1f else 0f)
+                modifier = Modifier.alpha(if (offsetX < with(density) { -50.dp.toPx() }) 1f else 0f)
             )
         }
     }
 }
 
-/**
- * Android Jetpack Compose equivalent of SwiftUI's SwipeableRowModifier.
- * 
- * Note: In Jetpack Compose, structural changes like adding sibling action 
- * buttons beneath a row are achieved by wrapping your content in a `@Composable` 
- * container rather than using a `Modifier`.
- */
 @Composable
 fun SwipeableRow(
     editingID: String?,
@@ -124,15 +98,14 @@ fun SwipeableRow(
     var hasVibrated by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
-
     val density = LocalDensity.current
+
     val pausePointPx = with(density) { -100.dp.toPx() }
     val commitPointPx = with(density) { -50.dp.toPx() }
     val deletePointPx = with(density) { -220.dp.toPx() }
-    val resetPointPx = 0f
 
-    val showNonDeleteButtons = offsetX.value > deletePointPx
     val nonDeleteCount = (if (buttonOne != null) 1 else 0) + (if (buttonTwo != null) 1 else 0)
+    val showNonDeleteButtons = offsetX.value > deletePointPx
     val minActionWeight = 0.01f
 
     val nonDeleteVisibility by animateFloatAsState(
@@ -141,79 +114,49 @@ fun SwipeableRow(
         label = "nonDeleteVisibility"
     )
 
-    val actionSpacing by animateDpAsState(
-        targetValue = if (deleteFunction != null) (8f * nonDeleteVisibility).dp else 8.dp,
-        animationSpec = tween(durationMillis = 180),
-        label = "actionSpacing"
-    )
-
     val deleteWeight by animateFloatAsState(
         targetValue = if (deleteFunction != null) {
-            (1f + ((1f - nonDeleteVisibility) * nonDeleteCount)).coerceAtLeast(minActionWeight)
-        } else {
-            1f
-        },
+            if (showNonDeleteButtons) 1f else (1f + nonDeleteCount.toFloat())
+        } else 1f,
         animationSpec = tween(durationMillis = 180),
         label = "deleteWeight"
     )
 
-    // Close row if another row is opened
     LaunchedEffect(editingID) {
-        if (editingID != id) {
-            offsetX.animateTo(resetPointPx, spring())
-        }
+        if (editingID != id) offsetX.animateTo(0f, rowSnapSpec)
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        // Background Action Buttons
         if (editingID == id) {
             BoxWithConstraints(
-                modifier = Modifier
-                    .matchParentSize()
-                    .padding(start = 16.dp),
+                modifier = Modifier.matchParentSize().padding(start = 16.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                val maxRevealWidthPx = with(density) { maxWidth.toPx() }
                 val revealWidth = max(0f, -offsetX.value - with(density) { 10.dp.toPx() })
-                    .coerceAtMost(maxRevealWidthPx)
+                    .coerceAtMost(with(density) { maxWidth.toPx() })
                 Box(
                     modifier = Modifier
                         .width(with(density) { revealWidth.toDp() })
                         .alpha(if (offsetX.value < with(density) { -10.dp.toPx() }) 1f else 0f)
                 ) {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(actionSpacing),
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(vertical = 4.dp)
+                        verticalArrangement = Arrangement.spacedBy((8f * nonDeleteVisibility).dp),
+                        modifier = Modifier.fillMaxHeight().padding(vertical = 4.dp)
                     ) {
                         if (deleteFunction != null) {
-                            if (buttonOne != null) {
-                                val buttonModifier = Modifier
-                                    .weight(nonDeleteVisibility)
-                                    .alpha(nonDeleteVisibility)
-                                buttonOne.let {
-                                    if (it.isShared) SkimShareLinkView(it, offsetX.value, buttonModifier)
-                                    else SkimButtonView(it, offsetX.value, buttonModifier)
-                                }
-                            }
-                            if (buttonTwo != null) {
-                                val buttonModifier = Modifier
-                                    .weight(nonDeleteVisibility)
-                                    .alpha(nonDeleteVisibility)
-                                buttonTwo.let {
-                                    if (it.isShared) SkimShareLinkView(it, offsetX.value, buttonModifier)
-                                    else SkimButtonView(it, offsetX.value, buttonModifier)
-                                }
-                            }
-                            // Delete Button
+                            val btnMod = Modifier.weight(nonDeleteVisibility).alpha(nonDeleteVisibility)
+                            buttonOne?.let { SkimButtonView(it, offsetX.value, btnMod) }
+                            buttonTwo?.let { SkimButtonView(it, offsetX.value, btnMod) }
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(deleteWeight)
                                     .clip(RoundedCornerShape(25.dp))
                                     .background(Color.Red)
-                                    .clickable { deleteFunction.invoke() },
+                                    .clickable {
+                                        deleteFunction.invoke()
+                                        onEditingIDChange(null)
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (offsetX.value < with(density) { -35.dp.toPx() }) {
@@ -226,21 +169,14 @@ fun SwipeableRow(
                                 }
                             }
                         } else {
-                            buttonOne?.let {
-                                if (it.isShared) SkimShareLinkView(it, offsetX.value, Modifier.weight(1f))
-                                else SkimButtonView(it, offsetX.value, Modifier.weight(1f))
-                            }
-                            buttonTwo?.let {
-                                if (it.isShared) SkimShareLinkView(it, offsetX.value, Modifier.weight(1f))
-                                else SkimButtonView(it, offsetX.value, Modifier.weight(1f))
-                            }
+                            buttonOne?.let { SkimButtonView(it, offsetX.value, Modifier.weight(1f)) }
+                            buttonTwo?.let { SkimButtonView(it, offsetX.value, Modifier.weight(1f)) }
                         }
                     }
                 }
             }
         }
 
-        // Main Content Row
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
@@ -253,44 +189,33 @@ fun SwipeableRow(
                                 isPressed = false
                             }
                         },
-                        onTap = {
-                            if (editingID != id) {
-                                buttonPressFunction()
-                            }
-                        },
-                        onLongPress = {
-                            if (editingID != id) {
-                                buttonPressFunction()
-                            }
-                        }
+                        onTap = { if (editingID != id) buttonPressFunction() },
+                        onLongPress = { if (editingID != id) buttonPressFunction() }
                     )
                 }
                 .pointerInput(id) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             scope.launch {
-                                if (offsetX.value < deletePointPx) {
-                                    deleteFunction?.invoke()
-                                    offsetX.animateTo(resetPointPx, spring())
-                                    onEditingIDChange(null)
-                                } else if (offsetX.value < commitPointPx) {
-                                    offsetX.animateTo(pausePointPx, spring())
-                                } else {
-                                    offsetX.animateTo(resetPointPx, spring())
-                                    onEditingIDChange(null)
+                                when {
+                                    offsetX.value < deletePointPx -> {
+                                        deleteFunction?.invoke()
+                                        offsetX.animateTo(0f, rowSnapSpec)
+                                        onEditingIDChange(null)
+                                    }
+                                    offsetX.value < commitPointPx -> offsetX.animateTo(pausePointPx, rowSnapSpec)
+                                    else -> {
+                                        offsetX.animateTo(0f, rowSnapSpec)
+                                        onEditingIDChange(null)
+                                    }
                                 }
                             }
                         },
                         onHorizontalDrag = { change, dragAmount ->
                             change.consume()
                             scope.launch {
-                                val newOffset = (offsetX.value + dragAmount).coerceIn(deletePointPx - 80f, resetPointPx)
-                                offsetX.snapTo(newOffset)
-
-                                if (offsetX.value < resetPointPx && editingID != id) {
-                                    onEditingIDChange(id)
-                                }
-
+                                offsetX.snapTo((offsetX.value + dragAmount).coerceIn(deletePointPx - 80f, 0f))
+                                if (offsetX.value < 0f && editingID != id) onEditingIDChange(id)
                                 if (offsetX.value < deletePointPx && !hasVibrated) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     hasVibrated = true

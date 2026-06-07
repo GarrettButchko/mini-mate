@@ -30,8 +30,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.di.KoinHelper
 import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.SectionCard
 import com.garrettbutchko.minimate.content.helper.WaitingIndicatorView
 import com.garrettbutchko.minimate.helper.QRScannerView
 import com.garrettbutchko.minimate.logic.JoinViewBusinessLogic
@@ -126,7 +127,6 @@ fun JoinGameView(
                             message = message,
                             logic = logic,
                             mainOppColor = MaterialTheme.colorScheme.onSurface,
-                            subColor = MaterialTheme.colorScheme.surfaceVariant,
                             onCodeChange = { joinVM.setGameCode(logic.formatEnteredCode(it)) },
                             onScanClick = { showScanner = true }
                         )
@@ -135,8 +135,7 @@ fun JoinGameView(
                     ActiveLobby(
                         gameModel = gameModel,
                         logic = logic,
-                        mainOppColor = MaterialTheme.colorScheme.onSurface,
-                        subColor = MaterialTheme.colorScheme.surfaceVariant
+                        mainOppColor = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -241,25 +240,13 @@ fun JoinGameView(
     }
 
     if (showScanner) {
-        ModalBottomSheet(onDismissRequest = { showScanner = false }) {
-            Text(
-                text = "Scan QR Code",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                textAlign = TextAlign.Center
-            )
-            Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-                QRScannerView(
-                    onScan = { scanned ->
-                        joinVM.setGameCode(logic.formatScannedCode(scanned))
-                        showScanner = false
-                    },
-                    onCanceled = { showScanner = false }
-                )
-            }
-        }
+        QRScannerView(
+            onScan = { scanned ->
+                joinVM.setGameCode(logic.formatScannedCode(scanned))
+                showScanner = false
+            },
+            onCanceled = { showScanner = false }
+        )
     }
 }
 
@@ -269,15 +256,11 @@ private fun JoinCard(
     message: String,
     logic: JoinViewBusinessLogic,
     mainOppColor: Color,
-    subColor: Color,
     onCodeChange: (String) -> Unit,
     onScanClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = subColor)
-        ) {
+        SectionCard {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -302,6 +285,7 @@ private fun JoinCard(
                     onValueChange = onCodeChange,
                     singleLine = true,
                     label = { Text("GameCode") },
+                    shape = AppTextFieldShape,
                     modifier = Modifier.width(220.dp)
                 )
 
@@ -333,14 +317,6 @@ private fun JoinCard(
                     .padding(12.dp)
             )
         }
-
-        Text(
-            text = if (logic.isJoinButtonDisabled(gameCode)) "Enter a 6 character game code" else "Ready to join",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
     }
 }
 
@@ -348,26 +324,17 @@ private fun JoinCard(
 private fun ActiveLobby(
     gameModel: GameViewModel,
     logic: JoinViewBusinessLogic,
-    mainOppColor: Color,
-    subColor: Color
+    mainOppColor: Color
 ) {
     val game by gameModel.game.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = subColor)
-        ) {
+
+        SectionCard(title = logic.getPlayersHeaderText(game.players.size)) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = logic.getPlayersHeaderText(game.players.size),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = mainOppColor
-                )
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     verticalAlignment = Alignment.CenterVertically
@@ -387,10 +354,7 @@ private fun ActiveLobby(
             }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = subColor)
-        ) {
+        SectionCard() {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)

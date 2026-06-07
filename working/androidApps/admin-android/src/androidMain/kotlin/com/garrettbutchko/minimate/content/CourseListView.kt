@@ -34,11 +34,12 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -190,7 +191,7 @@ private fun MultiCourseView(
 
         if (loadingCourse) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = colorResource(id = ResColor.swiftBlue))
+                LogoLoadingView()
             }
         } else {
             Column(
@@ -526,12 +527,13 @@ private fun AddCourseDialog(vm: CourseListViewModel) {
                 Text("Enter course password to begin.", color = colorResource(id = ResColor.mainOpp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { 
+                    onValueChange = {
                         password = it
                         vm.setPassword(it)
                     },
                     label = { Text("Password") },
-                    singleLine = true
+                    singleLine = true,
+                    shape = AppTextFieldShape
                 )
             }
         },

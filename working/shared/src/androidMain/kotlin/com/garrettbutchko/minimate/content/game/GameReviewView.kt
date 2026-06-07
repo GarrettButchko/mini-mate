@@ -18,7 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
+import com.garrettbutchko.minimate.content.helper.modifiers.colorCardLayout
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -143,21 +143,11 @@ fun GameReviewView(
             }
 
             // Average Strokes Chart
-            val hasCustomColor = course?.scoreCardColor != null
             val gridBgColor = Color.subVsColor(makeColor = course?.scoreCardColor)
             if (!isInCourseSettings) {
-                val chartModifier = if (hasCustomColor) {
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(0.3f)
-                        .background(gridBgColor, RoundedCornerShape(25.dp))
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(0.3f)
-                        .subtleShadow()
-                        .background(gridBgColor, RoundedCornerShape(25.dp))
-                }
+                val chartModifier = Modifier
+                    .colorCardLayout(course?.scoreCardColor, Modifier.fillMaxWidth().weight(0.3f))
+                    .background(gridBgColor, RoundedCornerShape(25.dp))
                 Box(modifier = chartModifier) {
                     BarChartView(
                         data = viewModel.averageStrokes(),
@@ -168,18 +158,9 @@ fun GameReviewView(
             }
 
             // Score Grid View
-            val gridModifier = if (hasCustomColor) {
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .background(gridBgColor, RoundedCornerShape(25.dp))
-            } else {
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .subtleShadow()
-                    .background(gridBgColor, RoundedCornerShape(25.dp))
-            }
+            val gridModifier = Modifier
+                .colorCardLayout(course?.scoreCardColor, Modifier.fillMaxWidth().weight(1f))
+                .background(gridBgColor, RoundedCornerShape(25.dp))
             Column(
                 modifier = gridModifier.clip(RoundedCornerShape(25.dp))
             ) {

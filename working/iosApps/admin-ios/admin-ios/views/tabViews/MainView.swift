@@ -87,7 +87,7 @@ struct MainView: View {
                                 .resizable()
                                 .scaledToFit()
                         } placeholder: {
-                            ProgressView()
+                            LogoLoadingView()
                         }
                         .id(URL(string: courseLogo))
                         .minimumScaleFactor(0.75)
@@ -134,7 +134,10 @@ struct MainView: View {
                     ZStack{
                         VStack (spacing: 16){
                             if analyticsVM.isLoadingHealth {
-                                ProgressView("Analyzing course health...")
+                                VStack(spacing: 12) {
+                                    LogoLoadingView()
+                                    Text("Analyzing course health...")
+                                }
                                     .frame(height: 375)
                                     .frame(maxWidth: .infinity)
                                     .background {

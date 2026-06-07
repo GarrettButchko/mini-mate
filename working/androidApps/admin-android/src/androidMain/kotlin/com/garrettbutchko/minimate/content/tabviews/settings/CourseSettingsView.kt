@@ -44,6 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -299,6 +300,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                         onValueChange = { vm.setNewPassword(it) },
                         label = { Text("New Password") },
                         visualTransformation = PasswordVisualTransformation(),
+                        shape = AppTextFieldShape,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = subColor,
                             unfocusedContainerColor = subColor,
@@ -316,6 +318,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                         onValueChange = { vm.setConfirmPassword(it) },
                         label = { Text("Confirm Password") },
                         visualTransformation = PasswordVisualTransformation(),
+                        shape = AppTextFieldShape,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = subColor,
                             unfocusedContainerColor = subColor,
@@ -459,7 +462,7 @@ private fun SocialLinkRow(
             onValueChange = onUrlChange,
             label = { Text("URL") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(15.dp),
+            shape = AppTextFieldShape,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = subColor,
                 unfocusedContainerColor = subColor,
@@ -641,7 +644,7 @@ private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, course
             },
             label = { Text("Ad Title") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(15.dp),
+            shape = AppTextFieldShape,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = subColor,
                 unfocusedContainerColor = subColor,
@@ -662,7 +665,7 @@ private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, course
             },
             label = { Text("Ad Description") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(15.dp),
+            shape = AppTextFieldShape,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = subColor,
                 unfocusedContainerColor = subColor,
@@ -683,7 +686,7 @@ private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, course
             },
             label = { Text("Ad Link (https://...)") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(15.dp),
+            shape = AppTextFieldShape,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = subColor,
                 unfocusedContainerColor = subColor,

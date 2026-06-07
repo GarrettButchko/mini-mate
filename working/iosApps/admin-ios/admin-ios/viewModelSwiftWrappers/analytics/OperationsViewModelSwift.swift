@@ -53,12 +53,12 @@ class OperationsViewModelSwift: ObservableObject {
         return kotlin.getBusiestDay()
     }
     
-    func prepareChartData() async throws -> [HourData] {
-        return try await kotlin.prepareChartData()
+    func prepareChartData() -> [HourData] {
+        return kotlin.prepareChartData()
     }
-    
-    func getDataForGamesPerDay() async throws -> [PlayerActivity] {
-        return try await kotlin.getDataForGamesPerDay()
+
+    func getDataForGamesPerDay() -> [PlayerActivity] {
+        return kotlin.getDataForGamesPerDay()
     }
     
     func getAvgGameDuration() -> DataPointObject {
@@ -77,7 +77,7 @@ class OperationsViewModelSwift: ObservableObject {
         return kotlin.getSlowestGameTime()
     }
     
-    func getDataForDurationTrend() async throws -> [GameDurationActivity] {
-        return try await kotlin.getDataForDurationTrend()
+    func getDataForDurationTrend() -> [GameDurationActivity] {
+        return kotlin.getDataForDurationTrend()
     }
 }

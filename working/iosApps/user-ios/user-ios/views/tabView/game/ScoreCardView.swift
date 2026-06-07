@@ -112,7 +112,7 @@ struct ScoreCardView: View {
                             .resizable()
                             .scaledToFit()
                     } placeholder: {
-                        ProgressView()
+                        LogoLoadingView()
                     }
                     .id(URL(string: courseLogo))
                 }
@@ -286,7 +286,7 @@ struct ScoreCardView: View {
                             AsyncImage(url: URL(string: adImage)) { phase in
                                 switch phase {
                                 case .empty:
-                                    ProgressView()
+                                    LogoLoadingView()
                                         .frame(height: 50)
                                 case .success(let image):
                                     image

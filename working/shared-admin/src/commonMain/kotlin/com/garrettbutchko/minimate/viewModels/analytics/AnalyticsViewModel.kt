@@ -55,7 +55,7 @@ enum class PlayerTier(
         label = "Mid-Tier",
         miniDescription = "2–5 plays, active",
         tierDescription = "Players who have played 2 to 5 times and have returned within the average window.",
-        colorKey = "gray",
+        colorKey = "grey",
         iconName = "medal.fill"
     ),
     FREQUENT(
@@ -288,6 +288,11 @@ open class AnalyticsViewModel(
             return
         }
 
+        _allDailyDocs.value = emptyList()
+        _allEmails.value = emptyMap()
+        _healthReport.value = null
+        _loadingDocs.value = true
+        _loadingEmails.value = true
         _isLoadingHealth.value = true
 
         coroutineScope.launch(Dispatchers.Default) {
@@ -385,11 +390,26 @@ open class AnalyticsViewModel(
         _loadingDocs.value = true
 
         coroutineScope.launch {
-            _allDailyDocs.value = analyticsRepo.fetchDailyAnalytics(
+            val newDocs = analyticsRepo.fetchDailyAnalytics(
                 courseID = course.id,
                 range = new,
                 existingDocs = _allDailyDocs.value
             )
+
+            val mainDays = new.daysInMainRange
+            val deltaDays = new.daysInDeltaRange
+            val rangeDocs = newDocs.filter { mainDays.contains(it.dayID) }
+            val deltaDocs = newDocs.filter { deltaDays.contains(it.dayID) }
+
+            growthVM.range = new
+            growthVM.rangeDailyDocs = rangeDocs
+            growthVM.deltaDailyDocs = deltaDocs
+            operationsVM.range = new
+            operationsVM.rangeDailyDocs = rangeDocs
+            operationsVM.deltaDailyDocs = deltaDocs
+            experienceVM.rangeDailyDocs = rangeDocs
+
+            _allDailyDocs.value = newDocs
             _loadingDocs.value = false
         }
     }

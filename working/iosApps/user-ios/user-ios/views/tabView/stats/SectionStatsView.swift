@@ -11,16 +11,24 @@ import shared_user
 struct SectionStatsView<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
     var title: String
+    var subtitle: String? = nil
     var spacing: CGFloat
-    
+
     var makeColor: Color? = nil
     @ViewBuilder var content: () -> Content
     var body: some View {
         VStack(alignment: .leading, spacing: spacing) {
             HStack {
-                Text(title)
-                    .font(.title3).fontWeight(.bold)
-                    .foregroundStyle(.mainOpp)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.title3).fontWeight(.bold)
+                        .foregroundStyle(.mainOpp)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Spacer()
             }
             content()

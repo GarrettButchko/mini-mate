@@ -226,7 +226,7 @@ struct SwipeableRowModifier: ViewModifier {
                     editingID = nil
                     
                     // 2. Safely call the delete function on the next run loop cycle
-                    DispatchQueue.saveAsync {
+                    DispatchQueue.main.async {
                         currentDeleteFunction?()
                     }
                 } else {
@@ -240,6 +240,7 @@ struct SwipeableRowModifier: ViewModifier {
                         }
                         lastOffsetX = offsetX
                     }
+                }
                 }
             }
     }

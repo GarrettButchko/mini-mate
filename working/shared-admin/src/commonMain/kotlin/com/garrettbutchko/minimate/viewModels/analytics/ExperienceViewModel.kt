@@ -4,8 +4,6 @@ import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.DailyDoc
 import com.garrettbutchko.minimate.extensions.format
 import com.garrettbutchko.minimate.generateUUID
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.collections.iterator
 import kotlin.math.round
 
@@ -59,17 +57,17 @@ open class ExperienceViewModel {
         }
     }
 
-    suspend fun getHoleDifficultyData(): List<HoleDifficultyData> = withContext(Dispatchers.Default) {
+    fun getHoleDifficultyData(): List<HoleDifficultyData> {
         val results = getHoleCombined()
-        results.mapNotNull { (key, value) ->
+        return results.mapNotNull { (key, value) ->
             val holeNum = key.toIntOrNull() ?: return@mapNotNull null
             HoleDifficultyData(generateUUID(), holeNum, value)
         }.sortedBy { it.holeNumber }
     }
 
-    suspend fun getHoleHeatmapForParData(course: Course): List<HoleHeatmapData> = withContext(Dispatchers.Default) {
+    fun getHoleHeatmapForParData(course: Course): List<HoleHeatmapData> {
         val combinedResults = getHoleCombined()
-        combinedResults.mapNotNull { (key, avgStrokes) ->
+        return combinedResults.mapNotNull { (key, avgStrokes) ->
             val holeNum = key.toIntOrNull() ?: return@mapNotNull null
             val index = holeNum - 1
             if (index < 0 || index >= course.pars.size) return@mapNotNull null

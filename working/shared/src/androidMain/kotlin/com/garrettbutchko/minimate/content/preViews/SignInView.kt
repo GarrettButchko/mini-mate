@@ -48,10 +48,17 @@ fun SignInView(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    val gradientColors = listOf(
-        colorResource(id = R.color.swiftBlue),
-        colorResource(id = R.color.swiftGreen)
-    )
+    val gradientColors = if (isMiniMateApp) {
+        listOf(
+            colorResource(id = R.color.swiftBlue),
+            colorResource(id = R.color.swiftGreen)
+        )
+    } else {
+        listOf(
+            colorResource(id = R.color.MMMBlue),
+            colorResource(id = R.color.MMMGreen)
+        )
+    }
 
     Box(
         modifier = Modifier

@@ -90,24 +90,28 @@ struct ProfileView: View {
                         if let user = authModel.userModel {
                             HStack {
                                 Text("Name:")
+                                Spacer()
                                 Text(user.name)
                             }
                             
                             HStack {
                                 Text("Email:")
+                                Spacer()
                                 Text(user.email ?? "")
                             }
                             
                             HStack {
                                 Text("UID:")
+                                Spacer()
                                 Text(user.googleId)
                             }
                             
+                            #if MINIMATE
                             HStack {
                                 Text("Pro:")
+                                Spacer()
                                 Text((user.isPro ? "Yes" : "Not Yet!"))
                                 
-                                #if MINIMATE
                                 if !user.isPro {
                                     Spacer()
                                     Button("Get Pro Now!") {
@@ -115,14 +119,13 @@ struct ProfileView: View {
                                     }
                                     .padding(.horizontal)
                                 }
-                                #endif
                             }
+                            #endif
                             
                         } else {
                             Text("User data not available.")
                         }
                     }
-                    
                     // Account Management Section
                     Section("Account Management") {
                         

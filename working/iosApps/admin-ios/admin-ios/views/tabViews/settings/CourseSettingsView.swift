@@ -231,7 +231,7 @@ struct LogoSectionView: View {
                         AsyncImage(url: URL(string: courseLogo)) { phase in
                             switch phase {
                             case .empty:
-                                ProgressView()
+                                LogoLoadingView()
                                     .frame(width: 60)
                             case .success(let image):
                                 image
@@ -584,7 +584,7 @@ struct AdImageView: View {
                         AsyncImage(url: URL(string: courseImage)) { phase in
                             switch phase {
                             case .empty:
-                                ProgressView()
+                                LogoLoadingView()
                                     .frame(width: 60)
                             case .success(let image):
                                 image

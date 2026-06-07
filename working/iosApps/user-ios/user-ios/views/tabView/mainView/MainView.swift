@@ -131,7 +131,7 @@ struct MainView: View {
                                 .resizable()
                                 .scaledToFit()
                         } placeholder: {
-                            ProgressView()
+                            LogoLoadingView()
                         }
                         .id(URL(string: courseLogo))
                     }
@@ -479,9 +479,7 @@ struct MainView: View {
                             } label: {
                                 HStack(spacing: 8) {
                                     if isLoading {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            .scaleEffect(0.8)
+                                        LogoLoadingView()
                                         Text("Searching...")
                                             .fontWeight(.medium)
                                     } else {
@@ -634,6 +632,7 @@ struct MainView: View {
             } label: {
                 SectionStatsView(
                     title: "Last Game",
+                    subtitle: lastGame.locationName ?? GameInfoViewModel(game: lastGame).dateStarted,
                     spacing: 12,
                     makeColor: gameModel.course?.scoreCardColor
                 ) {
@@ -666,7 +665,7 @@ struct MainView: View {
                         )
                     }
                     
-                    BarChartView(data: gameManager.kotlin.usersHolesOfLatestGame(), title: "Recap of Game")
+                    BarChartView(data: gameManager.kotlin.usersHolesOfLatestGame(), title: "Your Recap")
                         .frame(height: 150)
                         .background(
                             RoundedRectangle(cornerRadius: 12)

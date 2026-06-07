@@ -1,15 +1,14 @@
 package com.garrettbutchko.minimate.content.helper
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,21 +19,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.util.regex.Pattern
 
 data class NamedColor(val name: String, val color: Color)
 
 val LocalPlayerColors = listOf(
-    NamedColor("red", Color.Red),
-    NamedColor("orange", Color(0xFFFFA500)), // Orange
-    NamedColor("yellow", Color.Yellow),
-    NamedColor("green", Color.Green),
-    NamedColor("blue", Color.Blue),
-    NamedColor("indigo", Color(0xFF4B0082)), // Indigo
-    NamedColor("purple", Color(0xFF800080)), // Purple
-    NamedColor("pink", Color(0xFFFFC0CB)), // Pink
-    NamedColor("brown", Color(0xFFA52A2A))  // Brown
+    NamedColor("red", Color(0xFFE53935)),
+    NamedColor("orange", Color(0xFFFB8C00)),
+    NamedColor("yellow", Color(0xFFFDD835)),
+    NamedColor("green", Color(0xFF43A047)),
+    NamedColor("blue", Color(0xFF1E88E5)),
+    NamedColor("indigo", Color(0xFF3949AB)),
+    NamedColor("purple", Color(0xFF8E24AA)),
+    NamedColor("pink", Color(0xFFD81B60)),
+    NamedColor("brown", Color(0xFF6D4C41))
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,165 +55,116 @@ fun AddLocalPlayerView(
                 "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
                 ")+"
     )
+    val emailTouched = newPlayerEmail.isNotEmpty()
     val isValidEmail = EMAIL_PATTERN.matcher(newPlayerEmail.trim()).matches()
-    
+
     val isDisabled = if (hasCourseSelected) {
         newPlayerName.trim().isEmpty() || newPlayerEmail.trim().isEmpty() || !isValidEmail
     } else {
         newPlayerName.trim().isEmpty()
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-    ) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp, top = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Section
             Text(
-                text = "Add Local Player",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Normal,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                text = "Add Player",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold
             )
 
-            // Name and Email Row
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                TextField(
-                    value = newPlayerName,
-                    onValueChange = { if (it.length <= 18) newPlayerName = it },
-                    placeholder = { Text("Name") },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
+            OutlinedTextField(
+                value = newPlayerName,
+                onValueChange = { if (it.length <= 18) newPlayerName = it },
+                label = { Text("Name") },
+                singleLine = true,
+                shape = AppTextFieldShape,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = if (hasCourseSelected) ImeAction.Next else ImeAction.Done
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            if (hasCourseSelected) {
+                OutlinedTextField(
+                    value = newPlayerEmail,
+                    onValueChange = { newPlayerEmail = it },
+                    label = { Text("Email") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = if (hasCourseSelected) ImeAction.Next else ImeAction.Done),
+                    shape = AppTextFieldShape,
+                    isError = emailTouched && !isValidEmail,
+                    supportingText = if (emailTouched && !isValidEmail) {
+                        { Text("Enter a valid email address") }
+                    } else null,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Done
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                if (hasCourseSelected) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-                    TextField(
-                        value = newPlayerEmail,
-                        onValueChange = { newPlayerEmail = it },
-                        placeholder = { Text("Email") },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Done
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
 
-            Text(
-                text = "Ball Color",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            // Color Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                LocalPlayerColors.forEach { colorOption ->
-                    val isSelected = playerBallColor == colorOption.name
-                    val animatedColor by animateColorAsState(
-                        targetValue = if (isSelected) colorOption.color.copy(alpha = 0.3f) else colorOption.color,
-                        animationSpec = tween(durationMillis = 300)
-                    )
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
-                            .clickable { playerBallColor = colorOption.name }
-                    ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "Ball Color",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    LocalPlayerColors.forEach { colorOption ->
+                        val isSelected = playerBallColor == colorOption.name
                         Box(
+                            contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
-                                .background(animatedColor)
-                        )
+                                .background(colorOption.color)
+                                .clickable { playerBallColor = colorOption.name }
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // Button Row
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Cancel Button
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
-                        .clickable { onDismiss() }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    shape = AppTextFieldShape
                 ) {
-                    Text(
-                        text = "Cancel",
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Text("Cancel")
                 }
-
-                // Add Button
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(
-                            if (isDisabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f) 
-                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-                        )
-                        .clickable(enabled = !isDisabled) {
-                            onAddPlayer(newPlayerName.trim(), newPlayerEmail.trim(), playerBallColor)
-                            onDismiss()
-                        }
+                Button(
+                    onClick = {
+                        onAddPlayer(newPlayerName.trim(), newPlayerEmail.trim(), playerBallColor)
+                        onDismiss()
+                    },
+                    enabled = !isDisabled,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    shape = AppTextFieldShape
                 ) {
-                    Text(
-                        text = "Add",
-                        fontSize = 18.sp,
-                        color = if (isDisabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) 
-                                else MaterialTheme.colorScheme.onSurface
-                    )
+                    Text("Add Player")
                 }
             }
         }
