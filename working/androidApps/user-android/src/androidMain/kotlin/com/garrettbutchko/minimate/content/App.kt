@@ -204,13 +204,15 @@ fun App() {
                         modifier = Modifier
                     )
 
-                    is ViewType.Ad -> InterstitialAdView(
-                        adUnitID = "ca-app-pub-8261962597301587/3394145015"
-                    ) {
-                        if (targetView.isGuest) {
-                            deps.viewManager.navigateToSignIn()
-                        } else {
-                            deps.viewManager.navigateToMain(1)
+                    is ViewType.Ad -> Box(modifier = Modifier.fillMaxSize()) {
+                        InterstitialAdView(
+                            adUnitID = "ca-app-pub-8261962597301587/3394145015"
+                        ) {
+                            if (targetView.isGuest) {
+                                deps.viewManager.navigateToSignIn()
+                            } else {
+                                deps.viewManager.navigateToMain(1)
+                            }
                         }
                     }
 

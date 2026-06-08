@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,7 +31,11 @@ fun CourseSearchButton(
         enabled = !isLoading
     ) {
         if (isLoading) {
-            LogoLoadingView(size = 20.dp)
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = Color.White,
+                strokeWidth = 2.dp
+            )
             Spacer(Modifier.width(8.dp))
             Text("Searching...", color = Color.White)
         } else {

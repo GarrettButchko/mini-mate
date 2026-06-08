@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,13 +21,14 @@ import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.playerModels.Player
 import com.garrettbutchko.minimate.repositories.CourseLeaderboardRepository
-import com.garrettbutchko.minimate.content.helper.LogoLoadingView
+import com.garrettbutchko.minimate.shared.R
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AddToLeaderBoardButton(
     course: Course?,
     player: Player,
+    modifier: Modifier = Modifier,
     isProfaneName: Boolean = false, // Passed externally if ProfanityFilter is not in KMP
     courseLeaderBoardRepo: CourseLeaderboardRepository = remember { CourseLeaderboardRepository() }
 ) {
@@ -46,6 +48,7 @@ fun AddToLeaderBoardButton(
     if (shouldShow) {
         AnimatedContent(
             targetState = added,
+            modifier = modifier,
             transitionSpec = {
                 if (targetState) {
                     // Animating to "Added" state (scale + opacity)
@@ -67,7 +70,7 @@ fun AddToLeaderBoardButton(
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = "Added",
-                        tint = Color.Green,
+                        tint = colorResource(id = R.color.swiftGreen),
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -75,7 +78,7 @@ fun AddToLeaderBoardButton(
                         text = "Added",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Green
+                        color = colorResource(id = R.color.swiftGreen)
                     )
                 }
             } else {
@@ -104,14 +107,29 @@ fun AddToLeaderBoardButton(
                     enabled = !isSubmitting,
                     shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSubmitting) Color.Gray else Color.Blue,
+                        containerColor = if (isSubmitting) Color.Gray else MaterialTheme.colorScheme.primary,
                         disabledContainerColor = Color.Gray
                     ),
                     contentPadding = PaddingValues(0.dp),
                     modifier = Modifier.size(120.dp, 20.dp)
                 ) {
                     if (isSubmitting) {
-                        LogoLoadingView(size = 12.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(10.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = "Searching...",
+                                fontSize = 10.sp, // Using slightly smaller font to fit 120dp constraint
+                                color = Color.White
+                            )
+                        }
                     } else {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

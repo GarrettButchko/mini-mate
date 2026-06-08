@@ -240,18 +240,7 @@ fun ProfileView(
                 OutlinedTextField(
                     value = editNameInput,
                     onValueChange = { if (it.length <= 18) editNameInput = it },
-                    label = { Text("New Name") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = subColor,
-                        unfocusedContainerColor = subColor,
-                        focusedTextColor = mainOppColor,
-                        unfocusedTextColor = mainOppColor,
-                        focusedLabelColor = mainOppColor,
-                        unfocusedLabelColor = subThreeOppColor,
-                        cursorColor = successColor,
-                        focusedBorderColor = successColor,
-                        unfocusedBorderColor = subThreeOppColor
-                    )
+                    label = { Text("New Name") }
                 )
             },
             confirmButton = {

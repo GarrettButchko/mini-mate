@@ -55,7 +55,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProView(
     iapManager: IAPManager,
-    showSheet: Boolean,
     onShowSheetChange: (Boolean) -> Unit,
     activity: Activity?
 ) {

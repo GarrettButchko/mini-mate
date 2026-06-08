@@ -46,7 +46,13 @@ struct AddToLeaderBoardButton: View {
                             
                             HStack {
                                 if isSubmitting {
-                                    LogoLoadingView()
+                                    HStack(spacing: 8) {
+                                        ProgressView()
+                                            .tint(.white)
+                                            .controlSize(.small)
+                                        
+                                        Text("Submitting...")
+                                    }
                                 } else {
                                     Image(systemName: "plus")
                                     Text("Leaderboard")
@@ -55,7 +61,7 @@ struct AddToLeaderBoardButton: View {
                             .font(.caption)
                             .foregroundStyle(.white)
                         }
-                        .frame(width: 120, height: 20)
+                        .frame(width: 120, height: 25)
                     }
                     .disabled(isSubmitting) // Prevent multiple taps
                     .transition(.opacity.combined(with: .move(edge: .top)))

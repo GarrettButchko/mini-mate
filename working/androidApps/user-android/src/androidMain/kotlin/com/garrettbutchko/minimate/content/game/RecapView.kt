@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +19,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,6 +70,7 @@ fun RecapGameView(
     modifier: Modifier = Modifier
 ) {
     val logic = remember { RecapViewBusinessLogic() }
+    val stableCourse = remember { course }
     val sortedPlayers = remember(game) { logic.sortPlayers(game) }
     var gameReview by remember { mutableStateOf<Game?>(null) }
     var showConfetti by remember { mutableStateOf(false) }
@@ -110,10 +114,10 @@ fun RecapGameView(
                 PlayerStandingCard(
                     player = sortedPlayers[0],
                     place = PlayerStanding.FIRST,
-                    course = course,
+                    course = stableCourse,
                     onlyPlayer = false
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -121,7 +125,7 @@ fun RecapGameView(
                     PlayerStandingCard(
                         player = sortedPlayers[1],
                         place = PlayerStanding.SECOND,
-                        course = course,
+                        course = stableCourse,
                         onlyPlayer = false,
                         modifier = Modifier.weight(1f)
                     )
@@ -129,14 +133,14 @@ fun RecapGameView(
                         PlayerStandingCard(
                             player = sortedPlayers[2],
                             place = PlayerStanding.THIRD,
-                            course = course,
+                            course = stableCourse,
                             onlyPlayer = false,
                             modifier = Modifier.weight(1f)
                         )
                     }
                 }
                 if (sortedPlayers.size > 3) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -144,7 +148,7 @@ fun RecapGameView(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(sortedPlayers.drop(3)) { player ->
-                            PlayerStandingCard(player = player, place = null, course = course, onlyPlayer = false)
+                            PlayerStandingCard(player = player, place = null, course = stableCourse, onlyPlayer = false)
                         }
                     }
                 } else {
@@ -155,7 +159,7 @@ fun RecapGameView(
                     PlayerStandingCard(
                         player = sortedPlayers[0],
                         place = PlayerStanding.FIRST,
-                        course = course,
+                        course = stableCourse,
                         onlyPlayer = true
                     )
                 }
@@ -189,10 +193,23 @@ fun RecapGameView(
 
             Button(
                 onClick = onContinue,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp)
+                modifier = Modifier.padding(bottom = 24.dp),
+                shape = RoundedCornerShape(25.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF007AFF),
+                    contentColor = Color.White
+                ),
+                contentPadding = PaddingValues(vertical = 20.dp, horizontal = 30.dp)
             ) {
-                Text(if (isGuest) "Continue" else "Back to Home")
+                Icon(
+                    imageVector = if (isGuest) Icons.Default.AccountCircle else Icons.Default.Home,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (isGuest) "Back to Sign In Menu" else "Go Back to Main Menu",
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 
@@ -275,6 +292,7 @@ private fun PlayerStandingCard(
             .fillMaxWidth()
             .then(cardModifier)
             .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(

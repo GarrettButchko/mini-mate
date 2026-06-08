@@ -1,53 +1,77 @@
 import SwiftUI
 import GoogleMobileAds
 
-struct BannerAdView: View {
-    let adUnitID: String
-    @Binding var isAdLoaded: Bool
+// Google's intended preloading pattern: instantiate a BannerView early, kick off
+// load(), and hand the same instance into the view hierarchy when ready.
+// `BannerAdLoader` owns the BannerView + delegate together so they stay alive
+// for the duration of the async load.
+@MainActor
+final class BannerAdLoader: NSObject, BannerViewDelegate {
+    private let bannerView: BannerView
+    private var continuation: CheckedContinuation<BannerView?, Never>?
 
-    init(adUnitID: String, isAdLoaded: Binding<Bool> = .constant(false)) {
-        self.adUnitID = adUnitID
-        self._isAdLoaded = isAdLoaded
+    init(adUnitID: String, adSize: AdSize = AdSizeBanner) {
+        self.bannerView = BannerView(adSize: adSize)
+        super.init()
+        bannerView.adUnitID = adUnitID
+        bannerView.rootViewController = UIApplication.shared.getRootViewController()
+        bannerView.delegate = self
+    }
+
+    func load() async -> BannerView? {
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            bannerView.load(Request())
+        }
+    }
+
+    nonisolated func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        Task { @MainActor in
+            continuation?.resume(returning: bannerView)
+            continuation = nil
+        }
+    }
+
+    nonisolated func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+        print("Banner ad failed to load: \(error.localizedDescription)")
+        Task { @MainActor in
+            continuation?.resume(returning: nil)
+            continuation = nil
+        }
+    }
+}
+
+struct BannerAdView: View {
+    let bannerView: BannerView
+    let adSize: AdSize
+
+    @State private var isAdLoaded = false
+
+    init(bannerView: BannerView, adSize: AdSize = AdSizeBanner) {
+        self.bannerView = bannerView
+        self.adSize = adSize
     }
 
     var body: some View {
-        _BannerAdRepresentable(adUnitID: adUnitID, isAdLoaded: $isAdLoaded)
-            .frame(height: isAdLoaded ? 50 : 0)
-            .padding(isAdLoaded ? 16 : 0)
+        BannerViewContainer(bannerView: bannerView)
+            .frame(height: adSize.size.height)
+            .padding(16)
             .animation(.easeInOut(duration: 0.25), value: isAdLoaded)
     }
 }
 
-private struct _BannerAdRepresentable: UIViewRepresentable {
-    let adUnitID: String
-    @Binding var isAdLoaded: Bool
+private struct BannerViewContainer: UIViewRepresentable {
+    typealias UIViewType = BannerView
+
+    let bannerView: BannerView
 
     func makeUIView(context: Context) -> BannerView {
-        let bannerView = BannerView(adSize: AdSizeBanner)
-        bannerView.adUnitID = adUnitID
-        bannerView.delegate = context.coordinator
-        bannerView.load(Request())
-        return bannerView
+        bannerView
     }
 
     func updateUIView(_ uiView: BannerView, context: Context) {
         if uiView.rootViewController == nil {
             uiView.rootViewController = UIApplication.shared.getRootViewController()
-        }
-    }
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    class Coordinator: NSObject, BannerViewDelegate {
-        var parent: _BannerAdRepresentable
-        init(_ parent: _BannerAdRepresentable) { self.parent = parent }
-
-        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
-            DispatchQueue.main.async { self.parent.isAdLoaded = true }
-        }
-
-        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
-            DispatchQueue.main.async { self.parent.isAdLoaded = false }
         }
     }
 }
@@ -60,4 +84,44 @@ extension UIApplication {
         }
         return root
     }
+}
+
+// Demo view showing the full preload-then-display flow.
+// Uses Google's public test ad unit so it's safe to run.
+struct BannerAdDemoView: View {
+    private static let testAdUnitID = "ca-app-pub-3940256099942544/2435281174"
+
+    @State private var preloadedBanner: BannerView?
+    @State private var didFail = false
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Text("Banner Ad Demo")
+                .font(.title2.weight(.semibold))
+
+            if let preloadedBanner {
+                BannerAdView(bannerView: preloadedBanner)
+            } else if didFail {
+                Text("Ad failed to load")
+                    .foregroundStyle(.secondary)
+            } else {
+                ProgressView("Preloading ad…")
+            }
+
+            Spacer()
+        }
+        .padding()
+        .task {
+            let loader = BannerAdLoader(adUnitID: BannerAdDemoView.testAdUnitID)
+            if let banner = await loader.load() {
+                preloadedBanner = banner
+            } else {
+                didFail = true
+            }
+        }
+    }
+}
+
+#Preview {
+    BannerAdDemoView()
 }

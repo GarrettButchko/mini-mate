@@ -45,6 +45,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.garrettbutchko.minimate.shared.R
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun CourseSearchResultsView(
@@ -67,7 +68,7 @@ fun CourseSearchResultsView(
     LaunchedEffect(shouldShowLoadingState, logic.retryButtonDelay) {
         showRetryButton = false
         if (shouldShowLoadingState) {
-            delay((logic.retryButtonDelay * 1000).toLong())
+            delay((logic.retryButtonDelay * 1000).toLong().milliseconds)
             showRetryButton = true
         }
     }
@@ -118,7 +119,7 @@ fun CourseSearchResultsView(
             ) {
                 itemsIndexed(sortedMapItems) { index, item ->
                     if (index > 0) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
                     }
                     SearchResultRow(
                         mapItem = item,

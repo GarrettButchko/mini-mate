@@ -2,6 +2,9 @@ package com.garrettbutchko.minimate.content.game
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -389,25 +392,32 @@ fun ScoreCardGameView(
             }
         }
 
-        if (showRecap && passGame != null) {
-            RecapGameView(
-                game = passGame,
-                course = currentCourse,
-                isGuest = isGuest,
-                onContinue = {
-                    val shouldShowAd = logic.shouldShowAds(
-                        isConnected = NetworkChecker.shared.isConnected,
-                        isGuest = isGuest,
-                        isPro = user?.isPro
-                    )
-                    if (shouldShowAd) {
-                        viewManager.navigateToAd(isGuest = isGuest)
-                    } else {
-                        viewManager.navigateToMain(1)
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
+        AnimatedVisibility(
+            visible = showRecap && passGame != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            if (passGame != null) {
+                RecapGameView(
+                    game = passGame,
+                    course = currentCourse,
+                    isGuest = isGuest,
+                    onContinue = {
+                        val shouldShowAd = logic.shouldShowAds(
+                            isConnected = NetworkChecker.shared.isConnected,
+                            isGuest = isGuest,
+                            isPro = user?.isPro
+                        )
+                        if (shouldShowAd) {
+                            viewManager.navigateToAd(isGuest = isGuest)
+                        } else {
+                            viewManager.navigateToMain(1)
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 

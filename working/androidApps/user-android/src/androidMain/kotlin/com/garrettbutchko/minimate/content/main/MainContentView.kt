@@ -46,7 +46,6 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,7 +53,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +64,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -93,6 +92,7 @@ import com.garrettbutchko.minimate.content.game.GameReviewView
 import com.garrettbutchko.minimate.content.game.HostGameView
 import com.garrettbutchko.minimate.content.game.JoinGameView
 import com.garrettbutchko.minimate.content.helper.CourseBannerAdView
+import com.garrettbutchko.minimate.content.helper.rememberCourseBannerAdVisible
 import com.garrettbutchko.minimate.content.helper.InfoButton
 import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.BarChartView
@@ -118,7 +118,7 @@ import com.garrettbutchko.minimate.content.stats.StatCard
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.extensions.formatted
 import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
-
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @Composable
@@ -157,11 +157,19 @@ fun MainContentView(
     val joinSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showJoinSheet by remember { mutableStateOf(false) }
 
+    var onBannerLoaded by remember { mutableStateOf(false) }
+
     val scope = rememberCoroutineScope()
 
     val disablePlaying = logic.isPlayDisabled(
         isPro = user?.isPro,
         gameCount = user?.gameIDs?.size ?: 0
+    )
+
+    val isBannerAdVisible = rememberCourseBannerAdVisible(
+        isGuest = isGuest,
+        isPro = user?.isPro,
+        isConnected = NetworkChecker.shared.isConnected
     )
 
     LaunchedEffect(Unit) {
@@ -183,7 +191,7 @@ fun MainContentView(
 
     LaunchedEffect(showPromoStage) {
         if (showPromoStage) {
-            delay((logic.proPromotionDisplayDuration * 1000).toLong())
+            delay((logic.proPromotionDisplayDuration * 1000).toLong().milliseconds)
             showPromoStage = false
         }
     }
@@ -194,7 +202,6 @@ fun MainContentView(
     ) {
         MainTopBar(
             greetingName = logic.getGreetingName(user?.name),
-            courseName = course?.name,
             courseLogoUrl = course?.logo,
             profilePhotoUrl = user?.photoURL,
             onProfileTap = {
@@ -230,24 +237,31 @@ fun MainContentView(
                             isRotating = isRotating,
                             onSearchNearby = {
                                 scope.launch {
-                                    isSearching = true
-                                    gameModel.hasLoaded = false
-                                    runCatching { gameModel.findClosestLocationAndLoadCourse() }
-                                    isSearching = false
+                                    runCatching {
+                                        gameModel.searchNearby(
+                                            isLoading1 = { isSearching = it },
+                                            isLoading2 = { isSearching = it }
+                                        )
+                                    }
                                 }
                             },
                             onRetry = {
                                 scope.launch {
-                                    isRotating = true
-                                    isSearching = true
-                                    gameModel.hasLoaded = false
-                                    runCatching { gameModel.findClosestLocationAndLoadCourse() }
-                                    isSearching = false
-                                    delay(700)
-                                    isRotating = false
+                                    runCatching {
+                                        gameModel.retry(
+                                            firstRotate = { isRotating = it },
+                                            secondRotate = { isRotating = it },
+                                            isLoading1 = { isSearching = it },
+                                            isLoading2 = { isSearching = it }
+                                        )
+                                    }
                                 }
                             },
-                            onExit = { gameModel.exit() },
+                            onExit = {
+                                isSearching = false
+                                isRotating = false
+                                gameModel.exit()
+                            },
                             makeColor = course?.scoreCardColor
                         )
                     }
@@ -263,16 +277,21 @@ fun MainContentView(
 
 
                 item {
-                    CourseBannerAdView(
-                        adUnitID = "ca-app-pub-8261962597301587/9726040339",
-                        isGuest = isGuest,
-                        isPro = user?.isPro,
-                        isConnected = NetworkChecker.shared.isConnected
-                    )
-                }
+                    val showCustomAd = course?.customAdActive == true
+                    if (showCustomAd || isBannerAdVisible) {
+                        CourseBannerAdView(
+                            showColor = true,
+                            adUnitID = "ca-app-pub-8261962597301587/9726040339",
+                            isGuest = isGuest,
+                            isPro = user?.isPro,
+                            isConnected = NetworkChecker.shared.isConnected,
+                            onBannerAdLoaded = { onBannerLoaded = it }
+                        )
+                        if (showCustomAd || onBannerLoaded) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
 
-
-                item {
                     LastGameCard(
                         gameManager = gameManager,
                         tintColor = course?.scoreCardColor,
@@ -349,6 +368,7 @@ fun MainContentView(
                     .padding(horizontal = 16.dp),
                 isOnlineMode = isOnlineMode,
                 hasConnection = NetworkChecker.shared.isConnected,
+                disablePlaying = disablePlaying,
                 infoText = logic.getInfoMessage(isOnlineMode = isOnlineMode),
                 title = logic.getHeaderTitle(isOnlineMode = isOnlineMode),
                 onBackToOffline = { isOnlineMode = false },
@@ -567,7 +587,6 @@ fun MainContentView(
         ) {
             ProView(
                 iapManager = iapManager,
-                showSheet = showProSheetState.value,
                 onShowSheetChange = { showProSheetState.value = it },
                 activity = contextAsActivityOrNull()
             )
@@ -579,7 +598,6 @@ fun MainContentView(
 @Composable
 private fun MainTopBar(
     greetingName: String,
-    courseName: String?,
     courseLogoUrl: String?,
     courseBallColors: List<Color>?,
     profilePhotoUrl: String?,
@@ -653,6 +671,7 @@ private fun MainActionCard(
     modifier: Modifier,
     isOnlineMode: Boolean,
     hasConnection: Boolean,
+    disablePlaying: Boolean,
     makeColor: Color?,
     title: String,
     infoText: String,
@@ -768,6 +787,7 @@ private fun MainActionCard(
                     FilledActionButton(
                         title = "Host",
                         enabled = true,
+                        dimmed = disablePlaying,
                         color = Color(0xFF7E57C2),
                         onClick = onHost,
                         icon = Icons.Default.Refresh,
@@ -787,6 +807,7 @@ private fun MainActionCard(
                     FilledActionButton(
                         title = "Quick",
                         enabled = true,
+                        dimmed = disablePlaying,
                         color = Color(0xFF1E88E5),
                         onClick = onQuick,
                         icon = Icons.Default.Person,
@@ -796,6 +817,7 @@ private fun MainActionCard(
                     FilledActionButton(
                         title = "Connect",
                         enabled = hasConnection,
+                        dimmed = disablePlaying,
                         color = Color(0xFF43A047),
                         onClick = onConnect,
                         icon = Icons.Default.Public,
@@ -815,14 +837,20 @@ private fun FilledActionButton(
     color: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    dimmed: Boolean = false
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        colors = ButtonDefaults.buttonColors(containerColor = color),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = color,
+            disabledContainerColor = color.copy(alpha = 0.5f)
+        ),
         shape = RoundedCornerShape(15.dp),
-        modifier = modifier.height(50.dp)
+        modifier = modifier
+            .height(50.dp)
+            .alpha(if (dimmed || !enabled) 0.5f else 1f)
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -943,7 +971,11 @@ private fun LocationCard(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             if (loading) {
-                                                LogoLoadingView(size = 16.dp)
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    color = Color.White,
+                                                    strokeWidth = 2.dp
+                                                )
                                                 Text("Searching...", color = Color.White)
                                             } else {
                                                 Icon(Icons.Default.Search, contentDescription = null, tint = Color.White)
@@ -1044,73 +1076,80 @@ private fun LastGameCard(
     val holes = remember(gameState) { gameManager.usersHolesOfLatestGame() }
     val strokes = remember(gameState) { gameManager.usersScoreOfLatestGame() }
 
-    if (latestGame != null) {
-
-        val subtitle = latestGame.locationName ?: latestGame.date.formatted()
-        Box(modifier = Modifier.clickable(onClick = onOpenStats).padding(bottom = 14.dp)) {
-            SectionStatsCard(
-                title = "Last Game",
-                subtitle = subtitle,
-                makeColor = tintColor,
-                content = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        if (latestGame.players.size > 1 && winner != null) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color.subTwoVsColor(tintColor))
-                                    .padding(8.dp)
-                                    .fillMaxHeight(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                PhotoIconView(
-                                    photoURL = winner.photoURL,
-                                    name = logic.formatWinnerName(winner.name),
-                                    ballColor = winner.ballColor,
-                                    imageSize = 30.dp,
-                                    backgroundColor = Color(0xFFFFCC00),
-                                    showName = true
-                                )
+    AnimatedContent(
+        targetState = latestGame,
+        transitionSpec = {
+            (fadeIn() + slideInVertically { it / 2 }).togetherWith(fadeOut())
+        },
+        label = "LastGameAnimation"
+    ) { targetLatestGame ->
+        if (targetLatestGame != null) {
+            val subtitle = targetLatestGame.locationName ?: targetLatestGame.date.formatted()
+            Box(modifier = Modifier.clickable(onClick = onOpenStats).padding(bottom = 14.dp)) {
+                SectionStatsCard(
+                    title = "Last Game",
+                    subtitle = subtitle,
+                    makeColor = tintColor,
+                    content = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (targetLatestGame.players.size > 1 && winner != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(0.3f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color.subTwoVsColor(tintColor))
+                                        .padding(8.dp)
+                                        .fillMaxHeight(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    PhotoIconView(
+                                        photoURL = winner.photoURL,
+                                        name = logic.formatWinnerName(winner.name),
+                                        ballColor = winner.ballColor,
+                                        imageSize = 30.dp,
+                                        backgroundColor = Color(0xFFFFCC00),
+                                        showName = true
+                                    )
+                                }
                             }
+
+                            StatCard(
+                                title = "Your Strokes",
+                                value = strokes.toString(),
+                                makeColor = tintColor,
+                                cornerRadius = 12.dp,
+                                infoText = "The number of strokes you had last game.",
+                                modifier = Modifier.weight(0.6f)
+                            )
                         }
 
-                        StatCard(
-                            title = "Your Strokes",
-                            value = strokes.toString(),
-                            makeColor = tintColor,
-                            cornerRadius = 12.dp,
-                            infoText = "The number of strokes you had last game.",
-                            modifier = Modifier.weight(1f)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.subTwoVsColor(tintColor))
+                                .height(150.dp)
+                        ) {
+                            BarChartView(
+                                data = holes,
+                                title = "Your Recap"
+                            )
+                        }
                     }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.subTwoVsColor(tintColor))
-                            .height(150.dp)
-                    ) {
-                        BarChartView(
-                            data = holes,
-                            title = "Your Recap"
-                        )
-                    }
-                }
-            )
-        }
-    } else {
-        Column(
-            modifier = Modifier.fillMaxSize(), // Makes the Column take up the whole screen
-            horizontalAlignment = Alignment.CenterHorizontally // Centers children horizontally
-        ) {
-            LogoDefault(topPadding = 0.dp)
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LogoDefault(topPadding = 0.dp)
+            }
         }
     }
 }

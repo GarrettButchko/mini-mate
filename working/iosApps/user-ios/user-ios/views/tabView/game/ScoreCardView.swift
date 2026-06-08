@@ -257,7 +257,6 @@ struct ScoreCardView: View {
             
             CourseBannerAdView(
                 adUnitID: "ca-app-pub-8261962597301587/6716977198",
-                course: gameModel.course,
                 isGuest: isGuest,
                 isPro: authModel.userModel?.isPro ?? false,
                 isConnected: NetworkChecker.companion.shared.isConnected

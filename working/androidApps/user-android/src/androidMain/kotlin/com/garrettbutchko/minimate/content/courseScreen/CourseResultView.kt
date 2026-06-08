@@ -3,6 +3,7 @@ package com.garrettbutchko.minimate.content.courseScreen
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -71,7 +73,7 @@ fun CourseResultView(
                 top = 55.dp,
                 bottom = 16.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
 
             item {
@@ -122,26 +124,26 @@ fun CourseResultViewHeader(
     courseName: String?,
     onBack: () -> Unit
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
     ) {
         Button(
             onClick = onBack,
-            modifier = Modifier.size(width = 40.dp, height = 30.dp),
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .size(width = 40.dp, height = 30.dp),
             contentPadding = PaddingValues(0.dp),
             shape = RoundedCornerShape(25.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                modifier = Modifier.size(18.dp) // Scaled down to fit your 30.dp height
+                modifier = Modifier.size(18.dp)
             )
         }
-
-        Spacer(Modifier.width(8.dp))
 
         Text(
             text = courseName ?: "Course",
@@ -149,11 +151,12 @@ fun CourseResultViewHeader(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 48.dp).basicMarquee(),
             color = MaterialTheme.colorScheme.onSurface
         )
-
-        Spacer(modifier = Modifier.width(40.dp))
     }
 }
 
@@ -163,12 +166,11 @@ fun CourseDirectionsButton(viewModel: CourseViewModel) {
         onClick = { viewModel.getDirections() },
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp), // Height to accommodate the VStack-style layout
+            .height(70.dp).subtleShadow(), // Height to accommodate the VStack-style layout
         shape = RoundedCornerShape(15.dp), // Matches your cornerRadius: 15
         colors = ButtonDefaults.buttonColors(
             contentColor = Color.White
-        ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+        )
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

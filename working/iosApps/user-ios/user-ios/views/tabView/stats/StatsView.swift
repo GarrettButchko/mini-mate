@@ -164,7 +164,6 @@ struct StatsView: View {
                 VStack(spacing: 16){
                     CourseBannerAdView(
                         adUnitID: "ca-app-pub-8261962597301587/6344452429",
-                        course: nil,
                         isGuest: authModel.userModel == nil,
                         isPro: authModel.userModel?.isPro ?? false,
                         isConnected: NetworkChecker.companion.shared.isConnected,
@@ -260,7 +259,6 @@ struct StatsView: View {
                 
                 CourseBannerAdView(
                     adUnitID: "ca-app-pub-8261962597301587/6344452429",
-                    course: nil,
                     isGuest: authModel.userModel == nil,
                     isPro: authModel.userModel?.isPro ?? false,
                     isConnected: NetworkChecker.companion.shared.isConnected,

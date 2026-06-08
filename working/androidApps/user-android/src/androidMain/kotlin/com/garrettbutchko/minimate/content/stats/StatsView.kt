@@ -388,7 +388,7 @@ private fun OverviewSection(
 ) {
     val spacing = 10.dp
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 22.dp).padding(bottom = 14.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 8.dp).padding(bottom = 8.dp)) {
         SectionStatsCard(
             title = "Basic Stats",
             content = {

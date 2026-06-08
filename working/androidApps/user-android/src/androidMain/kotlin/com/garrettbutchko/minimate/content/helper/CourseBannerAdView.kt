@@ -52,11 +52,12 @@ fun rememberCourseBannerAdVisible(
 
 @Composable
 fun CourseBannerAdView(
+    modifier: Modifier = Modifier,
+    showColor: Boolean = false,
     adUnitID: String,
     isGuest: Boolean,
     isPro: Boolean?,
     isConnected: Boolean,
-    modifier: Modifier = Modifier,
     onBannerAdLoaded: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -65,8 +66,8 @@ fun CourseBannerAdView(
     val primaryColor = colorResource(R.color.mainOpp)
     val secondaryColor = colorResource(R.color.subTwoOpp)
 
-    val bgColor = Color.subVsColor(makeColor = course?.scoreCardColor)
-    val styledMod = if (course?.scoreCardColor != null) {
+    val bgColor = Color.subVsColor(makeColor = if (showColor) course?.scoreCardColor else null)
+    val styledMod = if (course?.scoreCardColor != null && showColor) {
         modifier.background(bgColor, RoundedCornerShape(25.dp)).padding(16.dp)
     } else {
         modifier.subtleShadow().background(bgColor, RoundedCornerShape(25.dp)).padding(16.dp)
