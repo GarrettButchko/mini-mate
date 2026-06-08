@@ -75,7 +75,6 @@ import com.garrettbutchko.minimate.content.courseScreen.CourseScreen
 import com.garrettbutchko.minimate.content.game.HostGameView
 import com.garrettbutchko.minimate.content.game.ScoreCardGameView
 import com.garrettbutchko.minimate.content.helper.InterstitialAdView
-import com.garrettbutchko.minimate.content.helper.SplashLoadingView
 import com.garrettbutchko.minimate.content.main.MainContentView
 import com.garrettbutchko.minimate.content.preViews.SignInView
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
@@ -126,8 +125,6 @@ fun App() {
     val deps = rememberAppDependencies()
 
     val currentView by deps.viewManager.currentView.collectAsState()
-    val isLoadingUser by deps.authModel.isLoadingUser.collectAsState()
-    val currentUserModel by deps.authModel.userModel.collectAsState()
     var guestGameDate by remember { mutableStateOf<String?>(null) }
     val guestGame = remember { mutableStateOf<Game?>(null) }
 
@@ -184,30 +181,17 @@ fun App() {
             ) { targetView ->
                 when (targetView) {
                     is ViewType.Main -> {
-                        val showSplash = isLoadingUser && currentUserModel == null
-                        AnimatedContent(
-                            targetState = showSplash,
-                            transitionSpec = {
-                                fadeIn(tween(300)).togetherWith(fadeOut(tween(200)))
-                            },
-                            label = "splash-to-main"
-                        ) { splashing ->
-                            if (splashing) {
-                                SplashLoadingView()
-                            } else {
-                                MainTabView(
-                                    initialSelectedTab = targetView.tab,
-                                    viewManager = deps.viewManager,
-                                    authModel = deps.authModel,
-                                    gameModel = deps.gameModel,
-                                    gameManager = deps.gameManager,
-                                    localGameRepo = deps.localGameRepo,
-                                    locationHandler = deps.locationHandler,
-                                    statsViewModel = deps.statsViewModel,
-                                    courseViewModel = deps.courseViewModel
-                                )
-                            }
-                        }
+                        MainTabView(
+                            initialSelectedTab = targetView.tab,
+                            viewManager = deps.viewManager,
+                            authModel = deps.authModel,
+                            gameModel = deps.gameModel,
+                            gameManager = deps.gameManager,
+                            localGameRepo = deps.localGameRepo,
+                            locationHandler = deps.locationHandler,
+                            statsViewModel = deps.statsViewModel,
+                            courseViewModel = deps.courseViewModel
+                        )
                     }
 
                     ViewType.Welcome -> WelcomeView()
@@ -303,15 +287,12 @@ private fun MainTabView(
 
     val currentUserId by authModel.currentUserIdentifierFlow.collectAsState()
     val currentUserModel by authModel.userModel.collectAsState()
-    val isLoadingUser by authModel.isLoadingUser.collectAsState()
     val userGames by statsViewModel.allGames.collectAsState()
     val isRefreshing by statsViewModel.isRefreshing.collectAsState()
     val hasConnection = NetworkChecker.shared.isConnected
 
     var selectedTab by remember { mutableIntStateOf(initialSelectedTab) }
     var loadedTabs by remember { mutableStateOf(setOf(1)) }
-    var initialLoadComplete by remember { mutableStateOf(false) }
-
     LaunchedEffect(initialSelectedTab) {
         selectedTab = initialSelectedTab
     }
@@ -362,27 +343,36 @@ private fun MainTabView(
 
         if (userId == null) {
             authModel.setLoading(false)
-            initialLoadComplete = true
             return@LaunchedEffect
         }
 
         authModel.setLoading(true)
 
         try {
-            val loadedUser = authModel.userRepository.loadOrCreateUser(
-                id = userId
-            ) { refreshedModel ->
-                authModel.setUserModel(refreshedModel)
+            val loadedUser = try {
+                authModel.userRepository.loadOrCreateUser(
+                    id = userId
+                ) { refreshedModel ->
+                    authModel.setUserModel(refreshedModel)
+                }
+            } catch (e: IllegalStateException) {
+                Logger.w("User load failed (transient?): ${e.message}. Retrying in 3s...")
+                kotlinx.coroutines.delay(3_000)
+                authModel.userRepository.loadOrCreateUser(
+                    id = userId
+                ) { refreshedModel ->
+                    authModel.setUserModel(refreshedModel)
+                }
             }
 
             authModel.setUserModel(loadedUser)
             gameManager.onAppear()
             localGameRepo.deleteAllUnusedGames()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Logger.i("Failed to bootstrap user data on Android: ${e.message}")
-            authModel.setUserModel(currentUserModel)
         } finally {
-            initialLoadComplete = true
             authModel.setLoading(false)
         }
     }
@@ -501,15 +491,8 @@ private fun MainTabView(
                         }
                     }
 
-                    if (isLoadingUser && !initialLoadComplete && currentUserModel == null) {
-                        LoadingOverlay()
-                    }
                 }
             }
-        }
-
-        if (isLoadingUser && !initialLoadComplete && currentUserModel == null) {
-            LoadingOverlay()
         }
     }
 }
@@ -537,27 +520,6 @@ private fun LazyTabContent(
     }
 }
 
-@Composable
-private fun LoadingOverlay() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-            tonalElevation = 4.dp
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                LogoLoadingView()
-                Text("Loading your Mini Mate data...")
-            }
-        }
-    }
-}
 
 
 

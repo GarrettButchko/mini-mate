@@ -92,7 +92,7 @@ import com.garrettbutchko.minimate.content.TitleView
 import com.garrettbutchko.minimate.content.game.GameReviewView
 import com.garrettbutchko.minimate.content.game.HostGameView
 import com.garrettbutchko.minimate.content.game.JoinGameView
-import com.garrettbutchko.minimate.content.helper.BannerAdView
+import com.garrettbutchko.minimate.content.helper.CourseBannerAdView
 import com.garrettbutchko.minimate.content.helper.InfoButton
 import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.BarChartView
@@ -135,6 +135,7 @@ fun MainContentView(
     val context = LocalContext.current
     val defaultWebClientId = stringResource(com.garrettbutchko.minimate.user.R.string.default_web_client_id)
     val user by authModel.userModel.collectAsState()
+    val isGuest = user == null
     val course by gameModel.course.collectAsState()
     val userGames by gameManager.userGames.collectAsState()
     val hasLocationAccess by locationHandler.hasLocationAccess.collectAsState()
@@ -260,28 +261,16 @@ fun MainContentView(
                     }
                 }
 
+
                 item {
-                    if (NetworkChecker.shared.isConnected && user?.isPro == false) {
-
-                        val myModifier = if (course?.scoreCardColor != null) {
-                            Modifier
-                                .fillMaxWidth()
-                        } else {
-                            Modifier
-                                .fillMaxWidth()
-                                .subtleShadow()
-                        }
-
-                        BannerAdView(adUnitID = "ca-app-pub-8261962597301587/9726040339",
-                            modifier = myModifier
-                                .height(80.dp)
-                                .background(
-                                    color = Color.subVsColor(makeColor = course?.scoreCardColor),
-                                    shape = RoundedCornerShape(25.dp)
-                                )
-                                .padding(14.dp))
-                    }
+                    CourseBannerAdView(
+                        adUnitID = "ca-app-pub-8261962597301587/9726040339",
+                        isGuest = isGuest,
+                        isPro = user?.isPro,
+                        isConnected = NetworkChecker.shared.isConnected
+                    )
                 }
+
 
                 item {
                     LastGameCard(

@@ -1,28 +1,54 @@
 import SwiftUI
 import GoogleMobileAds
 
-struct BannerAdView: UIViewRepresentable {
+struct BannerAdView: View {
     let adUnitID: String
+    @Binding var isAdLoaded: Bool
+
+    init(adUnitID: String, isAdLoaded: Binding<Bool> = .constant(false)) {
+        self.adUnitID = adUnitID
+        self._isAdLoaded = isAdLoaded
+    }
+
+    var body: some View {
+        _BannerAdRepresentable(adUnitID: adUnitID, isAdLoaded: $isAdLoaded)
+            .frame(height: isAdLoaded ? 50 : 0)
+            .padding(isAdLoaded ? 16 : 0)
+            .animation(.easeInOut(duration: 0.25), value: isAdLoaded)
+    }
+}
+
+private struct _BannerAdRepresentable: UIViewRepresentable {
+    let adUnitID: String
+    @Binding var isAdLoaded: Bool
 
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView(adSize: AdSizeBanner)
         bannerView.adUnitID = adUnitID
-        bannerView.rootViewController = UIApplication.shared.getRootViewController()
         bannerView.delegate = context.coordinator
         bannerView.load(Request())
         return bannerView
     }
 
     func updateUIView(_ uiView: BannerView, context: Context) {
-        // No update needed
+        if uiView.rootViewController == nil {
+            uiView.rootViewController = UIApplication.shared.getRootViewController()
+        }
     }
 
-    func makeCoordinator() -> Coordinator {
-        return Coordinator()
-    }
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     class Coordinator: NSObject, BannerViewDelegate {
-        // Optional: Implement delegate methods for logging, etc.
+        var parent: _BannerAdRepresentable
+        init(_ parent: _BannerAdRepresentable) { self.parent = parent }
+
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+            DispatchQueue.main.async { self.parent.isAdLoaded = true }
+        }
+
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+            DispatchQueue.main.async { self.parent.isAdLoaded = false }
+        }
     }
 }
 

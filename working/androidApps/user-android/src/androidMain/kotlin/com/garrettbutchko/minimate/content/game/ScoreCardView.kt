@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.game.fix.GameInfoViewAndroid
-import com.garrettbutchko.minimate.content.helper.BannerAdView
+import com.garrettbutchko.minimate.content.helper.CourseBannerAdView
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.StepperControl
 import com.garrettbutchko.minimate.content.helper.modifiers.SyncScrollStates
@@ -135,6 +135,7 @@ fun ScoreCardGameView(
     val secondaryTextColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.subTwoOpp)
 
     Box(modifier = modifier.fillMaxSize()) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -377,38 +378,13 @@ fun ScoreCardGameView(
                         }
                     }
 
-                    if (currentCourse?.customAdActive == true) {
-                        Surface(
-                            onClick = {
-                                val link = currentCourse.adLink
-                                if (!link.isNullOrBlank()) {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth().height(50.dp),
-                            color = Color.Transparent
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    currentCourse.adTitle?.let { Text(it, fontWeight = FontWeight.SemiBold, color = primaryTextColor) }
-                                    currentCourse.adDescription?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = secondaryTextColor) }
-                                }
-                                currentCourse.adImage?.takeIf { it.isNotBlank() }?.let {
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    AsyncImage(model = it, contentDescription = "Ad", modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp)))
-                                }
-                                Spacer(modifier = Modifier.width(16.dp))
-                            }
-                        }
-                    } else if (logic.shouldShowAds(NetworkChecker.shared.isConnected, isGuest, user?.isPro)) {
-                        BannerAdView(
-                            adUnitID = "ca-app-pub-8261962597301587/6716977198",
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+
+                    CourseBannerAdView(
+                        adUnitID = "ca-app-pub-8261962597301587/6716977198",
+                        isGuest = isGuest,
+                        isPro = user?.isPro,
+                        isConnected = NetworkChecker.shared.isConnected
+                    )
                 }
             }
         }

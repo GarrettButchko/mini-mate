@@ -33,12 +33,14 @@ class GameManager(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    // Tracks IDs we've already attempted to fetch from remote this session.
+    // Prevents infinite retry loops when the remote returns empty (e.g. network issues).
+    private val _sessionAttemptedIDs = mutableSetOf<String>()
+
     // Fixed: Use a computed property so it always reflects the current user's ID
     val userID: String? get() = authModel.userModel.value?.googleId
 
     init {
-        // Automatically keep userGames in sync whenever the user's gameIDs change
-        // This handles the case where the user model takes time to load (it will emit when ready)
         coroutineScope.launch {
             authModel.userModel.collectLatest { user ->
                 if (user != null) {
@@ -47,8 +49,21 @@ class GameManager(
                 } else {
                     log.d { "👤 User logged out. Clearing games." }
                     _userGames.value = emptyList()
+                    _sessionAttemptedIDs.clear()
                 }
             }
+        }
+    }
+
+    /**
+     * Clears the session-attempted cache and re-syncs from scratch.
+     * Call this from a pull-to-refresh or retry button.
+     */
+    fun forceRefresh() {
+        val user = authModel.userModel.value ?: return
+        _sessionAttemptedIDs.clear()
+        coroutineScope.launch {
+            syncGames(user)
         }
     }
 
@@ -71,6 +86,9 @@ class GameManager(
      * Orchestrates the local fetch and background cloud refresh.
      */
     private suspend fun syncGames(user: UserModel) {
+        // Reset attempted IDs whenever we sync a (potentially new) user
+        _sessionAttemptedIDs.clear()
+
         // 1. Initial local fetch to populate UI quickly
         val games = localGameRepo.fetchAll(ids = user.gameIDs)
         _userGames.value = games
@@ -91,12 +109,27 @@ class GameManager(
         log.d { "☁️ Starting cloud refresh for missing games..." }
         _isRefreshing.value = true
 
+        var idsAddedThisCall = emptySet<String>()
+
         try {
-            val missingIDs = localGameRepo.getMissingLocalGameIDs(user.gameIDs)
+            val allMissingIDs = localGameRepo.getMissingLocalGameIDs(user.gameIDs)
+            // Skip IDs we already attempted this session to prevent infinite retry loops
+            // when the remote returns empty (e.g. network failure, document not found).
+            val missingIDs = allMissingIDs.filter { it !in _sessionAttemptedIDs }
+
             if (missingIDs.isEmpty()) {
-                log.d { "✅ No missing games locally." }
+                if (allMissingIDs.isNotEmpty()) {
+                    log.d { "⏭️ Skipping ${allMissingIDs.size} already-attempted IDs this session." }
+                } else {
+                    log.d { "✅ No missing games locally." }
+                }
                 return
             }
+
+            // Mark IDs as attempted before the fetch so concurrent/re-entrant calls
+            // don't redundantly retry while this fetch is in-flight.
+            idsAddedThisCall = missingIDs.toSet()
+            _sessionAttemptedIDs.addAll(idsAddedThisCall)
 
             log.d { "📡 Fetching ${missingIDs.size} games from Remote..." }
             val remoteDTOs = remoteGameRepo.fetchAll(missingIDs)
@@ -106,10 +139,22 @@ class GameManager(
                 val success = localGameRepo.save(remoteGames)
                 if (success) {
                     log.d { "✅ Saved ${remoteGames.size} games to local DB" }
+
                     // Re-fetch all to ensure full consistency and update the StateFlow
                     _userGames.value = localGameRepo.fetchAll(ids = user.gameIDs)
+
+                    // Allow successfully-saved IDs to be re-fetched if they somehow
+                    // go missing locally again (e.g. DB cleared).
+                    remoteGames.forEach { _sessionAttemptedIDs.remove(it.id) }
                 }
+            } else {
+                log.w { "⚠️ Remote returned 0 results for IDs: $missingIDs — likely a network failure or missing documents. Will not retry this session." }
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // On cancellation the fetch was interrupted, not definitively empty —
+            // remove from the attempted set so the next launch can retry.
+            _sessionAttemptedIDs.removeAll(idsAddedThisCall)
+            throw e
         } catch (e: Exception) {
             log.e(e) { "❌ Error during cloud refresh" }
         } finally {

@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.runtime.MutableState
 import com.garrettbutchko.minimate.dataModels.gameModels.GameDTO
 
@@ -400,7 +401,7 @@ class GameViewModel(
         if (!_onlineGame.value) return
         resetGame()
         resetCourse()
-        
+
         liveGameRepo.fetchGame(id) { game ->
             when (val status = validateJoinGame(game, userId)) {
                 is JoinGameStatus.Success -> {
@@ -408,6 +409,16 @@ class GameViewModel(
                         setGame(game)
                         addUser()
                         listenForUpdates()
+                        // Fetch the full Course object so the joiner has the same
+                        // location data as the host (courseID/locationName alone are
+                        // not enough — downstream screens depend on the Course object).
+                        val courseID = game.courseID
+                        if (courseID != null) {
+                            coroutineScope.launch {
+                                val fetchedCourse = courseRepo.fetchCourse(id = courseID)
+                                setCourse(fetchedCourse)
+                            }
+                        }
                         completion(true, null)
                     }
                 }
@@ -427,7 +438,7 @@ class GameViewModel(
         pushUpdate()
         
         coroutineScope.launch {
-            delay(500)
+            delay(500.milliseconds)
             stopListening()
             resetGame()
         }
@@ -476,12 +487,12 @@ class GameViewModel(
             players = updatedPlayers
         )
 
-        if (onlineGame.value && (game.value.players.count({ it.userId.count() >= 7 }) < 2)) {
+        if (onlineGame.value && (game.value.players.count { it.userId.count() >= 7 } < 2)) {
             setOnlineGame(false)
             stopListening()
             liveGameRepo.deleteGame(_game.value.id) { result ->
                 if (result) {
-                    Logger.i("Deleted Game id: \$gameIdToDelete From Firebase")
+                    Logger.i("Deleted Game id: ${_game.value.id} From Firebase")
                 }
             }
         }
@@ -553,11 +564,11 @@ class GameViewModel(
         }
 
         coroutineScope.launch {
-            var saveSuccess = false
+            var saveSuccess: Boolean
             var analyticsSuccess = true
 
             if (!isGuest) {
-                val (localOK, remoteOK) = suspendCancellableCoroutine<Pair<Boolean, Boolean>> { continuation ->
+                val (localOK, remoteOK) = suspendCancellableCoroutine { continuation ->
                     unifiedGameRepository.save(finished) { l, r ->
                         continuation.resume(Pair(l, r))
                     }
@@ -601,7 +612,7 @@ class GameViewModel(
             }
             
             if (finished.id.isNotEmpty() && _onlineGame.value) {
-                val result = suspendCancellableCoroutine<Boolean> { continuation ->
+                val result = suspendCancellableCoroutine { continuation ->
                     liveGameRepo.deleteGame(finished.id) {
                         continuation.resume(it)
                     }

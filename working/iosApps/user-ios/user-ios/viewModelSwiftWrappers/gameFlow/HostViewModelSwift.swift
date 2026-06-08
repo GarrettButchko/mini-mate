@@ -146,4 +146,6 @@ class HostViewModelSwift: ObservableObject {
             showHost.wrappedValue = false
         }, isGuest: isGuest)
     }
+
+    
 }

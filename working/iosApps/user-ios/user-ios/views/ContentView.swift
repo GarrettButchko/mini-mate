@@ -1,6 +1,5 @@
 import SwiftUI
 import MapKit
-import UIKit
 import shared_user
 
 struct ContentView: View {
@@ -30,7 +29,6 @@ struct ContentView: View {
         .environmentObject(locationHandler)
         
         .animation(.easeInOut(duration: 0.4), value: viewManager.currentView)
-        .animation(.easeInOut(duration: 0.35), value: authModel.isLoading)
         .onAppear {
             locationHandler.requestLocationAccess()
         }
@@ -57,13 +55,7 @@ struct ContentView: View {
     private var viewContent: some View {
         switch onEnum(of: viewManager.currentView) {
         case .main(tab: let main):
-            if authModel.isLoading && authModel.userModel == nil {
-                SplashLoadingView()
-                    .transition(.opacity)
-            } else {
-                MainTabView(selectedTab: Int(main.tab))
-                    .transition(.opacity)
-            }
+            MainTabView(selectedTab: Int(main.tab))
         case .welcome:
             WelcomeView()
         case .scoreCard(let scorecard):
@@ -199,10 +191,21 @@ struct MainTabView: View {
             
             guard let id = authModel.kotlinVM.currentUserIdentifier else { return }
             
-            // Load user data and keep BOTH Swift and Kotlin models updated
-            authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
-                DispatchQueue.main.async {
-                    self.authModel.userModel = refreshedModel
+            // Load user data. If the remote fetch fails transiently and no local user exists,
+            // the KMP layer throws rather than silently creating a blank user. Retry once after a delay.
+            do {
+                authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
+                    DispatchQueue.main.async {
+                        self.authModel.userModel = refreshedModel
+                    }
+                }
+            } catch {
+                print("⚠️ User load failed (\(error.localizedDescription)), retrying in 3s...")
+                try await Task.sleep(nanoseconds: 3_000_000_000)
+                authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
+                    DispatchQueue.main.async {
+                        self.authModel.userModel = refreshedModel
+                    }
                 }
             }
             

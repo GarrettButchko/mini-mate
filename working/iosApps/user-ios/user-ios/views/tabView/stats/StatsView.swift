@@ -162,18 +162,14 @@ struct StatsView: View {
     private var gamesSection: some View {
             ScrollView {
                 VStack(spacing: 16){
-                    if NetworkChecker.companion.shared.isConnected && !authModel.userModel!.isPro {
-                        VStack{
-                            BannerAdView(adUnitID: "ca-app-pub-8261962597301587/6344452429") // Replace with real one later
-                                .frame(height: 50)
-                                .padding()
-                        }
-                        .background(
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(.sub)
-                                .cardShadow()
-                        )
-                    }
+                    CourseBannerAdView(
+                        adUnitID: "ca-app-pub-8261962597301587/6344452429",
+                        course: nil,
+                        isGuest: authModel.userModel == nil,
+                        isPro: authModel.userModel?.isPro ?? false,
+                        isConnected: NetworkChecker.companion.shared.isConnected,
+                        showBackground: true
+                    )
                     
                     if !authModel.userModel!.isPro && authModel.userModel!.gameIDs.count >= 2 {
                         Text("You’ve reached the free limit. Upgrade to Pro to store more than 2 games.")
@@ -210,7 +206,6 @@ struct StatsView: View {
                         
                         LogoDefault(topPadding: 0)
                     } else if !authModel.userModel!.gameIDs.isEmpty && games.isEmpty {
-                        // Game IDs exist but SwiftData hasn't loaded them yet - show loading state
                         VStack(spacing: 16) {
                             LogoLoadingView()
 
@@ -263,18 +258,14 @@ struct StatsView: View {
                 }
                 
                 
-                if NetworkChecker.companion.shared.isConnected && !authModel.userModel!.isPro {
-                    VStack{
-                        BannerAdView(adUnitID: "ca-app-pub-8261962597301587/6344452429") // Replace with real one later
-                            .frame(height: 50)
-                            .padding()
-                    }
-                    .background(
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(.sub)
-                            .cardShadow()
-                    )
-                }
+                CourseBannerAdView(
+                    adUnitID: "ca-app-pub-8261962597301587/6344452429",
+                    course: nil,
+                    isGuest: authModel.userModel == nil,
+                    isPro: authModel.userModel?.isPro ?? false,
+                    isConnected: NetworkChecker.companion.shared.isConnected,
+                    showBackground: true
+                )
                 
                 SectionStatsView(title: "Average 18-Hole Game", spacing: spacing){
                     BarChartView(data: gameManager.kotlin.averageHoles18(), title: "Average Strokes")

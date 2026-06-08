@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
@@ -196,11 +197,13 @@ class HostViewModel(
         _isRotating.value = true
         searchNearby()
         coroutineScope.launch {
-            delay(1000)
+            delay(1000.milliseconds)
             _isRotating.value = false
             resetTimer()
         }
     }
+
+
 
     fun exit() {
         gameModel.resetCourse()

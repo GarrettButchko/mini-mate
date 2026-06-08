@@ -96,6 +96,11 @@ class UserRepository(
                 updatedRemote
             }
             else -> {
+                if (firebaseUser == null) {
+                    // Returning-user path: remote fetch likely failed transiently.
+                    // DO NOT create a blank user — that would overwrite the real Firestore doc.
+                    throw IllegalStateException("User $id not found locally or remotely. Remote fetch may have failed.")
+                }
                 log.d { "🆕 Creating new user" }
                 createUser(id, firebaseUser, name, signInMethod, appleId, guestGame)
             }

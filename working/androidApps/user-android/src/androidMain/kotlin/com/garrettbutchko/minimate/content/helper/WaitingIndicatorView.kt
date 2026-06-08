@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 fun WaitingIndicatorView(
     label: String,
     color: Color = MaterialTheme.colorScheme.onSurface,
-    size: Dp = 30.dp
+    size: Dp = 40.dp
 ) {
     Column(
         modifier = Modifier.padding(horizontal = 16.dp),

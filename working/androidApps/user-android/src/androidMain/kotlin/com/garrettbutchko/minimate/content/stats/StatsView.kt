@@ -64,7 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.helper.SectionStatsCard
-import com.garrettbutchko.minimate.content.helper.BannerAdView
+import com.garrettbutchko.minimate.content.helper.CourseBannerAdView
 import com.garrettbutchko.minimate.content.helper.BarChartView
 import com.garrettbutchko.minimate.content.helper.LogoDefault
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
@@ -96,6 +96,8 @@ fun StatsView(
     statsViewModel: StatsViewModel
 ) {
     val user by authModel.userModel.collectAsState()
+
+
     var pickedSection by rememberSaveable { mutableStateOf("Games") }
     var latestFirst by rememberSaveable { mutableStateOf(true) }
     var editingGameID by rememberSaveable { mutableStateOf<String?>(null) }
@@ -213,7 +215,8 @@ fun StatsView(
                                 averagePerGame = averagePerGame,
                                 averagePerHole = averagePerHole,
                                 bestGame = bestGame,
-                                worstGame = worstGame
+                                worstGame = worstGame,
+                                user = user
                             )
                         } else {
                             Column(
@@ -280,16 +283,12 @@ private fun GamesSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(vertical = 8.dp).padding(bottom = 14.dp)
     ) {
-        if (NetworkChecker.shared.isConnected && user?.isPro == false) {
-            PromoCard {
-                BannerAdView(
-                    adUnitID = "ca-app-pub-8261962597301587/1525588861",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                )
-            }
-        }
+        CourseBannerAdView(
+            adUnitID = "ca-app-pub-8261962597301587/1525588861",
+            isGuest = user == null,
+            isPro = user?.isPro,
+            isConnected = NetworkChecker.shared.isConnected
+        )
 
         if (user?.isPro == false && user.gameIDs.size >= 2) {
             PromoCard {
@@ -384,11 +383,12 @@ private fun OverviewSection(
     averagePerGame: Double,
     averagePerHole: Double,
     bestGame: String,
-    worstGame: String
+    worstGame: String,
+    user: com.garrettbutchko.minimate.dataModels.userModels.UserModel?
 ) {
     val spacing = 10.dp
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(vertical = 8.dp).padding(bottom = 14.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 22.dp).padding(bottom = 14.dp)) {
         SectionStatsCard(
             title = "Basic Stats",
             content = {
@@ -430,16 +430,14 @@ private fun OverviewSection(
             }
         )
 
-        BannerAdView(adUnitID = "ca-app-pub-8261962597301587/1525588861",
-            modifier = Modifier
-                .fillMaxWidth()
-                .subtleShadow()
-                .height(80.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(25.dp)
-                )
-                .padding(14.dp))
+
+
+            CourseBannerAdView(
+                adUnitID = "ca-app-pub-8261962597301587/1525588861",
+                isGuest = user == null,
+                isPro = user?.isPro,
+                isConnected = NetworkChecker.shared.isConnected
+            )
 
         SectionStatsCard(
             title = "Average 18-Hole Game",

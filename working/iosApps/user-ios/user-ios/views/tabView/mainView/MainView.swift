@@ -22,6 +22,7 @@ struct MainView: View {
     @EnvironmentObject var authModel: AuthViewModelSwift
     @EnvironmentObject var gameModel: GameViewModelSwift
     @EnvironmentObject var gameManager: GameManagerSwift
+    @EnvironmentObject var hostVM: HostViewModelSwift
     
     @State private var nameIsPresented = false
     @State private var isSheetPresented = false
@@ -607,20 +608,14 @@ struct MainView: View {
     }
     
     var ad: some View {
-        Group{
-            if NetworkChecker.companion.shared.isConnected && !authModel.userModel!.isPro {
-                VStack{
-                    BannerAdView(adUnitID: "ca-app-pub-8261962597301587/6344452429") // Replace with real one later
-                        .frame(height: 50)
-                        .padding()
-                }
-                .background(){
-                    RoundedRectangle(cornerRadius: 25)
-                        .subVsColor(makeColor: gameModel.course?.scoreCardColor)
-                }
-                .compositingGroup()
-            }
-        }
+        CourseBannerAdView(
+            adUnitID: "ca-app-pub-8261962597301587/6344452429",
+            course: gameModel.course,
+            isGuest: authModel.userModel == nil,
+            isPro: authModel.userModel?.isPro ?? false,
+            isConnected: NetworkChecker.companion.shared.isConnected,
+            showBackground: true
+        )
     }
     
     @ViewBuilder

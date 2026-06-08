@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PlayerDTO(
-    val id: String,
-    val userId: String,
-    val name: String,
+    val id: String = "",
+    val userId: String = "",
+    val name: String = "",
     val photoURL: String? = null,
     val email: String? = null,
     val ballColorDT: String? = null,

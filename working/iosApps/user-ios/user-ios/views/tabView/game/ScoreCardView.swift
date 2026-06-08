@@ -255,71 +255,13 @@ struct ScoreCardView: View {
                 }
             }
             
-            if let course = gameModel.course, course.customAdActive {
-                Button {
-                    if let link = course.adLink, link != "" {
-                        if let url = URL(string: link) {
-                            UIApplication.shared.open(url)
-                        }
-                    }
-                } label: {
-                    HStack{
-                        VStack(alignment: .leading, spacing: 8) {
-                            if let adTitle = course.adTitle {
-                                Text(adTitle)
-                                    .foregroundStyle(.mainOpp)
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                            }
-                            
-                            if let adDescription = course.adDescription {
-                                Text(adDescription)
-                                    .foregroundStyle(.mainOpp)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.leading)
-                                    .padding(.trailing)
-                            }
-                        }
-                        Spacer()
-                        if let adImage = course.adImage, adImage != ""  {
-                            AsyncImage(url: URL(string: adImage)) { phase in
-                                switch phase {
-                                case .empty:
-                                    LogoLoadingView()
-                                        .frame(height: 50)
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: 50)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                        .clipped()
-                                case .failure:
-                                    Image(systemName: "photo")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: 50)
-                                        .foregroundColor(.gray)
-                                        .background(Color.gray.opacity(0.2))
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                @unknown default:
-                                    EmptyView()
-                                }
-                            }
-                        }
-                        Spacer()
-                    }
-                    .padding()
-                }
-                .frame(height: 50)
-            } else {
-                if NetworkChecker.companion.shared.isConnected && (isGuest || !authModel.userModel!.isPro) {
-                    BannerAdView(adUnitID: "ca-app-pub-8261962597301587/6716977198") // Replace with real one later
-                        .frame(height: 50)
-                        .padding(.top, 5)
-                }
-            }
+            CourseBannerAdView(
+                adUnitID: "ca-app-pub-8261962597301587/6716977198",
+                course: gameModel.course,
+                isGuest: isGuest,
+                isPro: authModel.userModel?.isPro ?? false,
+                isConnected: NetworkChecker.companion.shared.isConnected
+            )
         }
         .padding(.bottom)
     }

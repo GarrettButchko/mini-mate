@@ -66,8 +66,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -442,19 +445,27 @@ private fun GameInfoSection(
                 HorizontalDivider()
 
                 qrCodeBytes?.toImageBitmap()?.let { imageBitmap ->
+                    val isDark = isSystemInDarkTheme()
+                    val invertMatrix = ColorMatrix(floatArrayOf(
+                        -1f, 0f, 0f, 0f, 255f,
+                        0f, -1f, 0f, 0f, 255f,
+                        0f, 0f, -1f, 0f, 255f,
+                        0f, 0f, 0f, 1f, 0f
+                    ))
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color.White.copy(alpha = 0.1f)) // Placeholder for ultraThinMaterial
+                            .background(MaterialTheme.colorScheme.background)
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             bitmap = imageBitmap,
                             contentDescription = "Game QR Code",
-                            modifier = Modifier.fillMaxHeight()
+                            modifier = Modifier.fillMaxHeight(),
+                            colorFilter = if (isDark) ColorFilter.colorMatrix(invertMatrix) else null
                         )
                     }
                 }

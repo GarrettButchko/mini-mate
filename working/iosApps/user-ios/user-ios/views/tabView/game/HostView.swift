@@ -9,6 +9,7 @@ import shared_user
 
 struct HostView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject var gameModel: GameViewModelSwift
     @EnvironmentObject var locationHandler: LocationHandlerSwift
     @EnvironmentObject var authModel: AuthViewModelSwift
@@ -168,11 +169,12 @@ struct HostView: View {
                             .interpolation(.none)
                             .resizable()
                             .scaledToFit()
+                            .colorInvertIf(colorScheme == .dark)
                             .frame(height: 200)
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(.ultraThinMaterial)
+                                    .fill(Color("mainApp"))
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
@@ -445,5 +447,12 @@ struct LocationButtons: View {
         }
         .buttonStyle(.plain)
         .transition(.move(edge: .trailing).combined(with: .opacity).combined(with: .blurReplace))
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func colorInvertIf(_ condition: Bool) -> some View {
+        if condition { self.colorInvert() } else { self }
     }
 }

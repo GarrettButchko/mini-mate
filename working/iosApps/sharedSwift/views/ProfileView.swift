@@ -159,7 +159,7 @@ struct ProfileView: View {
                             isSheetPresent = false
                             viewModel.kotlinVM.logOut()
                         }
-                        .foregroundColor(.red)
+                        .foregroundColor(.orange)
                         
                         Button("Delete Account") {
                             viewModel.kotlinVM.deleteAccount(userModel: authModel.userModel!)

@@ -5,7 +5,6 @@ import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.gameModels.GameDTO
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
-import dev.gitlive.firebase.firestore.FieldPath
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -66,23 +65,27 @@ class RemoteGameRepository {
     suspend fun fetchAll(ids: List<String>): List<GameDTO> = coroutineScope {
         if (ids.isEmpty()) return@coroutineScope emptyList()
 
-        // Firestore 'in' query supports up to 30 elements (used 10 in Swift snippet)
-        val chunks = ids.chunked(10)
-
+        // Fetch each document by ID in parallel. The FieldPath.documentId inArray query
+        // silently returns 0 results on iOS (gitlive-firebase bug), so individual fetches
+        // are used for cross-platform reliability.
         try {
-            val results = chunks.map { chunk ->
+            ids.map { id ->
                 async {
-                    db.collection(collectionName)
-                        .where { FieldPath.documentId inArray chunk }
-                        .get()
-                        .documents
-                        .map { it.data<GameDTO>() }
+                    val snapshot = db.collection(collectionName).document(id).get()
+                    if (snapshot.exists) {
+                        try {
+                            snapshot.data<GameDTO>()
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            log.e(e) { "❌ Failed to deserialize doc $id: ${e.message}" }
+                            null
+                        }
+                    } else {
+                        log.w { "⚠️ Document $id not found in Firestore" }
+                        null
+                    }
                 }
-            }.awaitAll().flatten()
-
-            // Sort by the input ids to maintain order as in the Swift implementation
-            val gameMap = results.associateBy { it.id }
-            ids.mapNotNull { gameMap[it] }
+            }.awaitAll().filterNotNull()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             log.e(e) { "❌ Firestore fetchAll error: ${e.message}" }

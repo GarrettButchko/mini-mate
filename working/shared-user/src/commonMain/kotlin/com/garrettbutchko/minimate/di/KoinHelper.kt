@@ -12,7 +12,6 @@ import com.garrettbutchko.minimate.viewModels.StatsViewModel
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 
-// This object acts as a provider for Swift
 object KoinHelper : KoinComponent {
     fun getGameViewModel(): GameViewModel = get()
     fun getCourseViewModel(): CourseViewModel = get()
