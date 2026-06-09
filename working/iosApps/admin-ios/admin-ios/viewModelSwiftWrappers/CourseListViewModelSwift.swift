@@ -21,6 +21,8 @@ class CourseListViewModelSwift: ObservableObject {
     @Published private var _failedAttempts: Int = 0
     @Published private var _addTarget: ColorAddTarget? = nil
     @Published private var _showColor: Bool = false
+    @Published private var _adminUsers: [UserModel] = []
+    @Published private var _loadingAdmins: Bool = false
     
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
@@ -70,7 +72,15 @@ class CourseListViewModelSwift: ObservableObject {
         get { _showColor }
         set { kotlin.setShowColor(value: newValue) }
     }
-    
+
+    var adminUsers: [UserModel] {
+        get { _adminUsers }
+    }
+
+    var loadingAdmins: Bool {
+        get { _loadingAdmins }
+    }
+
     var hasCourse: Bool {
         kotlin.hasCourse
     }
@@ -148,6 +158,18 @@ class CourseListViewModelSwift: ObservableObject {
         Task {
             for await val in kotlin.showColor {
                 self._showColor = val.boolValue
+            }
+        }
+
+        Task {
+            for await val in kotlin.adminUsers {
+                self._adminUsers = val
+            }
+        }
+
+        Task {
+            for await val in kotlin.loadingAdmins {
+                self._loadingAdmins = val.boolValue
             }
         }
     }

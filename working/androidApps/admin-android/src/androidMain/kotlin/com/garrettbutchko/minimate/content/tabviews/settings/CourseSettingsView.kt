@@ -30,10 +30,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -147,6 +149,7 @@ fun CourseSettingsView(
 
                 if (tier >= 1) {
                     SectionCard(title = "Course") { CourseSectionContent(course = currentCourse) }
+                    SectionCard(title = "Admins") { AdminsSectionContent(course = currentCourse, courseListVM = courseListVM) }
                     SectionCard(title = "Password") { PasswordSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
                     SectionCard(title = "Social Links") { SocialLinksSectionContent(course = currentCourse, courseListVM = courseListVM) }
                 }
@@ -249,6 +252,106 @@ private fun CourseSectionContent(course: Course) {
     InfoRow(label = "Name", value = course.name, mainOppColor = mainOpp, subOppColor = subOpp)
     HorizontalDivider(color = mainOpp.copy(alpha = 0.1f))
     InfoRow(label = "Tier", value = "${course.tier}", mainOppColor = mainOpp, subOppColor = subOpp)
+}
+
+// ---------------------------------------------------------------------------
+// Admins section
+// ---------------------------------------------------------------------------
+@Composable
+private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.courseModels.Course, courseListVM: CourseListViewModel) {
+    val adminUsers by courseListVM.adminUsers.collectAsState()
+    val loadingAdmins by courseListVM.loadingAdmins.collectAsState()
+    var emailToDelete by remember { mutableStateOf<String?>(null) }
+
+    val mainOpp = colorResource(id = ResColor.mainOpp)
+    val subOpp = colorResource(id = ResColor.subOpp)
+    val swiftRed = colorResource(id = ResColor.swiftRed)
+
+    LaunchedEffect(course.id) {
+        courseListVM.loadAdmins()
+    }
+
+    if (loadingAdmins) {
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(modifier = Modifier.padding(16.dp), color = colorResource(id = ResColor.swiftBlue))
+        }
+    } else {
+        Column {
+            adminUsers.forEachIndexed { index, user ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val photoUrl = user.photoURL
+                    if (!photoUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = photoUrl,
+                            contentDescription = "Admin avatar",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Admin avatar",
+                            tint = subOpp,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        val isYou = user.email == courseListVM.currentUserEmail
+                        Text(
+                            text = user.name + if (isYou) " (you)" else "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = mainOpp
+                        )
+                        Text(
+                            text = user.email ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = subOpp
+                        )
+                    }
+                    IconButton(onClick = { emailToDelete = user.email }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Remove admin",
+                            tint = swiftRed
+                        )
+                    }
+                }
+                if (index < adminUsers.lastIndex) {
+                    HorizontalDivider(color = mainOpp.copy(alpha = 0.1f))
+                }
+            }
+        }
+    }
+
+    if (emailToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { emailToDelete = null },
+            title = { Text("Remove Admin?", color = mainOpp) },
+            text = { Text("This will remove their admin access.", color = mainOpp) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    courseListVM.removeAdmin(emailToDelete!!)
+                    emailToDelete = null
+                }) {
+                    Text("Remove", color = swiftRed)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { emailToDelete = null }) {
+                    Text("Cancel", color = mainOpp)
+                }
+            }
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------

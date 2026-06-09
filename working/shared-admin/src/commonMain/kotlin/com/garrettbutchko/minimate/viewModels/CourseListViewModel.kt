@@ -20,6 +20,9 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Clock
 import kotlin.time.Instant
 import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.dataModels.userModels.UserModel
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.functions.functions
 
 open class CourseListViewModel(
     private val courseRepo: CourseRepository,
@@ -60,6 +63,15 @@ open class CourseListViewModel(
 
     private val _showColor = MutableStateFlow(false)
     val showColor: StateFlow<Boolean> = _showColor.asStateFlow()
+
+    private val _adminUsers = MutableStateFlow<List<UserModel>>(emptyList())
+    val adminUsers: StateFlow<List<UserModel>> = _adminUsers.asStateFlow()
+
+    private val _loadingAdmins = MutableStateFlow(false)
+    val loadingAdmins: StateFlow<Boolean> = _loadingAdmins.asStateFlow()
+
+    val currentUserEmail: String?
+        get() = authModel.firebaseUser.value?.email
 
     // MARK: - Dependencies
     private var saveJob: Job? = null
@@ -170,26 +182,15 @@ open class CourseListViewModel(
                     _message.value = "Course Already Added"
                     completion(false)
                 } else {
-                    if (currentUser != null) {
-                        val updatedUser = currentUser.copy(adminCourses = currentAdminCourses + courseID)
-                        authModel.setUserModel(updatedUser)
-                        
-                        val currentUserId = authModel.currentUserIdentifier
-                        if (currentUserId != null) {
-                            userRepo.saveUnified(currentUserId, updatedUser)
-                        }
-                    }
-                    
-                    val email = authModel.firebaseUser.value?.email
-                    if (email != null) {
-                        val success = courseRepo.addAdminIDtoCourse(email, courseID)
-                        if (success) {
-                            log.i("✅ Course claimed and email added to adminIDs")
-                        } else {
-                            log.i("❌ Failed to add email to course adminIDs")
-                        }
-                    }
-                    
+
+                    addCourseIDToUser(
+                        currentUser = currentUser,
+                        currentAdminCourses = currentAdminCourses,
+                        courseID = courseID
+                    )
+
+                    addUserEmailToCourse(courseID)
+
                     getCourses()
                     _message.value = null
                     completion(true)
@@ -207,6 +208,75 @@ open class CourseListViewModel(
             }
         }
     }
+
+    suspend fun addCourseIDToUser(currentUser: UserModel?, currentAdminCourses: List<String>, courseID: String){
+        if (currentUser != null) {
+            val updatedUser = currentUser.copy(adminCourses = currentAdminCourses + courseID)
+            authModel.setUserModel(updatedUser)
+
+            val currentUserId = authModel.currentUserIdentifier
+            if (currentUserId != null) {
+                userRepo.saveUnified(currentUserId, updatedUser)
+            }
+        }
+    }
+
+    suspend fun addUserEmailToCourse(courseID: String){
+        val email = authModel.firebaseUser.value?.email
+        if (email != null) {
+            val success = courseRepo.addAdminIDtoCourse(email, courseID)
+            if (success) {
+                log.i("✅ Course claimed and email added to adminIDs")
+            } else {
+                log.i("❌ Failed to add email to course adminIDs")
+            }
+        }
+    }
+
+    fun loadAdmins() {
+        val course = _selectedCourse.value ?: return
+        _loadingAdmins.value = true
+        coroutineScope.launch {
+            val users = course.adminIDs.mapNotNull { email ->
+                userRepo.fetchByEmail(email)
+            }
+            _adminUsers.value = users
+            _loadingAdmins.value = false
+        }
+    }
+
+    fun removeAdmin(email: String) {
+        val course = _selectedCourse.value ?: return
+        val currentEmail = authModel.firebaseUser.value?.email
+        coroutineScope.launch {
+            removeEmailFromCourse(email, course.id)
+            _adminUsers.value = _adminUsers.value.filter { it.email != email }
+            if (email == currentEmail) {
+                val currentUser = authModel.userModel.value
+                if (currentUser != null) {
+                    val updated = currentUser.copy(adminCourses = currentUser.adminCourses - course.id)
+                    authModel.setUserModel(updated)
+                    val userId = authModel.currentUserIdentifier
+                    if (userId != null) userRepo.saveUnified(userId, updated)
+                }
+                _userCourses.value = _userCourses.value.filter { it.id != course.id }
+                _selectedCourse.value = null
+            }
+        }
+    }
+
+    suspend fun removeEmailFromCourse(email: String, courseID: String) {
+        try {
+            val functions = Firebase.functions
+            functions.httpsCallable("removeAdminFromCourse").invoke(
+                mapOf("email" to email, "courseId" to courseID)
+            )
+            log.i("✅ removeAdminFromCourse succeeded")
+        } catch (e: Exception) {
+            log.e(e) { "❌ removeAdminFromCourse failed: ${e.message}" }
+        }
+    }
+
 
     fun start() {
         val course = _selectedCourse.value ?: return

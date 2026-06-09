@@ -32,6 +32,7 @@ struct CourseSettingsView: View {
                 
                 if tier >= 1 {
                     CourseSectionView(course: course)
+                    AdminsSectionView()
                     PasswordSectionView(course: course)
                     SocialLinksSectionView()
                 }
@@ -74,6 +75,77 @@ struct LeaderBoardSectionView: View {
                         .font(.footnote)
                 }
             }
+        }
+    }
+}
+
+// MARK: - Admins Section
+struct AdminsSectionView: View {
+    @EnvironmentObject var courseViewModel: CourseListViewModelSwift
+    @EnvironmentObject var authModel: AuthViewModelSwift
+    @State private var emailToRemove: String? = nil
+    @State private var showConfirm = false
+
+    var body: some View {
+        Section("Admins") {
+            if courseViewModel.loadingAdmins {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+            } else {
+                ForEach(courseViewModel.adminUsers, id: \.googleId) { user in
+                    HStack(spacing: 12) {
+                        AsyncImage(url: URL(string: user.photoURL ?? "")) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image.resizable().scaledToFill()
+                                    .frame(width: 36, height: 36)
+                                    .clipShape(Circle())
+                            default:
+                                Image(systemName: "person.circle.fill")
+                                    .resizable().frame(width: 36, height: 36)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            let isYou = user.email == authModel.userModel?.email
+                            Text(user.name + (isYou ? " (you)" : ""))
+                                .font(.body)
+                            Text(user.email ?? "")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button {
+                            emailToRemove = user.email
+                            showConfirm = true
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .onAppear {
+            Task { courseViewModel.kotlin.loadAdmins() }
+        }
+        .alert("Remove Admin?", isPresented: $showConfirm) {
+            Button("Remove", role: .destructive) {
+                if let email = emailToRemove {
+                    courseViewModel.kotlin.removeAdmin(email: email)
+                }
+                emailToRemove = nil
+            }
+            Button("Cancel", role: .cancel) {
+                emailToRemove = nil
+            }
+        } message: {
+            Text("This will remove their admin access.")
         }
     }
 }

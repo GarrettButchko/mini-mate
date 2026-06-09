@@ -80,6 +80,7 @@ struct CourseTabView: View {
     @StateObject private var leaderboardVM = LeaderBoardViewModelSwift()
     @EnvironmentObject var authModel: AuthViewModelSwift
     @EnvironmentObject var VM: CourseListViewModelSwift
+    @EnvironmentObject var viewManager: ViewManagerSwift
 
     @State var selectedTab: Int
     
@@ -107,6 +108,11 @@ struct CourseTabView: View {
         }
         .onDisappear {
             VM.kotlin.stop()
+        }
+        .onChange(of: VM.selectedCourse) { _, newCourse in
+            if newCourse == nil {
+                viewManager.kotlinVM.navigateToCourseList()
+            }
         }
         .environmentObject(analyticsVM)
         .environmentObject(analyticsVM.growthVM)

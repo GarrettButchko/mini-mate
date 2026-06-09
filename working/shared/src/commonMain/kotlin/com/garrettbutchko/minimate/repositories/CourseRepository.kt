@@ -238,24 +238,6 @@ class CourseRepository {
         }
     }
 
-    suspend fun removeAdminIDfromCourse(email: String, courseID: String): Boolean {
-        val ref = db.collection(collectionName).document(courseID)
-        try {
-            ref.updateFields {
-                "adminIDs" to FieldValue.arrayRemove(email)
-            }
-            val snapshot = ref.get()
-            val adminIDs = snapshot.get<List<String>?>("adminIDs") ?: emptyList()
-            ref.updateFields {
-                "isClaimed" to adminIDs.isNotEmpty()
-            }
-            return true
-        } catch (e: Exception) {
-            log.e(e) { "❌ Failed to remove admin ID:" + e.message }
-            return false
-        }
-    }
-
     suspend fun uploadCourseImage(id: String, imageData: Data, key: String): String? {
         val ref = storage.reference.child(id).child("$key.png")
         try {

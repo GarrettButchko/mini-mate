@@ -18,6 +18,16 @@ class RemoteUserRepository {
 
     private val log = Logger.withTag("RemoteUserRepo")
 
+    suspend fun fetchByEmail(email: String): UserModel? {
+        return try {
+            val docs = usersCollection.where { "email" equalTo email }.limit(1).get().documents
+            if (docs.isEmpty()) null else docs.first().data<UserDTO>().toUser()
+        } catch (e: Exception) {
+            log.e(e) { "❌ fetchByEmail error: ${e.message}" }
+            null
+        }
+    }
+
     suspend fun fetch(id: String): UserModel? {
         return try {
             val snapshot = usersCollection.document(id).get()

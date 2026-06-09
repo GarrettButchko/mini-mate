@@ -158,6 +158,8 @@ class UserRepository(
         return userModel.copy(accountType = userModel.accountType + type.value)
     }
 
+    suspend fun fetchByEmail(email: String): UserModel? = remoteRepo.fetchByEmail(email)
+
     suspend fun saveUnified(id: String, userModel: UserModel): Pair<Boolean, Boolean> {
         val localSuccess = localRepo.save(userModel)
         val remoteSuccess = remoteRepo.save(userModel)

@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.collectAsState
+import com.garrettbutchko.minimate.admin.BuildConfig
 import com.garrettbutchko.minimate.content.tabviews.MainView
 import com.garrettbutchko.minimate.content.tabviews.analytics.AnalyticsView
 import com.garrettbutchko.minimate.content.tabviews.settings.CourseSettingsView
@@ -184,7 +185,7 @@ fun ContentView(
                     userIsPro = user?.isPro ?: false,
                     userAccountType = user?.accountType?.joinToString(",") ?: "",
                     userBallColor = user?.ballColorDT.toColor(),
-                    isDebug = false, // TODO: Use BuildConfig.DEBUG when available
+                    isDebug = BuildConfig.DEBUG,
                     botMessage = profileBotMessage,
                     isBotMessageError = isProfileBotError,
                     onPhotoChange = {
@@ -323,6 +324,13 @@ private fun CourseTabView(
     LaunchedEffect(Unit) {
         courseListVM.start()
         analyticsVM.loadHealthData(course = courseListVM.selectedCourse.value)
+    }
+
+    // Navigate back to course list if the user removes themselves as admin
+    LaunchedEffect(selectedCourse) {
+        if (selectedCourse == null) {
+            onNavigateToCourseList()
+        }
     }
 
     val scoreCardColor = selectedCourse?.scoreCardColorDT?.toColor()
