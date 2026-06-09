@@ -383,6 +383,7 @@ fun ScoreCardGameView(
 
 
                     CourseBannerAdView(
+                        showBackground = false,
                         adUnitID = "ca-app-pub-8261962597301587/6716977198",
                         isGuest = isGuest,
                         isPro = user?.isPro,

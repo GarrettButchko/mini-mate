@@ -90,8 +90,10 @@ struct CourseSettingsHeaderView: View {
                 Text("Settings")
                     .font(.title).fontWeight(.bold)
                 Spacer()
-                Button("User View") {
+                Button {
                     viewModel.showReviewSheet = true
+                } label: {
+                    Label("User View", systemImage: "eye")
                 }
                 .sheet(isPresented: $viewModel.showReviewSheet) {
                     if let course = courseViewModel.selectedCourse {

@@ -326,7 +326,7 @@ private fun CourseTabView(
     }
 
     val scoreCardColor = selectedCourse?.scoreCardColorDT?.toColor()
-    val subColor = androidx.compose.ui.graphics.Color.subVsColor(makeColor = scoreCardColor)
+    val subColor = Color.subVsColor(makeColor = scoreCardColor)
 
     val customNavColors = NavigationBarItemDefaults.colors(
         indicatorColor = subColor,
@@ -335,7 +335,6 @@ private fun CourseTabView(
         selectedTextColor = MaterialTheme.colorScheme.primary,
         unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     )
-
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,

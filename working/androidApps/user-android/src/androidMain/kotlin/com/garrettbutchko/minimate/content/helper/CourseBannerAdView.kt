@@ -2,7 +2,6 @@ package com.garrettbutchko.minimate.content.helper
 
 import android.content.Intent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,10 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +49,7 @@ fun rememberCourseBannerAdVisible(
 @Composable
 fun CourseBannerAdView(
     modifier: Modifier = Modifier,
+    showBackground: Boolean = true,
     showColor: Boolean = false,
     adUnitID: String,
     isGuest: Boolean,
@@ -67,10 +64,15 @@ fun CourseBannerAdView(
     val secondaryColor = colorResource(R.color.subTwoOpp)
 
     val bgColor = Color.subVsColor(makeColor = if (showColor) course?.scoreCardColor else null)
-    val styledMod = if (course?.scoreCardColor != null && showColor) {
-        modifier.background(bgColor, RoundedCornerShape(25.dp)).padding(16.dp)
-    } else {
-        modifier.subtleShadow().background(bgColor, RoundedCornerShape(25.dp)).padding(16.dp)
+
+    var styledMod: Modifier = modifier
+
+    if (showBackground) {
+        styledMod = if (course?.scoreCardColor != null && showColor) {
+            modifier.background(bgColor, RoundedCornerShape(25.dp)).padding(16.dp)
+        } else {
+            modifier.subtleShadow().background(bgColor, RoundedCornerShape(25.dp)).padding(16.dp)
+        }
     }
 
     when {

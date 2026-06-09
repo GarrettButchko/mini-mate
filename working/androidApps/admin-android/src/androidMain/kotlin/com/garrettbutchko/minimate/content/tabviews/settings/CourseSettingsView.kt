@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -187,7 +188,16 @@ private fun CourseSettingsHeaderView(vm: CourseSettingsViewModel, courseListVM: 
             modifier = Modifier.weight(1f)
         )
         TextButton(onClick = { vm.setShowReviewSheet(true) }) {
-            Text("User View", color = colorResource(id = ResColor.swiftBlue))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Visibility,
+                    contentDescription = null,
+                    tint = colorResource(id = ResColor.swiftBlue),
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("User View", color = colorResource(id = ResColor.swiftBlue))
+            }
         }
     }
 
@@ -838,7 +848,7 @@ private fun ParConfigurationSectionContent(
     val subOpp   = colorResource(id = ResColor.subOpp)
     val swiftRed = colorResource(id = ResColor.swiftRed)
     val swiftBlue = colorResource(id = ResColor.swiftBlue)
-    val subThree = colorResource(id = ResColor.subThree)
+    val subThree = colorResource(id = ResColor.subThreeOpp)
     val sub      = colorResource(id = ResColor.sub)
 
     // ── "Par Configuration" section ──────────────────────────────────────────

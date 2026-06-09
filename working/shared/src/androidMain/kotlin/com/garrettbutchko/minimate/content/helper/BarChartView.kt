@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,10 +45,13 @@ fun BarChartView(
     title: String,
     modifier: Modifier = Modifier,
 ) {
-    val maxStrokes = data.maxOfOrNull { it.strokes }?.toFloat() ?: 5f
+    val nonZeroStrokes = data.map { it.strokes }.filter { it > 0 }
+    val minStrokes = nonZeroStrokes.minOrNull() ?: 0
+    val maxStrokes = nonZeroStrokes.maxOrNull() ?: 0
+    val yMax = (maxStrokes + 2).toFloat()
+
     val chartData = BarChartData(
         bars = data.map { hole ->
-
             var label = ""
             if (hole.number % 3 == 0) {
                 label = "H${hole.number}"
@@ -62,7 +64,7 @@ fun BarChartView(
             )
         },
         padBy = 0f,
-        maxBarValue = maxOf(maxStrokes, 1f)
+        maxBarValue = maxOf(yMax, 1f)
     )
 
     Column(
@@ -89,7 +91,11 @@ fun BarChartView(
                 labelTextColor = axisColor,
                 gridLineColor = gridColor
             ),
-            barDrawer = RoundedBarDrawer(),
+            barDrawer = RoundedBarDrawer(
+                minStrokes = minStrokes,
+                maxStrokes = maxStrokes,
+                labelTextColor = axisColor
+            ),
             labelDrawer = SimpleLabelDrawer(
                 drawLocation = SimpleLabelDrawer.DrawLocation.XAxis,
                 labelTextColor = axisColor
@@ -145,7 +151,7 @@ private class IntegerYAxisDrawer(
                 if (range > 0f) {
                     val start = floor(cachedMin.toDouble()).toInt()
                     val end = ceil(cachedMax.toDouble()).toInt()
-                    for (value in start..end) {
+                    for (value in end downTo start step 2) {
                         val v = value.toFloat()
                         if (v !in cachedMin..cachedMax) continue
                         val ratio = (v - cachedMin) / range
@@ -195,7 +201,7 @@ private class IntegerYAxisDrawer(
             val startValue = floor(minValue.toDouble()).toInt()
             val endValue = ceil(maxValue.toDouble()).toInt()
 
-            for (value in startValue..endValue) {
+            for (value in endValue downTo startValue step 2) {
                 val valueFloat = value.toFloat()
                 if (valueFloat !in minValue..maxValue) continue
 
@@ -214,9 +220,18 @@ private class IntegerYAxisDrawer(
     }
 }
 
-private class RoundedBarDrawer(private val cornerRadius: Float = 12f) : IBarDrawer {
+private class RoundedBarDrawer(
+    private val cornerRadius: Float = 12f,
+    private val minStrokes: Int = 0,
+    private val maxStrokes: Int = 0,
+    private val labelTextColor: Color = Color.Black
+) : IBarDrawer {
     private val mBarPaint = Paint().apply { isAntiAlias = true }
     private val mPath = Path()
+    private val mTextPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
 
     override fun drawBar(
         drawScope: DrawScope,
@@ -236,8 +251,24 @@ private class RoundedBarDrawer(private val cornerRadius: Float = 12f) : IBarDraw
             )
         )
         canvas.drawPath(mPath, mBarPaint.apply { color = bar.color })
+
+        val strokes = bar.value.roundToInt()
+        if (strokes > 0 && (strokes == minStrokes || strokes == maxStrokes)) {
+            val label = strokes.toString()
+            val paint = mTextPaint.apply {
+                color = labelTextColor.toLegacyInt()
+                textSize = 10.sp.toPx(drawScope)
+                alpha = (0.7f * 255).toInt()
+            }
+            val x = (barArea.left + barArea.right) / 2f
+            val y = barArea.top - 4.dp.toPx(drawScope)
+            canvas.nativeCanvas.drawText(label, x, y, paint)
+        }
     }
 }
+
+private fun TextUnit.toPx(drawScope: DrawScope): Float = with(drawScope) { toPx() }
+private fun androidx.compose.ui.unit.Dp.toPx(drawScope: DrawScope): Float = with(drawScope) { toPx() }
 
 private fun strokeColor(value: Int): Color {
     val cappedMax = maxOf(1, 10)
