@@ -52,6 +52,7 @@ import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
+import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.admin.R as AdminR
 
@@ -322,6 +323,10 @@ private fun CourseTabView(
 
     // Mirror iOS .onAppear for VM.kotlin.start() and loadHealthData
     LaunchedEffect(Unit) {
+        courseListVM.loadAdmins()
+        if (courseListVM.adminUsers.value.isEmpty()) {
+            onNavigateToCourseList()
+        }
         courseListVM.start()
         analyticsVM.loadHealthData(course = courseListVM.selectedCourse.value)
     }

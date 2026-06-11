@@ -131,9 +131,6 @@ struct AdminsSectionView: View {
                 }
             }
         }
-        .onAppear {
-            Task { courseViewModel.kotlin.loadAdmins() }
-        }
         .alert("Remove Admin?", isPresented: $showConfirm) {
             Button("Remove", role: .destructive) {
                 if let email = emailToRemove {

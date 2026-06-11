@@ -267,10 +267,6 @@ private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.
     val subOpp = colorResource(id = ResColor.subOpp)
     val swiftRed = colorResource(id = ResColor.swiftRed)
 
-    LaunchedEffect(course.id) {
-        courseListVM.loadAdmins()
-    }
-
     if (loadingAdmins) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(modifier = Modifier.padding(16.dp), color = colorResource(id = ResColor.swiftBlue))

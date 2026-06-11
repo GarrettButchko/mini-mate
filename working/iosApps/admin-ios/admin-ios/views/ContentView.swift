@@ -103,6 +103,10 @@ struct CourseTabView: View {
                 .tag(2)
         }
         .onAppear {
+            VM.kotlin.loadAdmins()
+            if (VM.adminUsers.isEmpty) {
+                viewManager.kotlinVM.navigateToCourseList()
+            }
             VM.kotlin.start()
             analyticsVM.kotlin.loadHealthData(course: VM.selectedCourse)
         }
