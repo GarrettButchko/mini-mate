@@ -193,7 +193,7 @@ struct StatsView: View {
                                     game: game,
                                     presentShareSheet: statModel.kotlin.presentShareSheet
                                 )
-                                .transition(.asymmetric(insertion: .opacity, removal: .opacity.combined(with: .move(edge: .leading))))
+                                .transition(.opacity.combined(with: .blurReplace))
                                 .sheet(item: $gameReview) {
                                     gameReview = nil
                                 } content: { game in

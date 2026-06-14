@@ -302,6 +302,11 @@ open class AnalyticsViewModel(
             analyticsJob.await()
             retentionJob.await()
 
+            // Ensure retention caches reflect the fully-loaded email data before
+            // computing health, regardless of reactive collector timing across
+            // dispatchers (fixes iOS/Android score divergence).
+            retentionVM.recomputePlayerTiers()
+
             val report = calculateCourseHealthBackground()
 
             launch(Dispatchers.Main) {

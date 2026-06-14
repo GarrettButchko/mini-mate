@@ -58,10 +58,18 @@ extension Insight {
 extension HealthGrade {
     var color: Color {
         switch self {
-        case .excellent, .great: return .green
-        case .good, .satisfactory: return .blue
-        case .fair, .needsImprovement: return .orange
-        case .poor, .critical: return .red
+        case .excellent, .great:
+            return Color(red: 52/255, green: 199/255, blue: 89/255)   // #34C759 green
+        case .good, .satisfactory:
+            return Color(red: 0/255, green: 136/255, blue: 255/255)   // #0088FF blue
+        case .fair:
+            return Color(red: 255/255, green: 204/255, blue: 0/255)   // #FFCC00 yellow
+        case .needsImprovement:
+            return Color(red: 255/255, green: 149/255, blue: 0/255)   // #FF9500 orange
+        case .poor:
+            return Color(red: 255/255, green: 107/255, blue: 0/255)   // #FF6B00 deep orange
+        case .critical:
+            return Color(red: 255/255, green: 59/255, blue: 48/255)   // #FF3B30 red
         }
     }
 }

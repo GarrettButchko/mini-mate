@@ -329,10 +329,8 @@ struct LogoSectionView: View {
                             .foregroundColor(.gray)
                             .background(Color.gray.opacity(0.2))
                     }
-                    
-                    
-                    
                 }
+                .buttonStyle(.borderless)
                 if let course = courseViewModel.selectedCourse, course.logo != nil {
                     Button{
                         viewModel.kotlin.deleteLogoImage(course: course) { course in
@@ -343,6 +341,7 @@ struct LogoSectionView: View {
                             .foregroundStyle(.white, .red) // Icon is white, circle is gray
                             .font(.system(size: 24))
                     }
+                    .buttonStyle(.borderless)
                 }
             }
             .sheet(isPresented: $viewModel.showingPickerLogo) {
@@ -686,6 +685,7 @@ struct AdImageView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
+                .buttonStyle(.borderless)
                 if let course = courseViewModel.selectedCourse, course.logo != nil {
                     Button{
                         viewModel.kotlin.deleteAdImage(course: course) { course in
@@ -696,6 +696,7 @@ struct AdImageView: View {
                             .foregroundStyle(.white, .red) // Icon is white, circle is gray
                             .font(.system(size: 24))
                     }
+                    .buttonStyle(.borderless)
                 }
             }
             .sheet(isPresented: $viewModel.showingPickerAd) {

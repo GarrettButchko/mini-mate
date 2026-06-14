@@ -1,6 +1,7 @@
 package com.garrettbutchko.minimate.content.tabviews
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,12 +64,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.garrettbutchko.minimate.content.TitleView
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.colorResource
 import com.garrettbutchko.minimate.content.helper.modifiers.colorCardLayout
 import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.HealthRatingChart
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.SectionHealthDetailView
+import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.skeleton
 import com.garrettbutchko.minimate.modelKotlinExtensions.courseColors
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 
@@ -242,6 +246,7 @@ private fun MainViewHeader(
             )
             // MarqueeText → Text with overflow (project convention)
             Text(
+                modifier = Modifier.basicMarquee(),
                 text = course?.name ?: "No Course Selected",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
                 maxLines = 1,
@@ -251,6 +256,9 @@ private fun MainViewHeader(
 
         // Course logo (if available)
         if (course?.logo != null) {
+
+            VerticalDivider(modifier = Modifier.height(30.dp))
+
             AsyncImage(
                 model = course.logo,
                 contentDescription = "Course logo",

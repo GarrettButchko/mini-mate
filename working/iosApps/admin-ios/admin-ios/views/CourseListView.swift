@@ -151,32 +151,13 @@ struct CourseListView: View {
                 ScrollView{
                     VStack(spacing: 16){
                         if let message = viewModel.message {
-                            VStack(spacing: 6) {
-                                if viewModel.timeRemaining > 0 {
-                                    Text(message)
-                                        .font(.headline)
-                                        .foregroundStyle(.blue)
-                                    
-                                    Text("Try again in \(max(0, Int(ceil(viewModel.timeRemaining)))) seconds")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                } else {
-                                    Text(message)
-                                        .font(.headline)
-                                        .foregroundStyle(.red)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .fill(viewModel.timeRemaining > 0 ? .blue.opacity(0.2) : .red.opacity(0.2))
-                                    .cardShadow()
-                            )
+                            MessageBanner(message: message, timeRemaining: viewModel.timeRemaining)
+                                .transition(.opacity)
                         }
-                        
+
                         ForEach(viewModel.userCourses) { course in
                             CourseButtonView(viewModel: viewModel, course: course)
+                                .transition(.opacity)
                         }
                         
                         Button {
@@ -286,8 +267,7 @@ struct CourseListView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background{
-                    RoundedRectangle(cornerRadius: 25).fill(.sub)
-                        .cardShadow()
+                    RoundedRectangle(cornerRadius: 25).fill(.subTwo)
                 }
                 
                 
@@ -296,8 +276,7 @@ struct CourseListView: View {
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background{
-                        RoundedRectangle(cornerRadius: 25).fill(.sub)
-                            .cardShadow()
+                        RoundedRectangle(cornerRadius: 25).fill(.subTwo)
                     }
                 
                 
@@ -350,23 +329,42 @@ struct CourseListView: View {
                 .disabled(viewModel.timeRemaining > 0)
                 
                 if let message = viewModel.message {
-                    VStack(spacing: 6) {
-                        Text(message).font(.headline)
-                        if viewModel.timeRemaining > 0 {
-                            Text("Try again in \(max(0, Int(ceil(viewModel.timeRemaining)))) seconds")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background{
-                        RoundedRectangle(cornerRadius: 25).fill(.sub)
-                            .cardShadow()
-                    }
+                    MessageBanner(message: message, timeRemaining: viewModel.timeRemaining)
+                        .transition(.opacity)
                 }
             }
+            .animation(.easeInOut, value: viewModel.message)
         }
+    }
+}
+
+private struct MessageBanner: View {
+    let message: String
+    let timeRemaining: Double
+
+    var body: some View {
+        VStack(spacing: 6) {
+            if timeRemaining > 0 {
+                Text(message)
+                    .font(.headline)
+                    .foregroundStyle(.blue)
+
+                Text("Try again in \(max(0, Int(ceil(timeRemaining)))) seconds")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(message)
+                    .font(.headline)
+                    .foregroundStyle(.red)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 25)
+                .fill(timeRemaining > 0 ? .blue.opacity(0.2) : .red.opacity(0.2))
+                .cardShadow()
+        )
     }
 }
 

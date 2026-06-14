@@ -141,7 +141,7 @@ class StatsViewModelSwift: ObservableObject {
         
         Task {
             for await val in kotlin.allGames {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                withAnimation {
                     self._allGames = val
                 }
             }

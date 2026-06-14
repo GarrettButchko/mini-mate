@@ -238,7 +238,11 @@ open class CourseListViewModel(
         _loadingAdmins.value = true
         coroutineScope.launch {
             val users = course.adminIDs.mapNotNull { email ->
-                userRepo.fetchByEmail(email)
+                if (authModel.firebaseUser.value?.email != email) {
+                    userRepo.fetchByEmail(email)
+                } else {
+                    authModel.userModel.value
+                }
             }
             _adminUsers.value = users
             _loadingAdmins.value = false
