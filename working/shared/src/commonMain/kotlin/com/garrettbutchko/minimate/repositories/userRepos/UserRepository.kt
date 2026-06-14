@@ -118,8 +118,14 @@ class UserRepository(
             result
         }
 
-        onUpdate(finalResult)
-        return finalResult
+        val freshLocal = localRepo.fetch(id)
+        val toEmit = if (freshLocal != null && freshLocal.lastUpdated.seconds > finalResult.lastUpdated.seconds) {
+            freshLocal
+        } else {
+            finalResult
+        }
+        onUpdate(toEmit)
+        return toEmit
     }
 
     private suspend fun createUser(
