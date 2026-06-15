@@ -27,7 +27,6 @@ struct ContentView: View {
         .environmentObject(viewManager)
         .environmentObject(hostVM)
         .environmentObject(locationHandler)
-        
         .animation(.easeInOut(duration: 0.4), value: viewManager.currentView)
         .onAppear {
             locationHandler.requestLocationAccess()

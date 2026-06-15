@@ -227,7 +227,7 @@ fun ProView(
             onClick = {
                 scope.launch {
                     errorMessage = null
-                    iapManager.checkIsPurchasedPro()
+                    iapManager.checkIsPurchasedPro(authModel)
                 }
             },
             enabled = !isPurchasing

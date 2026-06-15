@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.viewModels.AuthViewModel
 
 /**
  * Equivalent of the iOS IAPManager using Google Play Billing Library.
@@ -59,7 +60,6 @@ class IAPManager(
                     isInitialized = true
                     coroutineScope.launch {
                         retrieveProducts()
-                        checkIsPurchasedPro()
                     }
                 }
             }
@@ -162,14 +162,14 @@ class IAPManager(
     /**
      * Equivalent to `Transaction.currentEntitlements`
      */
-    suspend fun checkIsPurchasedPro() {
+    suspend fun checkIsPurchasedPro(authModel: AuthViewModel) {
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.INAPP)
             .build()
 
         val result = billingClient.queryPurchasesAsync(params)
         var hasPro = false
-        
+
         if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
             for (purchase in result.purchasesList) {
                 if (purchase.products.contains("com.minimate.pro") && purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
@@ -178,7 +178,12 @@ class IAPManager(
                 }
             }
         }
-        
+
+        val user = authModel.userModel.value
+        if (user != null && !user.isPro) {
+            authModel.setUserModel(user.copy(isPro = hasPro))
+        }
+
         onProStatusChecked(hasPro)
     }
 }

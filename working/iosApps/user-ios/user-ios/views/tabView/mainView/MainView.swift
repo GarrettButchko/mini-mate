@@ -11,7 +11,7 @@ struct MainView: View {
     
     var disablePlaying: Bool {
         logic.isPlayDisabled(
-            isPro: KotlinBoolean(nonretainedObject: authModel.userModel?.isPro),
+            isPro: KotlinBoolean(bool: authModel.userModel?.isPro ?? false),
             gameCount: Int32(authModel.userModel?.gameIDs.count ?? 0)
         )
     }
@@ -572,7 +572,7 @@ struct MainView: View {
     var proStopper: some View {
         Group{
             if logic.shouldShowProStopper(
-                isPro: KotlinBoolean(nonretainedObject: authModel.userModel?.isPro),
+                isPro: KotlinBoolean(bool: authModel.userModel?.isPro ?? false),
                 gameCount: Int32(authModel.userModel?.gameIDs.count ?? 0)
             ) {
                 Text("You’ve reached the free limit. Upgrade to Pro to store more than 2 games.")

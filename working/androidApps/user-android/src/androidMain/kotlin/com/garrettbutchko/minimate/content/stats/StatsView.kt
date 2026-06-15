@@ -1,16 +1,19 @@
 package com.garrettbutchko.minimate.content.stats
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -280,6 +283,8 @@ private fun GamesSection(
     statsViewModel: StatsViewModel
 ) {
     var reviewGame by remember { mutableStateOf<Game?>(null) }
+    var deletingIds by remember { mutableStateOf(setOf<String>()) }
+    val scope = rememberCoroutineScope()
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(vertical = 8.dp).padding(bottom = 14.dp)
     ) {
@@ -301,23 +306,34 @@ private fun GamesSection(
             }
         }
 
-        if (isRefreshing) {
+        if (isRefreshing && games.isEmpty()) {
             LoadingState()
         } else if (games.isNotEmpty()) {
             games.forEach { game ->
-                SwipeableRow(
-                    editingID = editingGameID,
-                    onEditingIDChange = onEditingGameIDChange,
-                    id = game.id,
-                    buttonPressFunction = { reviewGame = game },
-                    buttonOne = ButtonSkim(
-                        color = Color(0xFF1E88E5),
-                        icon = Icons.Filled.Share,
-                        string = makeShareableSummary(game)
-                    ),
-                    deleteFunction = { statsViewModel.deleteGame(game.id) }
+                AnimatedVisibility(
+                    visible = game.id !in deletingIds,
+                    exit = fadeOut() + shrinkVertically()
                 ) {
-                    GameSummaryCard(game = game)
+                    SwipeableRow(
+                        editingID = editingGameID,
+                        onEditingIDChange = onEditingGameIDChange,
+                        id = game.id,
+                        buttonPressFunction = { reviewGame = game },
+                        buttonOne = ButtonSkim(
+                            color = Color(0xFF1E88E5),
+                            icon = Icons.Filled.Share,
+                            string = makeShareableSummary(game)
+                        ),
+                        deleteFunction = {
+                            deletingIds = deletingIds + game.id
+                            scope.launch {
+                                delay(300)
+                                statsViewModel.deleteGame(game.id)
+                            }
+                        }
+                    ) {
+                        GameSummaryCard(game = game)
+                    }
                 }
             }
 
@@ -336,7 +352,6 @@ private fun GamesSection(
         val sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true
         )
-        val scope = rememberCoroutineScope()
 
         ModalBottomSheet(
             onDismissRequest = {

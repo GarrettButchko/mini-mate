@@ -182,7 +182,7 @@ struct StatsView: View {
                     }
                     
                     
-                    if statModel.isRefreshing {
+                    if statModel.isRefreshing && games.isEmpty {
                         LogoLoadingView()
                     } else if !games.isEmpty {
                             ForEach(games, id: \.id) { game in // Explicitly use .id to help transitions
@@ -193,7 +193,6 @@ struct StatsView: View {
                                     game: game,
                                     presentShareSheet: statModel.kotlin.presentShareSheet
                                 )
-                                .transition(.opacity.combined(with: .blurReplace))
                                 .sheet(item: $gameReview) {
                                     gameReview = nil
                                 } content: { game in
@@ -433,7 +432,6 @@ struct GameRow: View {
             HStack{
                 GameGridView(editOn: $editOn, game: game)
                     .frame(width: proxy.size.width)
-                    .transition(.opacity.combined(with: .blurReplace))
                     .swipeMod(editingID: $editingGameID, id: game.id,
                               buttonPressFunction: {
                         gameReview = game
@@ -442,10 +440,11 @@ struct GameRow: View {
                     ) {
                         statModel.kotlin.deleteGame(gameID: game.id)
                     }
-                    
+
             }
         }
         .frame(height: 250)
+        .transition(.opacity.combined(with: .blurReplace))
     }
 
     /// Build a plain-text summary (you could also return a URL to a generated PDF/image)

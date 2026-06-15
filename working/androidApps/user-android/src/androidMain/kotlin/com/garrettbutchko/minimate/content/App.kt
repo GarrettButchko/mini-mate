@@ -315,18 +315,6 @@ private fun MainTabView(
     }
 
     LaunchedEffect(iapManager) {
-        iapManager.onProStatusChecked = { hasPro ->
-            if (hasPro) {
-                val user = authModel.userModel.value
-                if (user != null && !user.isPro) {
-                    val upgraded = user.copy(isPro = true)
-                    authModel.setUserModel(upgraded)
-                    appScope.launch {
-                        runCatching { authModel.userRepository.saveUnified(upgraded.googleId, upgraded) }
-                    }
-                }
-            }
-        }
         iapManager.onPurchaseSuccess = { purchase ->
             val user = authModel.userModel.value
             if (user != null && !user.isPro) {
@@ -338,6 +326,7 @@ private fun MainTabView(
             }
         }
         iapManager.initialize()
+        iapManager.checkIsPurchasedPro(authModel)
     }
 
     LaunchedEffect(currentUserId) {
