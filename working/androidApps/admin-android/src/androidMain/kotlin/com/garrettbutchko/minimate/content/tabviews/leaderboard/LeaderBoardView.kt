@@ -1,9 +1,12 @@
 package com.garrettbutchko.minimate.content.tabviews.leaderboard
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,9 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -36,9 +39,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.garrettbutchko.minimate.content.helper.modifiers.SwipeableRow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -140,32 +147,52 @@ private fun LeaderboardContent(
         // Rows 4–25 in a scrollable list
         val listEntries = entries.drop(3).take(22) // ranks 4..25
         var editingPlayerID by remember { mutableStateOf<String?>(null) }
+        var deletingIds by remember { mutableStateOf(setOf<String>()) }
+        val scope = rememberCoroutineScope()
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(25.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
-            LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
-                itemsIndexed(listEntries) { idx, player ->
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                listEntries.forEachIndexed { idx, player ->
                     val rank = idx + 4 // ranks start at 4 after the podium
-                    SwipeableRow(
-                        editingID = editingPlayerID,
-                        onEditingIDChange = { editingPlayerID = it },
-                        id = player.id,
-                        buttonPressFunction = {},
-                        deleteFunction = {
-                            vm.deletePlayerEntry(courseID = courseId, playerID = player.id)
-                            editingPlayerID = null
+                    key(player.id) {
+                        AnimatedVisibility(
+                            visible = player.id !in deletingIds,
+                            enter = EnterTransition.None,
+                            exit = fadeOut() + shrinkVertically()
+                        ) {
+                            Column {
+                                SwipeableRow(
+                                    editingID = editingPlayerID,
+                                    onEditingIDChange = { editingPlayerID = it },
+                                    id = player.id,
+                                    buttonPressFunction = {},
+                                    deleteFunction = {
+                                        deletingIds = deletingIds + player.id
+                                        scope.launch {
+                                            delay(300)
+                                            vm.deletePlayerEntry(courseID = courseId, playerID = player.id)
+                                            editingPlayerID = null
+                                        }
+                                    }
+                                ) {
+                                    PlayerRow(player = player, rank = rank)
+                                }
+                                if (idx < listEntries.lastIndex) {
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                        modifier = Modifier.padding(vertical = 2.dp)
+                                    )
+                                }
+                            }
                         }
-                    ) {
-                        PlayerRow(player = player, rank = rank)
-                    }
-                    if (idx < listEntries.lastIndex) {
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        )
                     }
                 }
             }

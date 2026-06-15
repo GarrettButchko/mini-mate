@@ -295,7 +295,6 @@ struct PlayerRow: View {
             HStack(alignment: .center){
                 PlayerGridRow(player: player, rank: rank)
                     .frame(width: proxy.size.width)
-                    .transition(.opacity.combined(with: .blurReplace))
                     .swipeMod(editingID: $editingPlayerID, id: String(rank), buttonPressFunction: {}) {
                         guard let selectedCourse = courseVM.selectedCourse else { return }
                         VM.kotlin.deletePlayerEntry(courseID: selectedCourse.id, playerID: player.id)
@@ -304,6 +303,7 @@ struct PlayerRow: View {
             }
         }
         .frame(height: 40)
+        .transition(.opacity.combined(with: .blurReplace))
     }
 }
 
