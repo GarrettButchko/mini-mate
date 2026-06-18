@@ -8,7 +8,7 @@ import { getAuth } from "firebase-admin/auth";
 import { initializeApp } from "firebase-admin/app";
 
 initializeApp();
-const db = getFirestore();
+const db = getFirestore(); // v2
 
 export const removeAdminFromCourse = onCall(async (request) => {
     if (!request.auth) {
