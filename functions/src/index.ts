@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import { onUserDeleted } from "firebase-functions/v2/auth";
+import * as functionsV1 from "firebase-functions/v1";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
@@ -204,8 +204,8 @@ export const deleteUnverifiedAccounts = onSchedule("every 24 hours", async () =>
 // Google / email users: delete the document entirely.
 // Note: cleanupOrphanedGames fires automatically on the doc write/delete and
 // removes any games no longer owned by any user.
-export const cleanupDeletedAuthUser = onUserDeleted(async (event) => {
-    const uid = event.data.uid;
+export const cleanupDeletedAuthUser = functionsV1.auth.user().onDelete(async (user) => {
+    const uid = user.uid;
     const userRef = db.collection("users").doc(uid);
     const userSnap = await userRef.get();
 
