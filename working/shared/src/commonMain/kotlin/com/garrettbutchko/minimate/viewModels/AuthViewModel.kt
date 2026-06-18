@@ -328,6 +328,7 @@ open class AuthViewModel(
     fun handleAppleSignInResult(
         result: Result<FirebaseUser?>,
         name: String? = null,
+        email: String? = null,
         appleId: String? = null,
         guestGame: Game? = null,
         onErrorMessage: (String?, Boolean) -> Unit,
@@ -336,14 +337,17 @@ open class AuthViewModel(
         result.fold(
             onSuccess = { firebaseUser ->
                 if (firebaseUser != null) {
+                    _firebaseUser.value = firebaseUser
+                    syncCurrentUserIdentifier()
                     val userData = FirebaseUserSmallData(
                         uid = firebaseUser.uid,
-                        email = firebaseUser.email,
+                        email = firebaseUser.email ?: email,
                         displayName = firebaseUser.displayName,
                         photoURL = firebaseUser.safePhotoURL()
                     )
                     createOrSignInUserAndNavigateToHome(
                         user = userData,
+                        name = name,
                         signInMethod = SignInMethod.APPLE,
                         appleId = appleId,
                         guestGame = guestGame,

@@ -50,13 +50,14 @@ fun AuthViewModel.signInWithApple(
         NSString.create(data = accessTokenData, encoding = NSUTF8StringEncoding)?.toString()
     } else null
     
-    // Extract name if provided (usually only on first sign-in)
-    val name = appleCred.fullName?.let { 
+    // Extract name and email if provided (usually only on first sign-in)
+    val name = appleCred.fullName?.let {
         val first = it.givenName ?: ""
         val last = it.familyName ?: ""
         "$first $last".trim().ifEmpty { null }
     }
-    
+    val appleEmail = appleCred.email
+
     val appleId = appleCred.user
 
     val oauthCred = OAuthProvider.credential(
@@ -73,6 +74,7 @@ fun AuthViewModel.signInWithApple(
         handleAppleSignInResult(
             result = result,
             name = name,
+            email = appleEmail,
             appleId = appleId,
             guestGame = guestGame,
             onErrorMessage = onErrorMessage,
