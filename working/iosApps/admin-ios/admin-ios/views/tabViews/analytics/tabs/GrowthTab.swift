@@ -140,7 +140,7 @@ struct GrowthTab: View {
                     .background(RoundedRectangle(cornerRadius: 16).fill(.subTwo))
                 } else {
                     PlayerTrendChart(VM: VM)
-                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        .transition(.opacity)
                         .id(VM.growthChartTopic)
                         .id(VM.rangeDailyDocs.count)
                 }

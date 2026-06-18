@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +79,20 @@ internal fun ExperienceTab(vm: AnalyticsViewModel, course: Course?) {
         }
 
         SectionStatsCard(title = "Par Performance", isBigTitle = true) {
+
+            if (course?.customPar != true) {
+                Text(
+                    text = "Custom Par's haven't been added to this course yet. So for reference it uses a base of par 2 on all holes 1-18 for this evaluation.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Red,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(17.dp))
+                        .background(MaterialTheme.colorScheme.secondary)
+                        .padding(12.dp)
+                )
+            }
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DataCard(
                     data = expVM.getAvgRelativeToPar(),

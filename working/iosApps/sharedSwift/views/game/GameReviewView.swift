@@ -304,7 +304,6 @@ struct GameReviewView: View {
                                     }
                                 }
                             }
-                            Spacer()
                         }
                         .padding()
                     }

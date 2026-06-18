@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.repositories.analytics.AnalyticsRange
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,6 +145,18 @@ internal fun AnalyticsRangeBar(
     }
 
     if (showCustomSheet) {
+        val tz = TimeZone.currentSystemDefault()
+        val initialStart = if (range.isCustom) {
+            range.startDate.atStartOfDayIn(tz).toEpochMilliseconds()
+        } else {
+            System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+        }
+        val initialEnd = if (range.isCustom) {
+            range.endDate.atStartOfDayIn(tz).toEpochMilliseconds()
+        } else {
+            System.currentTimeMillis()
+        }
+
         ModalBottomSheet(
             onDismissRequest = { showCustomSheet = false },
             sheetState = customSheetState,
@@ -154,7 +168,9 @@ internal fun AnalyticsRangeBar(
                 onApply = { start, end ->
                     vm.setRange(AnalyticsRange.Custom(start, end), course)
                     showCustomSheet = false
-                }
+                },
+                initialStart = initialStart,
+                initialEnd = initialEnd
             )
         }
     }

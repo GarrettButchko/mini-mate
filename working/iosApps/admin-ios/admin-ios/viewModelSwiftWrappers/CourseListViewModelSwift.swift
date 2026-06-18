@@ -179,13 +179,11 @@ class CourseListViewModelSwift: ObservableObject {
         onSet: @escaping (T) -> Void = { _ in },
         debounce: Bool = false
     ) -> Binding<T>? {
-        guard selectedCourse != nil else { return nil }
+        guard let course = selectedCourse else { return nil }
+        let initialValue = course[keyPath: keyPath]
         return Binding(
-            get: {
-                guard let value = self.selectedCourse else {
-                    fatalError("Course became nil unexpectedly")
-                }
-                return value[keyPath: keyPath]
+            get: { [weak self] in
+                self?.selectedCourse?[keyPath: keyPath] ?? initialValue
             },
             set: { [weak self] newValue in
                 self?.objectWillChange.send()

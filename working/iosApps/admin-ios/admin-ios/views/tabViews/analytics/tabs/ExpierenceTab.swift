@@ -50,6 +50,17 @@ struct ExpierenceTab: View {
                         Spacer()
                     }
                     
+                    if !course.customPar {
+                        Text("Custom Par's haven't been added to this course yet. So for reference it uses a base of par 2 on all holes 1-18 for this evaluation.")
+                            .font(.footnote)
+                            .foregroundStyle(.red) // Note: .tint doesn't work on Text, use .foregroundStyle
+                            .padding()
+                            .background{
+                                RoundedRectangle(cornerRadius: 17)
+                                    .fill(.subTwo)
+                            }
+                    }
+                    
                     HStack{
                         DataCard(data: VM.getAvgRelativeToPar(), color: .subTwo, cornerRadius: 17)
                         DataCard(data: VM.getMostBeatenPar(), color: .subTwo, cornerRadius: 17)
@@ -58,6 +69,9 @@ struct ExpierenceTab: View {
                     
                         HoleDifficultyParCharts(course: course)
                             .id(VM.rangeDailyDocs.count)
+                    
+                    
+                    
                     
                 }
                 .padding()

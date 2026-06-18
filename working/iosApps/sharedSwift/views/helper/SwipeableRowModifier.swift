@@ -68,6 +68,7 @@ struct SwipeableRowModifier: ViewModifier {
     @State private var hasVibrated = false
     @State private var isPressed = false
     @State private var isDragging = false
+    @State private var isHorizontalDrag: Bool? = nil
     
     var id: String
     
@@ -197,6 +198,10 @@ struct SwipeableRowModifier: ViewModifier {
     var dragGesture: some Gesture {
         DragGesture(minimumDistance: 20)
             .onChanged { value in
+                if isHorizontalDrag == nil {
+                    isHorizontalDrag = abs(value.translation.width) > abs(value.translation.height)
+                }
+                guard isHorizontalDrag == true else { return }
                 if !isDragging { isDragging = true }
                 let totalOffset = lastOffsetX + value.translation.width
                 let clamped = min(resetPoint, max(totalOffset, deletePoint - 80))
@@ -216,7 +221,11 @@ struct SwipeableRowModifier: ViewModifier {
                 }
             }
             .onEnded { value in
-                defer { isDragging = false }
+                defer {
+                    isDragging = false
+                    isHorizontalDrag = nil
+                }
+                guard isHorizontalDrag == true else { return }
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 if offsetX < deletePoint {
                     // 1. Instantly reset layout positions locally so it doesn't break animations

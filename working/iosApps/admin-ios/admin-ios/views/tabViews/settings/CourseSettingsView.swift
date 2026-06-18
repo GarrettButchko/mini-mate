@@ -555,8 +555,6 @@ struct AdSectionView: View {
     var body: some View {
         
             Section("Ad") {
-                
-                
                 Toggle("Ad Active:", isOn: courseViewModel.binding(keyPath: \.customAdActive) ?? Binding.constant(false))
                     .toggleStyle(SwitchToggleStyle())
                 
@@ -686,7 +684,7 @@ struct AdImageView: View {
                     }
                 }
                 .buttonStyle(.borderless)
-                if let course = courseViewModel.selectedCourse, course.logo != nil {
+                if let course = courseViewModel.selectedCourse, course.adImage != nil {
                     Button{
                         viewModel.kotlin.deleteAdImage(course: course) { course in
                             courseViewModel.selectedCourse = course
@@ -771,7 +769,7 @@ struct ParConfigurationSectionView: View {
                         .font(.footnote)
                         .foregroundStyle(.red) // Note: .tint doesn't work on Text, use .foregroundStyle
                 } else {
-                    Text("Turning this on will show your course on the minimate map as a supported course and allow you to set custom pars for each hole. It will also enable the leaderboard feature, allowing players to submit their scores for this course.")
+                    Text("Turning this on will show your course on the minimate map as a **supported course** and allow you to set **custom pars** for each hole. It will also enable the **leaderboard feature**, allowing players to submit their scores for this course.")
                         .font(.footnote)
                 }
             }
