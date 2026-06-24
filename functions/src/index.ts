@@ -15,10 +15,10 @@ export const removeAdminFromCourse = onCall(async (request) => {
         throw new HttpsError("unauthenticated", "Must be signed in.");
     }
 
-    const { email, courseId } = request.data as { email: string; courseId: string };
+    const { userId, courseId } = request.data as { userId: string; courseId: string };
 
-    if (!email || !courseId) {
-        throw new HttpsError("invalid-argument", "email and courseId are required.");
+    if (!userId || !courseId) {
+        throw new HttpsError("invalid-argument", "userId and courseId are required.");
     }
 
     const courseRef = db.collection("courses").doc(courseId);
@@ -28,31 +28,25 @@ export const removeAdminFromCourse = onCall(async (request) => {
         throw new HttpsError("not-found", "Course not found.");
     }
 
-    const callerEmail = request.auth.token.email;
+    const callerUid = request.auth.uid;
     const adminIDs: string[] = courseSnap.data()?.adminIDs ?? [];
 
-    if (!callerEmail || !adminIDs.includes(callerEmail)) {
+    if (!adminIDs.includes(callerUid)) {
         throw new HttpsError("permission-denied", "You are not an admin of this course.");
     }
 
-    // Find the user by email and update their adminCourses
-    const usersSnap = await db.collection("users")
-        .where("email", "==", email)
-        .limit(1)
-        .get();
+    const userRef = db.collection("users").doc(userId);
 
     const batch = db.batch();
 
     batch.update(courseRef, {
-        adminIDs: FieldValue.arrayRemove(email),
+        adminIDs: FieldValue.arrayRemove(userId),
     });
 
-    if (!usersSnap.empty) {
-        batch.update(usersSnap.docs[0].ref, {
-            adminCourses: FieldValue.arrayRemove(courseId),
-            lastUpdated: FieldValue.serverTimestamp(),
-        });
-    }
+    batch.update(userRef, {
+        adminCourses: FieldValue.arrayRemove(courseId),
+        lastUpdated: FieldValue.serverTimestamp(),
+    });
 
     await batch.commit();
 

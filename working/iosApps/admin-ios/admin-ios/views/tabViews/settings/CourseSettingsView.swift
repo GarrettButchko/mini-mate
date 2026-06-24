@@ -83,7 +83,7 @@ struct LeaderBoardSectionView: View {
 struct AdminsSectionView: View {
     @EnvironmentObject var courseViewModel: CourseListViewModelSwift
     @EnvironmentObject var authModel: AuthViewModelSwift
-    @State private var emailToRemove: String? = nil
+    @State private var userIdToRemove: String? = nil
     @State private var showConfirm = false
 
     var body: some View {
@@ -119,7 +119,7 @@ struct AdminsSectionView: View {
                         }
                         Spacer()
                         Button {
-                            emailToRemove = user.email
+                            userIdToRemove = user.googleId
                             showConfirm = true
                         } label: {
                             Image(systemName: "trash")
@@ -133,13 +133,13 @@ struct AdminsSectionView: View {
         }
         .alert("Remove Admin?", isPresented: $showConfirm) {
             Button("Remove", role: .destructive) {
-                if let email = emailToRemove {
-                    courseViewModel.kotlin.removeAdmin(email: email)
+                if let userId = userIdToRemove {
+                    courseViewModel.kotlin.removeAdmin(userId: userId)
                 }
-                emailToRemove = nil
+                userIdToRemove = nil
             }
             Button("Cancel", role: .cancel) {
-                emailToRemove = nil
+                userIdToRemove = nil
             }
         } message: {
             Text("This will remove their admin access.")

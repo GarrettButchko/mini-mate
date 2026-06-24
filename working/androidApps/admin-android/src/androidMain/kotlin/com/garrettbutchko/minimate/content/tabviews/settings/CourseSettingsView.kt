@@ -261,7 +261,7 @@ private fun CourseSectionContent(course: Course) {
 private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.courseModels.Course, courseListVM: CourseListViewModel) {
     val adminUsers by courseListVM.adminUsers.collectAsState()
     val loadingAdmins by courseListVM.loadingAdmins.collectAsState()
-    var emailToDelete by remember { mutableStateOf<String?>(null) }
+    var userIdToDelete by remember { mutableStateOf<String?>(null) }
 
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
@@ -313,7 +313,7 @@ private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.
                             color = subOpp
                         )
                     }
-                    IconButton(onClick = { emailToDelete = user.email }) {
+                    IconButton(onClick = { userIdToDelete = user.googleId }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Remove admin",
@@ -328,21 +328,21 @@ private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.
         }
     }
 
-    if (emailToDelete != null) {
+    if (userIdToDelete != null) {
         AlertDialog(
-            onDismissRequest = { emailToDelete = null },
+            onDismissRequest = { userIdToDelete = null },
             title = { Text("Remove Admin?", color = mainOpp) },
             text = { Text("This will remove their admin access.", color = mainOpp) },
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
-                    courseListVM.removeAdmin(emailToDelete!!)
-                    emailToDelete = null
+                    courseListVM.removeAdmin(userIdToDelete!!)
+                    userIdToDelete = null
                 }) {
                     Text("Remove", color = swiftRed)
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { emailToDelete = null }) {
+                androidx.compose.material3.TextButton(onClick = { userIdToDelete = null }) {
                     Text("Cancel", color = mainOpp)
                 }
             }
