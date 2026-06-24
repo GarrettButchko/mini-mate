@@ -92,7 +92,8 @@ private fun ProfileViewModel.deleteAppleAccount(
                 googleId = userModel.googleId,
                 appleId = userModel.appleId,
                 name = userModel.name,
-                email = userModel.email
+                email = userModel.email,
+                accountType = userModel.accountType
             )
             userRemoteRepo.saveReplace(stub)
             // Clean up local games and local user doc.
