@@ -84,28 +84,24 @@ private fun ProfileViewModel.deleteAppleAccount(
     val oauthCred = OAuthProvider.credential(providerId = "apple.com", idToken = idToken, accessToken = null, rawNonce = nonce)
 
     coroutineScope.launch {
-        val result = authRepository.deleteAccount(oauthCred)
-        if (result.isSuccess) {
-            cleanupLocalData()
-            val userModel = authModel.userModel.value
-            if (userModel != null) {
-                val model = UserModel(
-                    googleId = userModel.googleId,
-                    appleId = userModel.appleId,
-                    name = userModel.name,
-                    photoURL = null,
-                    email = userModel.email,
-                    gameIDs = listOf(),
-                    accountType = listOf("apple")
-                )
-                userRemoteRepo.save(model)
-            }
-            completion(true)
-        } else {
-            setBotMessage(result.exceptionOrNull()?.message ?: "Deletion failed")
-            setIsRed(true)
-            completion(false)
+        val userModel = authModel.userModel.value
+        if (userModel != null) {
+            // Full document replace — keeps googleId, appleId, name, email; nulls everything else.
+            // The cleanupOrphanedGames cloud trigger fires on this write and handles game deletion.
+            val stub = UserModel(
+                googleId = userModel.googleId,
+                appleId = userModel.appleId,
+                name = userModel.name,
+                email = userModel.email
+            )
+            userRemoteRepo.saveReplace(stub)
+            // Clean up local games and local user doc.
+            localGameRepo.deleteByIds(userModel.gameIDs)
+            userRepo.localRepo.delete(userModel.googleId)
         }
+        // Sign out without deleting the Firebase Auth account.
+        authModel.logout()
+        completion(true)
     }
 }
 

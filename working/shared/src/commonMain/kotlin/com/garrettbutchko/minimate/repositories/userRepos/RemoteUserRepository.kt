@@ -73,6 +73,16 @@ class RemoteUserRepository {
         }
     }
 
+    suspend fun saveReplace(userModel: UserModel): Result<Boolean> {
+        return try {
+            usersCollection.document(userModel.googleId).set(userModel.toDTO())
+            Result.success(true)
+        } catch (e: Exception) {
+            log.e(e) { "❌ saveReplace error: ${e.message}" }
+            Result.failure(e)
+        }
+    }
+
     suspend fun uploadProfilePhoto(
         id: String,
         imageData: Data
