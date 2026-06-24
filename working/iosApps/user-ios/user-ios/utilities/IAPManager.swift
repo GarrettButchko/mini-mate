@@ -35,7 +35,7 @@ class IAPManager: ObservableObject {
     @MainActor
     func retrieveProducts() async {
         do {
-            let productIDs = ["com.minimate.pro"]
+            let productIDs = ["com.minimate.user.pro"]
             let fetchedProducts = try await Product.products(for: productIDs)
             self.products = fetchedProducts
             print("Products retrieved: \(fetchedProducts.map { $0.displayName })")
@@ -85,7 +85,6 @@ class IAPManager: ObservableObject {
                         print("✅ Remote: User saved successfully.")
                     } catch {
                         print("⚠️ Remote: Database sync failed, but purchase was successful locally: \(error)")
-                        // Note: You might still return true here because they DID pay.
                     }
                 } else {
                     print("⚠️ Remote: No userModel found in authModel to save.")
@@ -140,7 +139,7 @@ class IAPManager: ObservableObject {
 
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result,
-               transaction.productID == "com.minimate.pro" {
+               transaction.productID == "com.minimate.user.pro" {
                 hasPro = true
                 break
             }
