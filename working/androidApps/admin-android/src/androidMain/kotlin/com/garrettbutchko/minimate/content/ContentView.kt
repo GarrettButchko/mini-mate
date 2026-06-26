@@ -32,7 +32,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
@@ -52,7 +51,6 @@ import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
-import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.admin.R as AdminR

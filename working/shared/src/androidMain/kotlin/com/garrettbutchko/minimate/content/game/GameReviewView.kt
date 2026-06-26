@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.garrettbutchko.minimate.content.game.fix.GameInfoViewAndroid
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.BarChartView
 import com.garrettbutchko.minimate.content.helper.modifiers.SyncScrollStates
@@ -36,14 +35,7 @@ import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
 import com.garrettbutchko.minimate.modelKotlinExtensions.scoreCardColor
 import com.garrettbutchko.minimate.viewModels.GameReviewViewModel
 
-fun parseColor(hex: String?): Color {
-    if (hex.isNullOrEmpty()) return Color.DarkGray
-    return try {
-        Color(android.graphics.Color.parseColor(if (!hex.startsWith("#")) "#$hex" else hex))
-    } catch (e: Exception) {
-        Color.DarkGray
-    }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,8 +62,8 @@ fun GameReviewView(
     // Synchronize horizontal scrolling for the scorecard grid
     SyncScrollStates(headerScrollState, rowsScrollState, totalScrollState)
 
-    var titleHeightPx by remember { mutableStateOf(0) }
-    var holesColumnHeightPx by remember { mutableStateOf(0) }
+    var titleHeightPx by remember { mutableIntStateOf(0) }
+    var holesColumnHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
 
     // Compute a dp height for the hole rows column when available, otherwise fallback

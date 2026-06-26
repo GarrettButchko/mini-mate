@@ -1,8 +1,6 @@
 package com.garrettbutchko.minimate.content.tabviews.analytics.charts
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,9 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -21,9 +17,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.tabviews.analytics.ChartEmptyState
@@ -69,9 +63,7 @@ private fun BusiestTimesHeatmap(data: List<HourData>) {
         val xLabelHeight = 20.dp.toPx()
         val topPad = 4.dp.toPx()
 
-        val chartLeft = yLabelWidth
-        val chartTop = topPad
-        val chartWidth = size.width - chartLeft
+        val chartWidth = size.width - yLabelWidth
         val chartHeight = size.height - xLabelHeight - topPad
 
         val colWidth = chartWidth / 24f
@@ -81,8 +73,8 @@ private fun BusiestTimesHeatmap(data: List<HourData>) {
         for (item in data) {
             val intensity = (item.count.toFloat() / maxCount).coerceIn(0f, 1f)
             val alpha = 0.16f + intensity * 0.84f
-            val x = chartLeft + item.hour * colWidth + colWidth * cellPad / 2f
-            val y = chartTop + (item.weekday - 1) * rowHeight + rowHeight * cellPad / 2f
+            val x = yLabelWidth + item.hour * colWidth + colWidth * cellPad / 2f
+            val y = topPad + (item.weekday - 1) * rowHeight + rowHeight * cellPad / 2f
             drawRoundRect(
                 color = Color(0xFF34C759).copy(alpha = alpha),
                 topLeft = Offset(x, y),
@@ -94,7 +86,7 @@ private fun BusiestTimesHeatmap(data: List<HourData>) {
         val labelStyle = TextStyle(fontSize = 9.sp, color = labelColor)
 
         for ((day, label) in yAxisDays) {
-            val cy = chartTop + (day - 1) * rowHeight + rowHeight / 2f
+            val cy = topPad + (day - 1) * rowHeight + rowHeight / 2f
             val measured = textMeasurer.measure(label, labelStyle)
             drawText(
                 textLayoutResult = measured,
@@ -106,7 +98,7 @@ private fun BusiestTimesHeatmap(data: List<HourData>) {
         }
 
         for (hour in xAxisHours) {
-            val cx = chartLeft + hour * colWidth + colWidth / 2f
+            val cx = yLabelWidth + hour * colWidth + colWidth / 2f
             val measured = textMeasurer.measure(formatHour(hour), labelStyle)
             drawText(
                 textLayoutResult = measured,

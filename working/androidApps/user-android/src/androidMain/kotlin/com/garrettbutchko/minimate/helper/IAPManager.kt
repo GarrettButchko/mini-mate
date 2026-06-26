@@ -123,18 +123,22 @@ class IAPManager(
      * Equivalent to `for await update in Transaction.updates`
      */
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
-        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-            for (purchase in purchases) {
-                coroutineScope.launch {
-                    handlePurchase(purchase)
+        when (billingResult.responseCode) {
+            BillingClient.BillingResponseCode.OK if purchases != null -> {
+                for (purchase in purchases) {
+                    coroutineScope.launch {
+                        handlePurchase(purchase)
+                    }
                 }
             }
-        } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            log.i("🛑 Purchase: User cancelled the payment sheet.")
-            _isPurchasing.value = false
-        } else {
-            log.e("🚨 Purchase: System error: ${billingResult.debugMessage}")
-            _isPurchasing.value = false
+            BillingClient.BillingResponseCode.USER_CANCELED -> {
+                log.i("🛑 Purchase: User cancelled the payment sheet.")
+                _isPurchasing.value = false
+            }
+            else -> {
+                log.e("🚨 Purchase: System error: ${billingResult.debugMessage}")
+                _isPurchasing.value = false
+            }
         }
     }
 

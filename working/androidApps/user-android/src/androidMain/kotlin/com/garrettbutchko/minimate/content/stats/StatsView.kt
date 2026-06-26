@@ -86,6 +86,7 @@ import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.StatsViewModel
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @Composable
@@ -327,7 +328,7 @@ private fun GamesSection(
                         deleteFunction = {
                             deletingIds = deletingIds + game.id
                             scope.launch {
-                                delay(300)
+                                delay(300.milliseconds)
                                 statsViewModel.deleteGame(game.id)
                             }
                         }

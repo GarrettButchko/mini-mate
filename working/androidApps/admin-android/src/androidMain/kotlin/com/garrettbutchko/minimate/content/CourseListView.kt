@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -65,6 +64,7 @@ import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.ceil
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * CourseListView
@@ -103,7 +103,7 @@ fun CourseListView(
     // Tick the VM timer every second (replaces iOS Timer.publish)
     LaunchedEffect(Unit) {
         while (true) {
-            delay(1_000)
+            delay(1_000.milliseconds)
             vm.tick()
         }
     }

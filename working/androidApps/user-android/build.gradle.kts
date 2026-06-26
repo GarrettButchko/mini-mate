@@ -34,7 +34,6 @@ kotlin {
             implementation(libs.maps.compose)
             implementation(libs.play.maps)
             implementation(libs.play.location)
-            implementation(libs.places)
 
         }
         commonMain.dependencies {

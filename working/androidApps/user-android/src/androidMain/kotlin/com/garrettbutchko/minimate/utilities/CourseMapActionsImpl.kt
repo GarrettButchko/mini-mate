@@ -2,7 +2,6 @@ package com.garrettbutchko.minimate.utilities
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.viewModels.CourseMapActions
 import androidx.core.net.toUri

@@ -3,11 +3,7 @@ package com.garrettbutchko.minimate.content.tabviews.analytics.tabs
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,11 +14,6 @@ import com.garrettbutchko.minimate.content.tabviews.analytics.charts.GameDuratio
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.GamesPerDayChart
 import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.DataCard
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
-import com.garrettbutchko.minimate.viewModels.analytics.GameDurationActivity
-import com.garrettbutchko.minimate.viewModels.analytics.HourData
-import com.garrettbutchko.minimate.viewModels.analytics.PlayerActivity
-import androidx.compose.ui.text.font.FontWeight
-import com.garrettbutchko.minimate.content.helper.SectionCard
 import com.garrettbutchko.minimate.content.helper.SectionStatsCard
 import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 

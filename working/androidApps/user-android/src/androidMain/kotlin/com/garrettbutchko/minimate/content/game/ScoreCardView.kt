@@ -1,7 +1,5 @@
 package com.garrettbutchko.minimate.content.game
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,9 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
@@ -44,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -54,14 +50,12 @@ import androidx.compose.ui.draw.clip
 import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.garrettbutchko.minimate.content.game.fix.GameInfoViewAndroid
 import com.garrettbutchko.minimate.content.helper.CourseBannerAdView
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.StepperControl
@@ -85,7 +79,6 @@ fun ScoreCardGameView(
     modifier: Modifier = Modifier
 ) {
     val logic = remember { ScoreCardBusinessLogic() }
-    val context = LocalContext.current
 
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()
@@ -129,8 +122,8 @@ fun ScoreCardGameView(
         }
     }
 
-    var titleHeightPx by remember { mutableStateOf(0) }
-    var holesColumnHeightPx by remember { mutableStateOf(0) }
+    var titleHeightPx by remember { mutableIntStateOf(0) }
+    var holesColumnHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val holeColumnHeightDp = if (holesColumnHeightPx > 0) with(density) { holesColumnHeightPx.toDp() } else (holeCount * 60).dp
     val scoreGridDividerColor = colorResource(id = com.garrettbutchko.minimate.shared.R.color.mainOpp).copy(alpha = 0.1f)

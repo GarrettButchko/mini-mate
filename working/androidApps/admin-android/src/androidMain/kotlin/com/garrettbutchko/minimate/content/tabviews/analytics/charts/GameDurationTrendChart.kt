@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,12 +33,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.tabviews.analytics.ChartEmptyState
 import com.garrettbutchko.minimate.viewModels.analytics.GameDurationActivity
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.number
 
 private val durationLineColor = Color(0xFF32ADE6)
@@ -101,9 +98,7 @@ private fun GameDurationContent(data: List<GameDurationActivity>, drawProgress: 
             val xLabelHeight = 18.dp.toPx()
             val topPad = 4.dp.toPx()
 
-            val chartLeft = yLabelWidth
-            val chartTop = topPad
-            val chartWidth = size.width - chartLeft
+            val chartWidth = size.width - yLabelWidth
             val chartHeight = size.height - xLabelHeight - topPad
 
             val maxY = data.maxOf { it.avgMinutes }.toFloat().coerceAtLeast(1f)
@@ -113,12 +108,12 @@ private fun GameDurationContent(data: List<GameDurationActivity>, drawProgress: 
 
             for (i in 0..yStepCount) {
                 val value = (maxY * i / yStepCount).toInt()
-                val y = chartTop + chartHeight - (i.toFloat() / yStepCount) * chartHeight
+                val y = topPad + chartHeight - (i.toFloat() / yStepCount) * chartHeight
 
                 drawLine(
                     color = gridColor,
-                    start = Offset(chartLeft, y),
-                    end = Offset(chartLeft + chartWidth, y),
+                    start = Offset(yLabelWidth, y),
+                    end = Offset(yLabelWidth + chartWidth, y),
                     strokeWidth = 1.dp.toPx()
                 )
 
@@ -134,17 +129,17 @@ private fun GameDurationContent(data: List<GameDurationActivity>, drawProgress: 
             }
 
             val points = data.mapIndexed { index, item ->
-                val x = if (data.size == 1) chartLeft + chartWidth / 2f
-                else chartLeft + index * chartWidth / (data.size - 1).toFloat()
-                val y = chartTop + chartHeight - (item.avgMinutes.toFloat() / maxY) * chartHeight
+                val x = if (data.size == 1) yLabelWidth + chartWidth / 2f
+                else yLabelWidth + index * chartWidth / (data.size - 1).toFloat()
+                val y = topPad + chartHeight - (item.avgMinutes.toFloat() / maxY) * chartHeight
                 Offset(x, y)
             }
 
             val areaPath = Path().apply {
-                moveTo(points.first().x, chartTop + chartHeight)
+                moveTo(points.first().x, topPad + chartHeight)
                 lineTo(points.first().x, points.first().y)
                 for (i in 1 until points.size) lineTo(points[i].x, points[i].y)
-                lineTo(points.last().x, chartTop + chartHeight)
+                lineTo(points.last().x, topPad + chartHeight)
                 close()
             }
 
@@ -154,14 +149,14 @@ private fun GameDurationContent(data: List<GameDurationActivity>, drawProgress: 
             }
 
             // Left-to-right reveal driven by drawProgress — matches iOS Chart entrance animation.
-            val revealRight = chartLeft + chartWidth * drawProgress
+            val revealRight = yLabelWidth + chartWidth * drawProgress
             clipRect(left = 0f, top = 0f, right = revealRight, bottom = size.height) {
                 drawPath(
                     path = areaPath,
                     brush = Brush.verticalGradient(
                         colors = listOf(durationLineColor.copy(alpha = 0.3f), Color.Transparent),
-                        startY = chartTop,
-                        endY = chartTop + chartHeight
+                        startY = topPad,
+                        endY = topPad + chartHeight
                     )
                 )
                 drawPath(
@@ -175,15 +170,15 @@ private fun GameDurationContent(data: List<GameDurationActivity>, drawProgress: 
             for (idx in xLabelIndices) {
                 val item = data[idx]
                 val label = formatDurationMonthDay(item.date.month.number, item.date.day)
-                val x = if (data.size == 1) chartLeft + chartWidth / 2f
-                else chartLeft + idx * chartWidth / (data.size - 1).toFloat()
+                val x = if (data.size == 1) yLabelWidth + chartWidth / 2f
+                else yLabelWidth + idx * chartWidth / (data.size - 1).toFloat()
                 val measured = textMeasurer.measure(label, labelStyle)
                 drawText(
                     textLayoutResult = measured,
                     topLeft = Offset(
                         x = (x - measured.size.width / 2f).coerceIn(
-                            chartLeft,
-                            chartLeft + chartWidth - measured.size.width
+                            yLabelWidth,
+                            yLabelWidth + chartWidth - measured.size.width
                         ),
                         y = size.height - xLabelHeight + 2.dp.toPx()
                     )

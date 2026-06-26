@@ -149,7 +149,7 @@ fun CourseSettingsView(
 
                 if (tier >= 1) {
                     SectionCard(title = "Course") { CourseSectionContent(course = currentCourse) }
-                    SectionCard(title = "Admins") { AdminsSectionContent(course = currentCourse, courseListVM = courseListVM) }
+                    SectionCard(title = "Admins") { AdminsSectionContent(courseListVM = courseListVM) }
                     SectionCard(title = "Password") { PasswordSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
                     SectionCard(title = "Social Links") { SocialLinksSectionContent(course = currentCourse, courseListVM = courseListVM) }
                 }
@@ -258,7 +258,7 @@ private fun CourseSectionContent(course: Course) {
 // Admins section
 // ---------------------------------------------------------------------------
 @Composable
-private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.courseModels.Course, courseListVM: CourseListViewModel) {
+private fun AdminsSectionContent(courseListVM: CourseListViewModel) {
     val adminUsers by courseListVM.adminUsers.collectAsState()
     val loadingAdmins by courseListVM.loadingAdmins.collectAsState()
     var userIdToDelete by remember { mutableStateOf<String?>(null) }
@@ -334,7 +334,7 @@ private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.
             title = { Text("Remove Admin?", color = mainOpp) },
             text = { Text("This will remove their admin access.", color = mainOpp) },
             confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
+                TextButton(onClick = {
                     courseListVM.removeAdmin(userIdToDelete!!)
                     userIdToDelete = null
                 }) {
@@ -342,7 +342,7 @@ private fun AdminsSectionContent(course: com.garrettbutchko.minimate.dataModels.
                 }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { userIdToDelete = null }) {
+                TextButton(onClick = { userIdToDelete = null }) {
                     Text("Cancel", color = mainOpp)
                 }
             }
@@ -948,7 +948,6 @@ private fun ParConfigurationSectionContent(
     val swiftRed = colorResource(id = ResColor.swiftRed)
     val swiftBlue = colorResource(id = ResColor.swiftBlue)
     val subThree = colorResource(id = ResColor.subThreeOpp)
-    val sub      = colorResource(id = ResColor.sub)
 
     // ── "Par Configuration" section ──────────────────────────────────────────
     SectionCard(title = "Par Configuration") {
@@ -968,7 +967,7 @@ private fun ParConfigurationSectionContent(
                         // Mirror iOS: show confirmation alert before disabling
                         showDisableAlert = true
                     } else {
-                        // Mirror iOS: initialise 18 holes all par-2, set customPar = true
+                        // Mirror iOS: initialize 18 holes all par-2, set customPar = true
                         courseListVM.updateCustomPar(true)
                     }
                 },

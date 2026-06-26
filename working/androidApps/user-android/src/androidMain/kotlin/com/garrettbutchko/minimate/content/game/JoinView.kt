@@ -24,8 +24,6 @@ import androidx.compose.material.icons.filled.SportsGolf
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -65,8 +63,7 @@ fun JoinGameView(
     showJoin: Boolean,
     onShowJoinChange: (Boolean) -> Unit,
     viewManager: ViewManager,
-    gameModel: GameViewModel,
-    onBack: () -> Unit = {}
+    gameModel: GameViewModel
 ) {
     val joinVM = remember { KoinHelper.getJoinViewModel() }
     val logic = remember { JoinViewBusinessLogic() }
@@ -125,7 +122,6 @@ fun JoinGameView(
                         JoinCard(
                             gameCode = gameCode,
                             message = message,
-                            logic = logic,
                             mainOppColor = MaterialTheme.colorScheme.onSurface,
                             onCodeChange = { joinVM.setGameCode(logic.formatEnteredCode(it)) },
                             onScanClick = { showScanner = true }
@@ -254,7 +250,6 @@ fun JoinGameView(
 private fun JoinCard(
     gameCode: String,
     message: String,
-    logic: JoinViewBusinessLogic,
     mainOppColor: Color,
     onCodeChange: (String) -> Unit,
     onScanClick: () -> Unit

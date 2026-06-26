@@ -83,6 +83,7 @@ import com.garrettbutchko.minimate.content.stats.StatsView
 import com.garrettbutchko.minimate.generateUUID
 import com.garrettbutchko.minimate.viewModels.GuestData
 import com.garrettbutchko.minimate.helper.IAPManager
+import kotlin.time.Duration.Companion.milliseconds
 
 private data class AppDependencies(
     val viewManager: ViewManager,
@@ -220,11 +221,12 @@ fun App() {
                         isMiniMateApp = true,
                         authModel = deps.authModel,
                         onSignInWithGoogle = {
-                            val clientId = defaultWebClientId
-                            if (clientId.isBlank()) {
+                            if (defaultWebClientId.isBlank()) {
                                 Logger.i("Missing default_web_client_id string; Google sign-in not configured.")
                             } else {
-                                deps.authModel.signInWithGoogle(context, clientId) { result, photoUrl ->
+                                deps.authModel.signInWithGoogle(context,
+                                    defaultWebClientId
+                                ) { result, photoUrl ->
                                     deps.authModel.handleSignInResult(
                                         result = result,
                                         photoUrl = photoUrl,
@@ -288,7 +290,6 @@ private fun MainTabView(
     }
 
     val currentUserId by authModel.currentUserIdentifierFlow.collectAsState()
-    val currentUserModel by authModel.userModel.collectAsState()
     val userGames by statsViewModel.allGames.collectAsState()
     val isRefreshing by statsViewModel.isRefreshing.collectAsState()
     val hasConnection = NetworkChecker.shared.isConnected
@@ -339,7 +340,7 @@ private fun MainTabView(
                 }
             } catch (e: IllegalStateException) {
                 Logger.w("User load failed (transient?): ${e.message}. Retrying in 3s...")
-                kotlinx.coroutines.delay(3_000)
+                kotlinx.coroutines.delay(3_000.milliseconds)
                 authModel.userRepository.loadOrCreateUser(
                     id = userId
                 ) { refreshedModel ->

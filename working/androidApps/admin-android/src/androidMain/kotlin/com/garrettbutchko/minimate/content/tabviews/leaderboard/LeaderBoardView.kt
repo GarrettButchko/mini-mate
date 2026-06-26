@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.playerModels.LeaderboardEntry
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * LeaderBoardView
@@ -177,7 +178,7 @@ private fun LeaderboardContent(
                                     deleteFunction = {
                                         deletingIds = deletingIds + player.id
                                         scope.launch {
-                                            delay(300)
+                                            delay(300.milliseconds)
                                             vm.deletePlayerEntry(courseID = courseId, playerID = player.id)
                                             editingPlayerID = null
                                         }

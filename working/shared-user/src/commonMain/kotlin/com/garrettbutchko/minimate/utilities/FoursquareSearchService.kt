@@ -79,6 +79,12 @@ class FoursquareSearchService(private val apiKey: String = BuildKonfig.FOURSQUAR
                 parameter("fields", "fsq_place_id,name,categories,latitude,longitude,location,distance,tel,website")
             }
 
+            if (response.status.value !in 200..299) {
+                val errorBody = response.body<String>()
+                log.e("[FoursquareSearchService] HTTP ${response.status.value}: $errorBody")
+                return emptyList()
+            }
+
             val body = response.body<FsqSearchResponse>()
 
             if (body.results.isEmpty()) {

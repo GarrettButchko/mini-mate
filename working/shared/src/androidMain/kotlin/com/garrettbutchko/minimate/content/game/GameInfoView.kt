@@ -1,6 +1,5 @@
-package com.garrettbutchko.minimate.content.game.fix
+package com.garrettbutchko.minimate.content.game
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,10 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -37,9 +33,7 @@ fun GameInfoViewAndroid(
     val viewModel = remember(game) { GameInfoViewModel(game) }
     val bgColor = colorResource(id = R.color.bg)
     val mainOppColor = colorResource(id = R.color.mainOpp)
-    val subColor = colorResource(id = R.color.sub)
     val subOppColor = colorResource(id = R.color.subOpp)
-    val subThreeOppColor = colorResource(id = R.color.subThreeOpp)
 
     Column(
         modifier = modifier

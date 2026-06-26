@@ -40,7 +40,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.helper.modifiers.subTwoVsColor
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
-import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsSection
 import com.garrettbutchko.minimate.viewModels.analytics.CourseHealthReport
 import com.garrettbutchko.minimate.viewModels.analytics.HealthGrade

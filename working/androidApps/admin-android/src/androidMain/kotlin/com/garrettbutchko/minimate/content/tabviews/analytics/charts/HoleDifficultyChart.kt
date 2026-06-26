@@ -135,7 +135,7 @@ fun HoleHardnessRow(
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Text(
-                text = String.format("%.2f", hole.averageStrokes),
+                text = String.format(java.util.Locale.US, "%.2f", hole.averageStrokes),
                 fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.ExtraBold,
                 style = MaterialTheme.typography.bodySmall.copy(lineHeight = 14.sp)

@@ -36,6 +36,7 @@ import com.garrettbutchko.minimate.content.JetBrainsMono
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.viewModels.analytics.HoleHeatmapData
+import kotlin.math.abs
 
 private fun colorForParDifficulty(relativeToPar: Double): Color = when {
     relativeToPar <= -1.5 -> Color(0xFFBF5AF2).copy(alpha = 0.8f)
@@ -112,7 +113,7 @@ fun HolePreviewList(
     var isExpanded by remember { mutableStateOf(false) }
 
     val outliers = remember(allHoles) {
-        allHoles.sortedByDescending { Math.abs(it.relativeToPar) }
+        allHoles.sortedByDescending { abs(it.relativeToPar) }
     }
     val displayList = if (isExpanded) {
         remember(allHoles) { allHoles.sortedBy { it.holeNumber } }
@@ -202,9 +203,9 @@ fun HoleStatusRow(
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             val relStr = if (data.relativeToPar >= 0)
-                "+${String.format("%.1f", data.relativeToPar)}"
+                "+${String.format(java.util.Locale.US, "%.1f", data.relativeToPar)}"
             else
-                String.format("%.1f", data.relativeToPar)
+                String.format(java.util.Locale.US, "%.1f", data.relativeToPar)
 
             Text(
                 text = relStr,

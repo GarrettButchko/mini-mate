@@ -17,7 +17,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
  * A Jetpack Compose implementation of InterstitialAdView.
  * 
  * Unlike SwiftUI where we need a transparent UIViewControllerRepresentable,
- * in Compose we can simply use a side-effect (LaunchedEffect) to load and show
+ * in Compose we can simply use a side effect (LaunchedEffect) to load and show
  * the Activity-level interstitial overlay without polluting the UI hierarchy.
  */
 @Composable

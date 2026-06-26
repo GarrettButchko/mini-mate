@@ -20,14 +20,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.LocalDate
@@ -51,14 +50,13 @@ import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomRangeSheet(
-    vm: AnalyticsViewModel,
     onDismiss: () -> Unit,
     onApply: (LocalDate, LocalDate) -> Unit,
     initialStart: Long = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000,
     initialEnd: Long = System.currentTimeMillis()
 ) {
-    var startMillis by remember { mutableStateOf(initialStart) }
-    var endMillis by remember { mutableStateOf(initialEnd) }
+    var startMillis by remember { mutableLongStateOf(initialStart) }
+    var endMillis by remember { mutableLongStateOf(initialEnd) }
 
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
@@ -213,6 +211,6 @@ private fun millisToDisplayString(millis: Long): String {
 
 // Converts epoch millis to kotlinx.datetime.LocalDate
 private fun millisToLocalDate(millis: Long): LocalDate {
-    val instant = Instant.fromEpochMilliseconds(millis)
+    val instant = kotlin.time.Instant.fromEpochMilliseconds(millis)
     return instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 }

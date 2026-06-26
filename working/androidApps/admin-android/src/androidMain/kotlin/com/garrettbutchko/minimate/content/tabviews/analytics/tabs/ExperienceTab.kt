@@ -11,17 +11,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.garrettbutchko.minimate.content.helper.SectionCard
 import com.garrettbutchko.minimate.content.helper.SectionStatsCard
 import com.garrettbutchko.minimate.content.tabviews.analytics.ChartEmptyState
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.HoleDifficultyChart
@@ -31,8 +27,6 @@ import com.garrettbutchko.minimate.content.tabviews.analytics.charts.HolePreview
 import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.DataCard
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
-import com.garrettbutchko.minimate.viewModels.analytics.HoleDifficultyData
-import com.garrettbutchko.minimate.viewModels.analytics.HoleHeatmapData
 
 @Composable
 internal fun ExperienceTab(vm: AnalyticsViewModel, course: Course?) {

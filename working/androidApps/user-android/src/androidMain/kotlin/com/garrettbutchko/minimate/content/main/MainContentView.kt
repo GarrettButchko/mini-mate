@@ -356,8 +356,7 @@ fun MainContentView(
                         showJoin = showJoinSheet,
                         onShowJoinChange = { showJoinSheet = it },
                         viewManager = viewManager,
-                        gameModel = gameModel,
-                        onBack = { showJoinSheet = false }
+                        gameModel = gameModel
                     )
                 }
             }

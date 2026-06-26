@@ -4,18 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.content.ContextCompat
 import com.garrettbutchko.minimate.dataModels.MapRegionData
 import com.garrettbutchko.minimate.dataModels.mapModels.CoordinateDTO
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.interfaces.LocationFinding
-import com.garrettbutchko.minimate.modelKotlinExtensions.toDTO
-import com.garrettbutchko.minimate.utilities.FoursquareSearchService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,8 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.invoke
-import kotlin.text.toDouble
 import co.touchlab.kermit.Logger
 
 class LocationHandler(private val context: Context) : LocationFinding {
@@ -63,14 +57,6 @@ class LocationHandler(private val context: Context) : LocationFinding {
 
     override fun setSelectedItem(item: MapItemDTO?) {
         _selectedItem.value = item
-    }
-
-    fun setUserLocation(location: CoordinateDTO?) {
-        _userLocation.value = location
-    }
-
-    fun setHasLocationAccess(hasAccess: Boolean) {
-        _hasLocationAccess.value = hasAccess
     }
 
     @SuppressLint("MissingPermission")
