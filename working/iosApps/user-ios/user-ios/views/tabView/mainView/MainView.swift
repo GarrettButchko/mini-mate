@@ -469,6 +469,7 @@ struct MainView: View {
                                     HStack(spacing: 8) {
                                         if isLoading {
                                             ProgressView()
+                                                .tint(.white)
                                             Text("Searching...").fontWeight(.medium)
                                         } else {
                                             Image(systemName: "magnifyingglass").font(.body.weight(.semibold))

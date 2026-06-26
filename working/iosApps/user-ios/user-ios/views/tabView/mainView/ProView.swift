@@ -81,13 +81,17 @@ struct ProView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
             
+            Text("$1.99 one-time purchase")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
             Button {
                 Task {
                     guard let product = iapManager.products.first else {
                         print("No products available for purchase.")
                         return
                     }
-                    
+
                     let _ = await iapManager.purchase(product, authModel: authModel, showSheet: $showSheet)
                 }
             } label: {

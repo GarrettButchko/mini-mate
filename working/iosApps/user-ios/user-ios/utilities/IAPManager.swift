@@ -4,150 +4,184 @@
 //
 //  Created by Garrett Butchko on 6/2/25.
 //
+
 import StoreKit
 import SwiftUI
 import Combine
 import shared_user
 
-class IAPManager: ObservableObject {
-   @Published var products: [Product] = []
-   @Published var isPurchasing = false
-   private var isInitialized = false
-   
-   init() {
-       // Lightweight init - defer heavy operations
-   }
-   
-   // Call this after UI is rendered
-   func initialize() async {
-       print("Retrieving products")
-       guard !isInitialized else { return }
-       isInitialized = true
-       
-       await self.retrieveProducts()
+@MainActor
+final class IAPManager: ObservableObject {
+    static let productID = "com.minimate.user.pro"
 
-       // Listen in the background so init doesn't block forever.
-       Task { [weak self] in
-           await self?.listenForTransactions()
-       }
-   }
-   
-    @MainActor
+    @Published var products: [Product] = []
+    @Published var isPurchasing = false
+    @Published var lastError: String?
+
+    private var isInitialized = false
+    private var transactionListener: Task<Void, Never>?
+
+    init() {
+        transactionListener = listenForTransactions()
+    }
+
+    deinit {
+        transactionListener?.cancel()
+    }
+
+    /// Loads products from StoreKit. Safe to call multiple times.
+    func initialize() async {
+        guard !isInitialized else {
+            print("[IAP] initialize() already ran, skipping")
+            return
+        }
+        isInitialized = true
+        await retrieveProducts()
+    }
+
     func retrieveProducts() async {
+        print("[IAP] Fetching products for ID: \(Self.productID)")
         do {
-            let productIDs = ["com.minimate.user.pro"]
-            let fetchedProducts = try await Product.products(for: productIDs)
-            self.products = fetchedProducts
-            print("Products retrieved: \(fetchedProducts.map { $0.displayName })")
+            let fetched = try await Product.products(for: [Self.productID])
+            self.products = fetched
+            if fetched.isEmpty {
+                print("⚠️ [IAP] No products returned. Check the .storekit config or App Store Connect listing.")
+            } else {
+                print("[IAP] Loaded \(fetched.count) product(s): \(fetched.map { "\($0.id) @ \($0.displayPrice)" })")
+            }
         } catch {
-            print("Failed to fetch products: \(error)")
+            print("❌ [IAP] Product fetch failed: \(error)")
+            lastError = error.localizedDescription
         }
     }
-    
+
+    /// Presents the system purchase sheet and handles the result.
+    /// Cross-platform rule: only writes `isPro = true` to Firebase if it was previously `false`.
     func purchase(_ product: Product, authModel: AuthViewModelSwift, showSheet: Binding<Bool>) async -> Bool {
-        print("🛒 Purchase started for product: \(product.id)")
-        
+        print("🛒 [IAP] Purchase started for: \(product.id) (\(product.displayPrice))")
+        isPurchasing = true
+        defer { isPurchasing = false }
+
         do {
+            print("🛒 [IAP] Calling product.purchase()…")
             let result = try await product.purchase()
-            
+            print("🛒 [IAP] product.purchase() returned a result")
+
             switch result {
             case .success(let verification):
-                print("✅ StoreKit: Purchase call successful. Verifying...")
-                
-                // Handle verification results explicitly
+                print("✅ [IAP] Purchase result: .success — verifying…")
                 let transaction: StoreKit.Transaction
                 do {
-                    transaction = try self.verifyPurchase(verification)
-                    print("🛡️ Verification: Success for Transaction \(transaction.id)")
+                    transaction = try checkVerified(verification)
+                    print("🛡️ [IAP] Verified transaction \(transaction.id)")
                 } catch {
-                    print("❌ Verification: Failed. The purchase might be tampered with or invalid: \(error)")
+                    print("❌ [IAP] Verification failed: \(error)")
+                    lastError = "Purchase verification failed."
                     return false
                 }
-                
-                // Finish the transaction first to tell Apple you've acknowledged it
+
                 await transaction.finish()
-                print("🏁 Transaction finished with Apple.")
-                
-                // Update UI
-                await MainActor.run {
-                    withAnimation {
-                        authModel.userModel?.isPro = true
-                        showSheet.wrappedValue = false
-                        print("📱 UI: Pro status set and sheet dismissed.")
-                    }
-                }
-                
-                // Sync with your backend
-                if let userModel = authModel.userModel {
-                    print("☁️ Remote: Attempting to save user to KoinHelper...")
-                    do {
-                        _ = try await KoinHelperParent.shared.getRemoteUserRepo().save(userModel: userModel, updateLastUpdated: true)
-                        print("✅ Remote: User saved successfully.")
-                    } catch {
-                        print("⚠️ Remote: Database sync failed, but purchase was successful locally: \(error)")
-                    }
-                } else {
-                    print("⚠️ Remote: No userModel found in authModel to save.")
-                }
-                
+                print("🏁 [IAP] Transaction finished with Apple")
+
+                await applyProUnlock(authModel: authModel)
+
+                showSheet.wrappedValue = false
                 return true
-                
+
             case .userCancelled:
-                print("🛑 Purchase: User cancelled the payment sheet.")
+                print("🛑 [IAP] Purchase result: .userCancelled")
                 return false
-                
+
             case .pending:
-                print("⏳ Purchase: Transaction pending (e.g., Ask to Buy enabled).")
+                print("⏳ [IAP] Purchase result: .pending (Ask to Buy)")
+                lastError = "Purchase is pending approval."
                 return false
-                
+
             @unknown default:
-                print("❓ Purchase: Unknown status received.")
+                print("❓ [IAP] Purchase result: unknown")
                 return false
             }
-            
+
         } catch {
-            // This catches system-level errors (network down, iCloud issues, etc.)
-            print("🚨 Purchase: System error: \(error.localizedDescription)")
+            print("🚨 [IAP] Purchase threw: \(error.localizedDescription)")
+            lastError = error.localizedDescription
             return false
         }
     }
-    
-    func listenForTransactions() async {
-        for await update in Transaction.updates {
-            do {
-                let transaction = try self.verifyPurchase(update)
-                // Update your app state here (e.g., unlock premium features)
-                await transaction.finish()
-                print("Transaction processed: \(transaction.productID)")
-            } catch {
-                print("Transaction verification failed: \(error)")
-            }
-        }
-    }
-    
-   private func verifyPurchase(_ verification: VerificationResult<StoreKit.Transaction>) throws -> StoreKit.Transaction {
-       switch verification {
-       case .unverified:
-           throw NSError(domain: "Verification failed", code: 1, userInfo: nil)
-       case .verified(let transaction):
-           return transaction
-       }
-   }
-    
+
+    /// Checks Apple's currentEntitlements and only upgrades local + Firebase Pro state.
+    /// Never downgrades — protects users who purchased on Play Store.
     func isPurchasedPro(authModel: AuthViewModelSwift) async {
         var hasPro = false
-
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result,
-               transaction.productID == "com.minimate.user.pro" {
+               transaction.productID == Self.productID,
+               transaction.revocationDate == nil {
                 hasPro = true
                 break
             }
         }
+        guard hasPro else {
+            print("[IAP] Entitlement check: no active Apple Pro entitlement.")
+            return
+        }
+        print("[IAP] Entitlement check: Apple Pro entitlement found.")
+        await applyProUnlock(authModel: authModel)
+    }
+
+    /// Sets local `isPro = true` and conditionally writes to Firebase.
+    /// Only writes to Firebase if the user wasn't already Pro (cross-platform safe).
+    private func applyProUnlock(authModel: AuthViewModelSwift) async {
+        guard let userModel = authModel.userModel else {
+            print("⚠️ [IAP] No userModel — can't sync Pro state.")
+            return
+        }
+
+        let wasAlreadyPro = userModel.isPro
+
         withAnimation {
-            if let userModel = authModel.userModel, !userModel.isPro {
-                authModel.userModel?.isPro = hasPro
+            authModel.userModel?.isPro = true
+        }
+
+        guard !wasAlreadyPro else {
+            print("ℹ️ [IAP] User was already Pro — skipping remote save.")
+            return
+        }
+
+        do {
+            _ = try await KoinHelperParent.shared.getRemoteUserRepo().save(userModel: userModel, updateLastUpdated: true)
+            print("✅ [IAP] Pro status synced to Firebase.")
+        } catch {
+            print("⚠️ [IAP] Failed to sync Pro status to Firebase: \(error)")
+        }
+    }
+
+    /// Handles external transaction updates (purchases on other devices, refunds, family sharing).
+    /// Entitlement state is fully re-checked on next app launch via `isPurchasedPro`.
+    private func listenForTransactions() -> Task<Void, Never> {
+        Task.detached(priority: .background) {
+            for await update in Transaction.updates {
+                do {
+                    let transaction = try Self.staticCheckVerified(update)
+                    await transaction.finish()
+                    print("[IAP] External transaction processed: \(transaction.productID)")
+                } catch {
+                    print("⚠️ [IAP] External transaction failed verification: \(error)")
+                }
             }
+        }
+    }
+
+    private func checkVerified<T>(_ verification: VerificationResult<T>) throws -> T {
+        try Self.staticCheckVerified(verification)
+    }
+
+    private nonisolated static func staticCheckVerified<T>(_ verification: VerificationResult<T>) throws -> T {
+        switch verification {
+        case .unverified(_, let error):
+            throw error
+        case .verified(let value):
+            return value
         }
     }
 }

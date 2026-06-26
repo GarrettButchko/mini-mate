@@ -191,6 +191,13 @@ fun ProView(
             )
         }
 
+        Text(
+            text = "$1.99 one-time purchase",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
         Button(
             onClick = {
                 val product = products.firstOrNull()

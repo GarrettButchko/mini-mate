@@ -26,12 +26,15 @@ class ViewManager(
 
     init {
         val user = authRepository.currentUser
-        if (user != null && user.isEmailVerified) {
-            _currentView.value = ViewType.CourseList
-        } else {
-            scope.launch {
-                authRepository.logout()
+        if (user != null) {
+            val isEmailPasswordUser = user.providerData.any { it.providerId == "password" }
+            if (isEmailPasswordUser && !user.isEmailVerified) {
+                scope.launch { authRepository.logout() }
+                _currentView.value = ViewType.Welcome
+            } else {
+                _currentView.value = ViewType.CourseList
             }
+        } else {
             _currentView.value = ViewType.Welcome
         }
     }
