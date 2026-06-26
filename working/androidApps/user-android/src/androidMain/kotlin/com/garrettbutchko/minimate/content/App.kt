@@ -226,10 +226,11 @@ fun App() {
                             } else {
                                 deps.authModel.signInWithGoogle(context,
                                     defaultWebClientId
-                                ) { result, photoUrl ->
+                                ) { result, photoUrl, email ->
                                     deps.authModel.handleSignInResult(
                                         result = result,
                                         photoUrl = photoUrl,
+                                        email = email,
                                         onErrorMessage = { msg, _ -> Logger.i("Google sign-in error: ${msg ?: "Unknown error"}") },
                                         onClearGuestGame = {
                                             appScope.launch {
@@ -330,6 +331,12 @@ private fun MainTabView(
         }
 
         authModel.setLoading(true)
+
+        val sessionValid = authModel.verifyAndCleanupIfDeleted()
+        if (!sessionValid) {
+            authModel.setLoading(false)
+            return@LaunchedEffect
+        }
 
         try {
             val loadedUser = try {

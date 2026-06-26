@@ -162,39 +162,49 @@ class AuthViewModelSwift: ObservableObject {
     
     
     /// Signs in the user using Google Sign-In and Firebase via KMP
-    func signInWithGoogle(completion: @escaping (Any?, String?) -> Void) {
+    func signInWithGoogle(
+        guestGame: Game? = nil,
+        onErrorMessage: @escaping (String?, Bool) -> Void,
+        onClearGuestGame: @escaping (Game?) -> Void
+    ) {
         guard let clientID = FirebaseApp.app()?.options.clientID else {
-            completion(nil, nil)
+            onErrorMessage("Missing Firebase client ID", true)
             return
         }
         let config = GIDConfiguration(clientID: clientID)
         GIDSignIn.sharedInstance.configuration = config
-        
+
         guard let rootVC = UIApplication.shared.connectedScenes
             .compactMap({ ($0 as? UIWindowScene)?.windows.first?.rootViewController })
             .first else {
-            completion(nil, nil)
+            onErrorMessage("Unable to present sign-in", true)
             return
         }
-        
+
         GIDSignIn.sharedInstance.signIn(withPresenting: rootVC) { signInResult, error in
             Task { @MainActor in
                 if error != nil {
-                    completion(nil, nil); return
+                    onErrorMessage(error?.localizedDescription, true)
+                    return
                 }
                 guard let user = signInResult?.user,
                       let idToken = user.idToken?.tokenString else {
-                    completion(nil, nil)
+                    onErrorMessage("Google sign-in failed", true)
                     return
                 }
 
                 let profileURL = user.profile?.imageURL(withDimension: 320)?.absoluteString
+                let email = user.profile?.email
 
-                let result = await self.kotlinVM.signInWithGoogleTokens(
+                self.kotlinVM.signInWithGoogleAndHandleResult(
                     idToken: idToken,
-                    accessToken: user.accessToken.tokenString
+                    accessToken: user.accessToken.tokenString,
+                    photoUrl: profileURL,
+                    email: email,
+                    guestGame: guestGame,
+                    onErrorMessage: { message, type in onErrorMessage(message, type.boolValue) },
+                    onClearGuestGame: onClearGuestGame
                 )
-                completion(result, profileURL)
             }
         }
     }

@@ -36,7 +36,7 @@ private fun parseGoogleIdTokenCredential(credential: Credential): GoogleIdTokenC
 fun AuthViewModel.signInWithGoogle(
     context: Context,
     serverClientId: String,
-    completion: (Result<FirebaseUser?>, String?) -> Unit
+    completion: (Result<FirebaseUser?>, String?, String?) -> Unit
 ) {
     val credentialManager = CredentialManager.create(context.applicationContext)
     val googleIdOption = GetGoogleIdOption.Builder()
@@ -54,14 +54,15 @@ fun AuthViewModel.signInWithGoogle(
             val result = credentialManager.getCredential(context, request)
             val googleCredential = parseGoogleIdTokenCredential(result.credential)
             val photoUrl = googleCredential.profilePictureUri?.toString()
+            val email = googleCredential.id
             // Credential Manager Google ID flow returns an ID token; access token is null here.
             signInWithGoogleTokens(googleCredential.idToken, null) { firebaseResult ->
-                completion(firebaseResult, photoUrl)
+                completion(firebaseResult, photoUrl, email)
             }
         } catch (e: GetCredentialException) {
-            completion(Result.failure(e), null)
+            completion(Result.failure(e), null, null)
         } catch (e: Exception) {
-            completion(Result.failure(e), null)
+            completion(Result.failure(e), null, null)
         }
     }
 }

@@ -76,6 +76,33 @@ open class AuthViewModel(
         }
     }
 
+    /**
+     * Async check run at startup. If the Firebase account was deleted on another device,
+     * cleans up all local and remote data and navigates back to sign-in.
+     * Returns true if the session is still valid (or offline), false if cleaned up.
+     */
+    suspend fun verifyAndCleanupIfDeleted(): Boolean {
+        val result = authRepository.verifyAuthStillValid()
+
+        // Network/unknown error → can't confirm deletion, leave user signed in
+        if (result.isFailure) return true
+        // Valid session → proceed normally
+        if (result.getOrDefault(true)) return true
+
+        log.i("Account deleted on another device — cleaning up")
+        val userId = currentUserIdentifier
+
+        runCatching { authRepository.logout() }
+        if (userId != null) {
+            runCatching { userRepository.deleteUnified(userId) }
+        }
+        _firebaseUser.value = null
+        syncCurrentUserIdentifier()
+        _userModel.value = null
+        viewManager.navigateToSignIn()
+        return false
+    }
+
     fun refreshUID() {
         _firebaseUser.value = authRepository.currentUser
         syncCurrentUserIdentifier()
@@ -283,28 +310,21 @@ open class AuthViewModel(
     fun handleSignInResult(
         result: Result<FirebaseUser?>,
         photoUrl: String? = null,
+        email: String? = null,
         onErrorMessage: (String?, Boolean) -> Unit,
         onClearGuestGame: (Game?) -> Unit
     ) {
         result.fold(
             onSuccess = { firebaseUser ->
                 if (firebaseUser != null) {
+                    _firebaseUser.value = firebaseUser
+                    syncCurrentUserIdentifier()
 
-                    var newPhotoURL: String?
-
-                    if (photoUrl != null) {
-                        newPhotoURL = photoUrl
-                    } else {
-                        if (firebaseUser.photoURL != null) {
-                            newPhotoURL = firebaseUser.photoURL
-                        } else {
-                            newPhotoURL = null
-                        }
-                    }
+                    val newPhotoURL = photoUrl ?: firebaseUser.photoURL
 
                     val userData = FirebaseUserSmallData(
                         uid = firebaseUser.uid,
-                        email = firebaseUser.email,
+                        email = firebaseUser.email ?: email,
                         displayName = firebaseUser.displayName,
                         photoURL = newPhotoURL
                     )

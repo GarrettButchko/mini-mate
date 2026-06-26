@@ -264,13 +264,15 @@ struct StartButtons: View {
             .frame(height: 50)
 
             Button {
-                authModel.signInWithGoogle() { result, photoURL in
-                    authModel.kotlinVM.handleSignInResult(result: result, photoUrl: photoURL) { message, type in
-                        errorMessage = (message: message, type: type.boolValue)
-                    } onClearGuestGame: { game in
+                authModel.signInWithGoogle(
+                    guestGame: guestGame,
+                    onErrorMessage: { message, type in
+                        errorMessage = (message: message, type: type)
+                    },
+                    onClearGuestGame: { game in
                         guestGame = game
                     }
-                }
+                )
             } label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 25)

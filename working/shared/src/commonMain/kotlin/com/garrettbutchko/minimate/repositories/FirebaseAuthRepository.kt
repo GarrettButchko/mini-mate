@@ -92,6 +92,27 @@ class FirebaseAuthRepository {
         }
     }
 
+    /**
+     * Returns Success(true) if the Firebase auth session is still valid,
+     * Success(false) if the account was deleted on another device,
+     * or Failure if the check couldn't complete (e.g. offline) — caller should assume valid.
+     */
+    suspend fun verifyAuthStillValid(): Result<Boolean> {
+        val user = auth.currentUser ?: return Result.success(false)
+        return try {
+            user.reload()
+            Result.success(true)
+        } catch (e: Exception) {
+            val msg = e.message?.lowercase() ?: ""
+            val isDeleted = msg.contains("user-not-found") ||
+                msg.contains("user_not_found") ||
+                msg.contains("user has been deleted") ||
+                msg.contains("no user record") ||
+                msg.contains("user not found")
+            if (isDeleted) Result.success(false) else Result.failure(e)
+        }
+    }
+
     suspend fun refreshVerificationStatus(): Boolean {
         return try {
             val user = auth.currentUser ?: return false

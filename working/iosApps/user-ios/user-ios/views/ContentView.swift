@@ -189,7 +189,12 @@ struct MainTabView: View {
             await iapManager.initialize()
             
             guard let id = authModel.kotlinVM.currentUserIdentifier else { return }
-            
+
+            // Verify the Firebase session is still valid — catches the case where the account
+            // was deleted on another device while this one still has a cached session.
+            let sessionValid = try await authModel.kotlinVM.verifyAndCleanupIfDeleted()
+            guard Bool(truncating: sessionValid) else { return }
+
             // Load user data. If the remote fetch fails transiently and no local user exists,
             // the KMP layer throws rather than silently creating a blank user. Retry once after a delay.
             do {

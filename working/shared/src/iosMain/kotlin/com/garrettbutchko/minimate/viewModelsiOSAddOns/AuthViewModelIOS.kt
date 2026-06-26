@@ -6,6 +6,7 @@ import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.utilities.randomNonceString
 import com.garrettbutchko.minimate.utilities.sha256
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
+import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.OAuthProvider
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -14,6 +15,28 @@ import platform.AuthenticationServices.*
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
+
+fun AuthViewModel.signInWithGoogleAndHandleResult(
+    idToken: String,
+    accessToken: String?,
+    photoUrl: String?,
+    email: String?,
+    guestGame: Game? = null,
+    onErrorMessage: (String?, Boolean) -> Unit,
+    onClearGuestGame: (Game?) -> Unit
+) {
+    val credential = GoogleAuthProvider.credential(idToken, accessToken)
+    coroutineScope.launch {
+        val result = authRepository.signInWithCredential(credential)
+        handleSignInResult(
+            result = result,
+            photoUrl = photoUrl,
+            email = email,
+            onErrorMessage = onErrorMessage,
+            onClearGuestGame = onClearGuestGame
+        )
+    }
+}
 
 fun AuthViewModel.handleSignInWithAppleRequest(request: ASAuthorizationAppleIDRequest) {
     // Request full name and email scopes to ensure we get user info on first sign-in
