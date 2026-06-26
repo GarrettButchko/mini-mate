@@ -190,15 +190,11 @@ class AuthViewModelSwift: ObservableObject {
 
                 let profileURL = user.profile?.imageURL(withDimension: 320)?.absoluteString
 
-                do {
-                    let result = try await self.kotlinVM.signInWithGoogleTokens(
-                        idToken: idToken,
-                        accessToken: user.accessToken.tokenString
-                    )
-                    completion(result, profileURL)
-                } catch {
-                    completion(nil, nil)
-                }
+                let result = await self.kotlinVM.signInWithGoogleTokens(
+                    idToken: idToken,
+                    accessToken: user.accessToken.tokenString
+                )
+                completion(result, profileURL)
             }
         }
     }

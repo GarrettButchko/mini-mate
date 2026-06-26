@@ -40,6 +40,7 @@ class IAPManager(
     val isPurchasing: StateFlow<Boolean> = _isPurchasing.asStateFlow()
 
     private var isInitialized = false
+    private var pendingProCheck: (suspend () -> Unit)? = null
 
     // Callbacks to communicate with the AuthViewModel/KMP logic from the UI layer
     var onPurchaseSuccess: (Purchase) -> Unit = {}
@@ -51,8 +52,12 @@ class IAPManager(
         .enablePendingPurchases()
         .build()
 
-    fun initialize() {
-        if (isInitialized) return
+    fun initialize(onReady: (suspend () -> Unit)? = null) {
+        if (onReady != null) pendingProCheck = onReady
+        if (isInitialized) {
+            onReady?.let { coroutineScope.launch { it() } }
+            return
+        }
 
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
@@ -60,12 +65,13 @@ class IAPManager(
                     isInitialized = true
                     coroutineScope.launch {
                         retrieveProducts()
+                        pendingProCheck?.invoke()
+                        pendingProCheck = null
                     }
                 }
             }
 
             override fun onBillingServiceDisconnected() {
-                // Try to restart the connection on the next request to Google Play by calling the startConnection() method.
                 isInitialized = false
             }
         })
@@ -74,7 +80,7 @@ class IAPManager(
     private suspend fun retrieveProducts() {
         val productList = listOf(
             QueryProductDetailsParams.Product.newBuilder()
-                .setProductId("com.minimate.pro")
+                .setProductId("com.minimate.user.pro")
                 .setProductType(BillingClient.ProductType.INAPP)
                 .build()
         )
@@ -172,18 +178,34 @@ class IAPManager(
 
         if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
             for (purchase in result.purchasesList) {
-                if (purchase.products.contains("com.minimate.pro") && purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                if (purchase.products.contains("com.minimate.user.pro") && purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
                     hasPro = true
                     break
                 }
             }
+        } else {
+            log.w("checkIsPurchasedPro: billing not ready (${result.billingResult.responseCode}), skipping")
+            return
         }
 
+        if (!hasPro) {
+            log.i("checkIsPurchasedPro: no active Pro entitlement")
+            onProStatusChecked(false)
+            return
+        }
+
+        log.i("checkIsPurchasedPro: Pro entitlement found")
         val user = authModel.userModel.value
-        if (user != null && !user.isPro) {
-            authModel.setUserModel(user.copy(isPro = hasPro))
+        if (user != null) {
+            val wasAlreadyPro = user.isPro
+            authModel.setUserModel(user.copy(isPro = true))
+            if (!wasAlreadyPro) {
+                runCatching { authModel.userRepository.saveUnified(user.googleId, user.copy(isPro = true)) }
+                    .onSuccess { log.i("✅ Pro status synced to Firebase") }
+                    .onFailure { log.w("⚠️ Failed to sync Pro status to Firebase: ${it.message}") }
+            }
         }
 
-        onProStatusChecked(hasPro)
+        onProStatusChecked(true)
     }
 }

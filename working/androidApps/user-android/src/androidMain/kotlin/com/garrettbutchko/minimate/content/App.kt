@@ -315,18 +315,9 @@ private fun MainTabView(
     }
 
     LaunchedEffect(iapManager) {
-        iapManager.onPurchaseSuccess = { purchase ->
-            val user = authModel.userModel.value
-            if (user != null && !user.isPro) {
-                val upgraded = user.copy(isPro = true)
-                authModel.setUserModel(upgraded)
-                appScope.launch {
-                    runCatching { authModel.userRepository.saveUnified(upgraded.googleId, upgraded) }
-                }
-            }
+        iapManager.initialize {
+            iapManager.checkIsPurchasedPro(authModel)
         }
-        iapManager.initialize()
-        iapManager.checkIsPurchasedPro(authModel)
     }
 
     LaunchedEffect(currentUserId) {
