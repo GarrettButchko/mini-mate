@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -142,23 +142,21 @@ fun EmailPasswordView(
                     exit = shrinkVertically() + fadeOut()
                 ) {
                     errorMessage?.let { msg ->
+                        val swiftGreen = colorResource(id = R.color.swiftGreen)
+                        val swiftRed = colorResource(id = R.color.swiftRed)
+                        val subOpp = MaterialTheme.colorScheme.onSurfaceVariant
+                        val baseColor = if (isErrorPositive) swiftGreen else swiftRed
+                        val textColor = lerp(baseColor, subOpp, 0.5f)
                         Text(
                             text = msg,
-                            color = if (isErrorPositive) Color(0xFF00661A) else Color(0xFF800000),
+                            color = textColor,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(
-                                    if (isErrorPositive) Color.Green.copy(alpha = 0.25f)
-                                    else Color.Red.copy(alpha = 0.25f),
+                                    baseColor.copy(alpha = 0.25f),
                                     RoundedCornerShape(20.dp)
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isErrorPositive) Color.Green.copy(alpha = 0.5f)
-                                            else Color.Red.copy(alpha = 0.5f),
-                                    shape = RoundedCornerShape(20.dp)
                                 )
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         )

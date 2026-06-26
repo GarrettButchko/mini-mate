@@ -82,7 +82,7 @@ struct EmailPasswordView: View {
 
                                 if let errorMessageText = errorMessage.message {
                                     Text(errorMessageText)
-                                        .foregroundColor(errorMessage.type ? Color(red: 0.0, green: 0.4, blue: 0.1) : Color(red: 0.5, green: 0.0, blue: 0.0))
+                                        .foregroundColor(errorMessage.type ? .green.mix(with: .subOpp, by: 0.5) : .red.mix(with: .subOpp, by: 0.5))
                                         .font(.caption)
                                         .multilineTextAlignment(.center)
                                         .padding(.vertical, 8)
@@ -93,8 +93,6 @@ struct EmailPasswordView: View {
                                                     .fill(.ultraThinMaterial)
                                                 RoundedRectangle(cornerRadius: 20)
                                                     .fill(errorMessage.type ? .green.opacity(0.25) : .red.opacity(0.25))
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .strokeBorder(errorMessage.type ? .green.opacity(0.5) : .red.opacity(0.5), lineWidth: 1)
                                             }
                                         )
                                         .transition(.move(edge: .top).combined(with: .opacity))
