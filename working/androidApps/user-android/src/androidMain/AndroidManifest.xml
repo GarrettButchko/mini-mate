@@ -43,6 +43,7 @@
         <activity
             android:exported="true"
             android:name="com.garrettbutchko.minimate.MainActivity"
+            android:windowSoftInputMode="adjustNothing"
             android:configChanges="uiMode|keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
