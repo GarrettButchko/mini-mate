@@ -75,7 +75,30 @@ struct EmailPasswordView: View {
                                 
                                 emailSection.id(Field.email)
                                 passwordSection.id(Field.password)
-                                if showSignUp { confirmSection.id(Field.confirm) }
+                                if showSignUp {
+                                    confirmSection.id(Field.confirm)
+                                        .transition(.move(edge: .top).combined(with: .opacity))
+                                }
+
+                                if let errorMessageText = errorMessage.message {
+                                    Text(errorMessageText)
+                                        .foregroundColor(errorMessage.type ? Color(red: 0.0, green: 0.4, blue: 0.1) : Color(red: 0.5, green: 0.0, blue: 0.0))
+                                        .font(.caption)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(
+                                            ZStack {
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .fill(.ultraThinMaterial)
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .fill(errorMessage.type ? .green.opacity(0.25) : .red.opacity(0.25))
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .strokeBorder(errorMessage.type ? .green.opacity(0.5) : .red.opacity(0.5), lineWidth: 1)
+                                            }
+                                        )
+                                        .transition(.move(edge: .top).combined(with: .opacity))
+                                }
                                 
                                 Button {
                                     isLoading = true
@@ -90,7 +113,8 @@ struct EmailPasswordView: View {
                                             .frame(width: 150, height: 50)
                                             .foregroundColor(.green)
                                         if isLoading {
-                                            LogoLoadingView()
+                                            ProgressView()
+                                                .tint(Color.white)
                                         } else {
                                             Text(showSignUp ? "Sign Up" : "Login")
                                                 .foregroundColor(.white)
@@ -101,25 +125,9 @@ struct EmailPasswordView: View {
                                 .disabled(disabled || isLoading)
                                 .onChange(of: errorMessage.message) { _, _ in isLoading = false }
                                 .onChange(of: showSignUp) { _, _ in isLoading = false }
-                                
-                                // Error
-                                if let errorMessageText = errorMessage.message {
-                                    Text(errorMessageText)
-                                        .foregroundColor(errorMessage.type ? .green : .red)
-                                        .font(.caption)
-                                        .multilineTextAlignment(.center)
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(
-                                            ZStack{
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .fill(.ultraThinMaterial)
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .fill(errorMessage.type ? .green.opacity(0.2) : .red.opacity(0.2))
-                                            }
-                                        )
-                                }
                             }
+                            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showSignUp)
+                            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: errorMessage.message)
                             Spacer()
                             Spacer()
                         }

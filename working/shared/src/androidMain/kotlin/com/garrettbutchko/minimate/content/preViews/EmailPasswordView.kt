@@ -6,7 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -19,16 +19,15 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
@@ -137,6 +136,35 @@ fun EmailPasswordView(
                     )
                 }
 
+                AnimatedVisibility(
+                    visible = errorMessage != null,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    errorMessage?.let { msg ->
+                        Text(
+                            text = msg,
+                            color = if (isErrorPositive) Color(0xFF00661A) else Color(0xFF800000),
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    if (isErrorPositive) Color.Green.copy(alpha = 0.25f)
+                                    else Color.Red.copy(alpha = 0.25f),
+                                    RoundedCornerShape(20.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (isErrorPositive) Color.Green.copy(alpha = 0.5f)
+                                            else Color.Red.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+
                 // Submit Button
                 Button(
                     onClick = {
@@ -200,7 +228,11 @@ fun EmailPasswordView(
                         .align(Alignment.CenterHorizontally)
                 ) {
                     if (isLoading) {
-                        LogoLoadingView(size = 20.dp)
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
                     } else {
                         Text(
                             text = if (showSignUp) "Sign Up" else "Login",
@@ -209,25 +241,6 @@ fun EmailPasswordView(
                     }
                 }
 
-                // Error Message
-                errorMessage?.let { msg ->
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isErrorPositive) colorResource(id = R.color.swiftGreen).copy(alpha = 0.2f) 
-                                else colorResource(id = R.color.swiftRed).copy(alpha = 0.2f)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = msg,
-                            color = if (isErrorPositive) colorResource(id = R.color.swiftGreen) else colorResource(id = R.color.swiftRed),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
             }
             Spacer(modifier = Modifier.height(50.dp))
         }
