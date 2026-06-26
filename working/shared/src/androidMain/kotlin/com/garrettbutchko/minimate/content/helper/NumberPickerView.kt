@@ -16,8 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,7 +59,6 @@ fun NumberPickerView(
         }
     }
 
-    val selectedIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
     val fadeColor = MaterialTheme.colorScheme.surface
 
     Box(
@@ -76,7 +73,7 @@ fun NumberPickerView(
             modifier = Modifier.fillMaxSize()
         ) {
             items(numbers.size) { index ->
-                val isSelected = index == selectedIndex
+
                 Box(
                     modifier = Modifier.fillMaxWidth().height(itemHeight),
                     contentAlignment = Alignment.Center

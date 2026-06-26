@@ -37,15 +37,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-enum class Field {
-    Email, Password, Confirm
-}
-
 @Composable
 fun EmailPasswordView(
     authModel: AuthViewModel?,
     guestGame: Game?,
-    showEmail: Boolean,
     onShowEmailChange: (Boolean) -> Unit,
     email: String,
     onEmailChange: (String) -> Unit,

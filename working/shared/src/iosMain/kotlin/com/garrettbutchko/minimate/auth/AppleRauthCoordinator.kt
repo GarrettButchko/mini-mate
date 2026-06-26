@@ -9,7 +9,7 @@ import platform.UIKit.UIWindowScene
 import platform.darwin.NSObject
 
 
-class AppleReauthCoordinator(
+class AppleRauthCoordinator(
     val onAuthorize: (Result<ASAuthorization>) -> Unit
 ) : NSObject(), ASAuthorizationControllerDelegateProtocol, ASAuthorizationControllerPresentationContextProvidingProtocol {
 

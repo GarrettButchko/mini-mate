@@ -2,7 +2,6 @@ package com.garrettbutchko.minimate.content
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,9 +21,9 @@ import com.garrettbutchko.minimate.shared.R
 
 @Composable
 fun TitleView(
+    modifier: Modifier = Modifier,
     colors: List<Color>? = null,
-    isManager: Boolean = false,
-    modifier: Modifier = Modifier
+    isManager: Boolean = false
 ) {
     val defaultColors = listOf(
         colorResource(id = R.color.swiftRed),
@@ -109,7 +108,7 @@ fun OrbitingCirclesView(
     }
 
     // Animation timer loop
-    var time by remember { mutableStateOf(0f) }
+    var time by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(Unit) {
         val startTime = System.nanoTime()
         while (isActive) {

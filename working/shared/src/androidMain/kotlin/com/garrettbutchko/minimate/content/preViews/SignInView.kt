@@ -104,7 +104,6 @@ fun SignInView(
                         EmailPasswordView(
                             authModel = authModel,
                             guestGame = guestGame,
-                            showEmail = showEmailSignIn,
                             onShowEmailChange = { showEmailSignIn = it },
                             email = email,
                             onEmailChange = { email = it },

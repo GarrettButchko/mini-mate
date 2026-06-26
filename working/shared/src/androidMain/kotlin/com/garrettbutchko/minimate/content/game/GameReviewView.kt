@@ -34,7 +34,7 @@ import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.modelKotlinExtensions.ballColor
 import com.garrettbutchko.minimate.modelKotlinExtensions.scoreCardColor
 import com.garrettbutchko.minimate.viewModels.GameReviewViewModel
-
+import androidx.core.net.toUri
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -390,7 +390,7 @@ fun GameReviewView(
                             onClick = {
                                 val link = currentCourse.adLink
                                 if (!link.isNullOrEmpty()) {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                    val intent = Intent(Intent.ACTION_VIEW, link.toUri())
                                     context.startActivity(intent)
                                 }
                             },

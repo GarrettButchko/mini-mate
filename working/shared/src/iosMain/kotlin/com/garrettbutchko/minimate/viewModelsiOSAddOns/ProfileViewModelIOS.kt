@@ -15,12 +15,12 @@ import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
-import com.garrettbutchko.minimate.auth.AppleReauthCoordinator
+import com.garrettbutchko.minimate.auth.AppleRauthCoordinator
 import com.garrettbutchko.minimate.viewModels.ProfileViewModel
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 
-private var activeReauthCoordinator: AppleReauthCoordinator? = null
+private var activeReauthCoordinator: AppleRauthCoordinator? = null
 private var currentNonce: String? = null
 private val log = Logger.withTag("ProfileViewModelIOS")
 
@@ -35,7 +35,7 @@ fun ProfileViewModel.startAppleReauthAndDelete(onSheetPresentChange: (Boolean) -
     // Apple requires a SHA256 hash of the raw nonce.
     request.nonce = sha256(nonce)
 
-    val coordinator = AppleReauthCoordinator { result ->
+    val coordinator = AppleRauthCoordinator { result ->
         activeReauthCoordinator = null // Clear strong reference
         result.onSuccess { authorization ->
             deleteAppleAccount(authorization) { deletionSuccess ->
