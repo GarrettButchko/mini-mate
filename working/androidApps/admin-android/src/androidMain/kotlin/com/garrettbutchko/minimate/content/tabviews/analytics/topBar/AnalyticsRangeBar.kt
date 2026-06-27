@@ -163,7 +163,6 @@ internal fun AnalyticsRangeBar(
             containerColor = MaterialTheme.colorScheme.background
         ) {
             CustomRangeSheet(
-                vm = vm,
                 onDismiss = { showCustomSheet = false },
                 onApply = { start, end ->
                     vm.setRange(AnalyticsRange.Custom(start, end), course)

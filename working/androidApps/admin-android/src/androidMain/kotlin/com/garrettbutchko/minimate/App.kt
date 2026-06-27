@@ -118,10 +118,11 @@ fun App() {
                     onNavigateToWelcome = { viewManager.navigateToWelcome() },
                     authViewModel = authViewModel,
                     onSignInWithGoogle = {
-                        authViewModel.signInWithGoogle(context, webClientId) { result, photoUrl ->
+                        authViewModel.signInWithGoogle(context, webClientId) { result, photoUrl, email ->
                             authViewModel.handleSignInResult(
                                 result = result,
                                 photoUrl = photoUrl,
+                                email = email,
                                 onErrorMessage = { _, _ -> },
                                 onClearGuestGame = { }
                             )
