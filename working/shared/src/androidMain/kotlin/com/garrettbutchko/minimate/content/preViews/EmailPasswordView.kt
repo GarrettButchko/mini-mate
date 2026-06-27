@@ -49,12 +49,29 @@ fun EmailPasswordView(
     confirmPassword: String,
     onConfirmPasswordChange: (String) -> Unit,
     initialShowSignUp: Boolean = false,
+    isDebug: Boolean = false,
     onBack: () -> Unit
 ) {
     var showSignUp by remember { mutableStateOf(initialShowSignUp) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isErrorPositive by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+
+    // Retains the last non-null message so the text stays visible during the exit animation
+    var lastErrorMessage by remember { mutableStateOf("") }
+    var lastIsErrorPositive by remember { mutableStateOf(false) }
+    if (errorMessage != null) {
+        lastErrorMessage = errorMessage!!
+        lastIsErrorPositive = isErrorPositive
+    }
+
+    // Hold the spinner until the error banner has had time to animate into view
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            kotlinx.coroutines.delay(250)
+            isLoading = false
+        }
+    }
 
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
@@ -97,16 +114,16 @@ fun EmailPasswordView(
 
             Spacer(modifier = Modifier.height(50.dp))
 
-            // Form Fields
-            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                // Email Field
+            // Form Fields — spacers live inside AnimatedVisibility so they collapse with the content
+            Column {
                 EmailSection(
                     email = email,
                     onEmailChange = onEmailChange,
                     focusRequester = emailFocus
                 )
 
-                // Password Field
+                Spacer(modifier = Modifier.height(20.dp))
+
                 PasswordSection(
                     title = "Password",
                     password = password,
@@ -121,14 +138,17 @@ fun EmailPasswordView(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    PasswordSection(
-                        title = "Confirm Password",
-                        password = confirmPassword,
-                        onPasswordChange = {
-                            if (it.length <= characterLimit) onConfirmPasswordChange(it)
-                        },
-                        focusRequester = confirmFocus
-                    )
+                    Column {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        PasswordSection(
+                            title = "Confirm Password",
+                            password = confirmPassword,
+                            onPasswordChange = {
+                                if (it.length <= characterLimit) onConfirmPasswordChange(it)
+                            },
+                            focusRequester = confirmFocus
+                        )
+                    }
                 }
 
                 AnimatedVisibility(
@@ -136,14 +156,15 @@ fun EmailPasswordView(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    errorMessage?.let { msg ->
+                    Column {
+                        Spacer(modifier = Modifier.height(20.dp))
                         val swiftGreen = colorResource(id = R.color.swiftGreen)
                         val swiftRed = colorResource(id = R.color.swiftRed)
                         val subOpp = MaterialTheme.colorScheme.onSurfaceVariant
-                        val baseColor = if (isErrorPositive) swiftGreen else swiftRed
+                        val baseColor = if (lastIsErrorPositive) swiftGreen else swiftRed
                         val textColor = lerp(baseColor, subOpp, 0.5f)
                         Text(
-                            text = msg,
+                            text = lastErrorMessage,
                             color = textColor,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
@@ -157,6 +178,8 @@ fun EmailPasswordView(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // Submit Button
                 Button(
@@ -181,7 +204,6 @@ fun EmailPasswordView(
                                 onErrorMessage = { msg, type ->
                                     errorMessage = msg
                                     isErrorPositive = type
-                                    isLoading = false
                                 },
                                 onClearGuestGame = { /* Handled in AuthViewModel / Repo */ }
                             )
@@ -203,7 +225,6 @@ fun EmailPasswordView(
                                 onErrorMessage = { msg, type ->
                                     errorMessage = msg
                                     isErrorPositive = type
-                                    isLoading = false
                                 },
                                 onClearGuestGame = { /* Handled in AuthViewModel / Repo */ }
                             )
@@ -233,7 +254,6 @@ fun EmailPasswordView(
                         )
                     }
                 }
-
             }
             Spacer(modifier = Modifier.height(50.dp))
         }
