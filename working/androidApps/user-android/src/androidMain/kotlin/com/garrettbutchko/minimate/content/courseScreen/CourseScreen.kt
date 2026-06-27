@@ -3,7 +3,10 @@ package com.garrettbutchko.minimate.content.courseScreen
 import co.touchlab.kermit.Logger
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.core.net.toUri
+import com.garrettbutchko.minimate.utilities.AppLinks
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -239,7 +242,10 @@ fun CourseScreen(
                                             courseVM.closeSelectedCourse()
                                             courseVM.recenterMap()
                                         },
-                                        onClaimCourse = { courseLocationVM.claimCourse() }
+                                        onClaimCourse = {
+                                            val intent = Intent(Intent.ACTION_VIEW, AppLinks.claimCourseUrl.toUri())
+                                            context.startActivity(intent)
+                                        }
                                     )
                                 } else {
                                     CourseSearchResultsView(

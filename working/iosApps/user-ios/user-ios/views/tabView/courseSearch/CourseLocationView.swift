@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import MapKit
 import MarqueeText
 import shared_user
@@ -333,7 +334,7 @@ struct CourseClaimButton: View {
     @EnvironmentObject var courseLoc: CourseLocationViewModelSwift
     
     var body: some View {
-        Button(action: courseLoc.kotlin.claimCourse) {
+        Button(action: { UIApplication.shared.open(URL(string: AppLinks.shared.claimCourseUrl)!) }) {
             HStack {
                 Image(systemName: "safari.fill")
                 Text("Is this your course? Click to Claim!")

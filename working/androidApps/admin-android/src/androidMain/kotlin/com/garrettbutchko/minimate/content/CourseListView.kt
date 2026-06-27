@@ -1,6 +1,10 @@
 package com.garrettbutchko.minimate.content
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
+import com.garrettbutchko.minimate.utilities.AppLinks
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -460,13 +464,17 @@ private fun RateLimitBanner(message: String, timeRemaining: Double) {
 
 @Composable
 private fun GetPasswordButton() {
+    val context = LocalContext.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .subtleShadow(shape = RoundedCornerShape(18.dp)),
         shape = RoundedCornerShape(18.dp),
         color = colorResource(id = ResColor.sub),
-        onClick = { /* TODO: open web URL for course password */ }
+        onClick = {
+            val intent = Intent(Intent.ACTION_VIEW, AppLinks.coursePasswordUrl.toUri())
+            context.startActivity(intent)
+        }
     ) {
         Row(
             modifier = Modifier

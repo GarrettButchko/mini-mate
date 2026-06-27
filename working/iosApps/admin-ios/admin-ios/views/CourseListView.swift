@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import FirebaseAuth
 import shared_admin
 
@@ -186,7 +187,7 @@ struct CourseListView: View {
             }
             
             Button {
-                // later: open URL
+                UIApplication.shared.open(URL(string: AppLinks.shared.coursePasswordUrl)!)
             } label: {
                 HStack {
                     Image(systemName: "safari.fill")
@@ -291,7 +292,7 @@ struct CourseListView: View {
                     
                     // Placeholder until you have the site
                     Button {
-                        // later: open URL
+                        UIApplication.shared.open(URL(string: AppLinks.shared.coursePasswordUrl)!)
                     } label: {
                         HStack {
                             Image(systemName: "safari.fill")
