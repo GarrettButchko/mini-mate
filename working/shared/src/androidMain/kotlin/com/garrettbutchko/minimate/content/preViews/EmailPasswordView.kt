@@ -36,6 +36,7 @@ import com.garrettbutchko.minimate.shared.R
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun EmailPasswordView(
@@ -49,7 +50,6 @@ fun EmailPasswordView(
     confirmPassword: String,
     onConfirmPasswordChange: (String) -> Unit,
     initialShowSignUp: Boolean = false,
-    isDebug: Boolean = false,
     onBack: () -> Unit
 ) {
     var showSignUp by remember { mutableStateOf(initialShowSignUp) }
@@ -68,7 +68,7 @@ fun EmailPasswordView(
     // Hold the spinner until the error banner has had time to animate into view
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
-            kotlinx.coroutines.delay(250)
+            kotlinx.coroutines.delay(250.milliseconds)
             isLoading = false
         }
     }
