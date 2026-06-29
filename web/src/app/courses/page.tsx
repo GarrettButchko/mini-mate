@@ -5,7 +5,7 @@ import { MapPin, Users, Smartphone, Map } from "lucide-react";
 import MiniMateLogo from "@/components/MiniMateLogo";
 import type { MapItemDTO } from "@/lib/foursquare";
 import { resolveContactRoute, getAllContactRoutes } from "@/lib/contactRouter";
-import { SearchResultBusinessLogic } from "@/logic/SearchResultBusinessLogic";
+import { SearchResultBusinessLogic } from "@/lib/SearchResultBusinessLogic";
 
 const searchLogic = new SearchResultBusinessLogic();
 

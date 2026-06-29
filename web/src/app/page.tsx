@@ -2,7 +2,7 @@ import Link from "next/link";
 import ScreenshotFrame from "@/components/ScreenshotFrame";
 import { Target, Globe, BarChart2, Map, Smartphone, Building2, Download } from "lucide-react";
 import MiniMateLogo from "@/components/MiniMateLogo";
-import { MainViewBusinessLogic } from "@/logic/MainViewBusinessLogic";
+import { MainViewBusinessLogic } from "@/lib/MainViewBusinessLogic";
 
 const logic = new MainViewBusinessLogic();
 

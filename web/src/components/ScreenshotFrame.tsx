@@ -55,7 +55,7 @@ export default function ScreenshotFrame({ imageSrc, imageAlt, frameWidth = 100, 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-6"
           style={{
-            background: visible ? "rgba(0,0,0,0.96)" : "rgba(0,0,0,0)",
+            background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
             transition: "background 0.25s ease",
