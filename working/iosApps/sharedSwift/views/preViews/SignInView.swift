@@ -33,7 +33,7 @@ struct SignInView: View {
     @StateObject private var keyboard = KeyboardObserver()
     @FocusState private var isTextFieldFocused: Field?
     
-    var gradientColors: [Color] = [.blue, .green]
+    var gradientColors: [Color] = Color.brandGradient
 
     private let characterLimit = 15
     
@@ -250,8 +250,8 @@ struct StartButtons: View {
             } label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 25)
-                        .foregroundStyle(.green)
-                    
+                        .foregroundStyle(.brand)
+
                     HStack{
                         Image(systemName: "envelope.fill")
                         Text("Sign in with Email")

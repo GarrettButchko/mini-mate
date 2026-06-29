@@ -1,5 +1,4 @@
 import Link from "next/link";
-import MiniMateLogo from "@/components/MiniMateLogo";
 import {
   MapPin,
   Sliders,
@@ -20,6 +19,9 @@ import {
   Building2,
   Layers,
 } from "lucide-react";
+import PageShell from "@/components/PageShell";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 type TierFeature = { icon: React.ElementType; text: string; soon?: boolean };
 
@@ -93,25 +95,18 @@ const tiers: {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]" style={{ background: "var(--bg)", color: "var(--text)" }}>
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4">
-        <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
-          <MiniMateLogo size={20} color="#34C759" />
-          <span className="text-[20px] font-medium tracking-tight leading-none" style={{ color: "var(--text)" }}>Mini Mate</span>
+    <PageShell>
+      <SiteNav logoColor="#AF52DE">
+        <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
+          For Players
         </Link>
-        <div className="glass-pill flex items-center gap-1 px-2 py-2">
-          <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
-            For Players
-          </Link>
-        </div>
-      </nav>
+      </SiteNav>
 
       {/* Header */}
       <section className="pt-20 pb-12 px-6 text-center">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold mb-6"
-          style={{ background: "rgba(52,199,89,0.12)", color: "#34C759" }}
+          style={{ background: "rgba(175,82,222,0.12)", color: "#AF52DE" }}
         >
           <Building2 size={13} />
           For Course Owners
@@ -130,19 +125,14 @@ export default function PricingPage() {
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className="relative flex flex-col p-8"
+              className={`relative flex flex-col p-8${tier.highlight ? " pricing-highlight-card" : ""}`}
               style={
                 tier.highlight
-                  ? {
-                      background: "linear-gradient(145deg, var(--gradient-start) 0%, var(--gradient-end) 100%)",
-                      borderRadius: "25px",
-                      boxShadow: "var(--shadow)",
-                    }
+                  ? undefined
                   : {
                       background: "var(--glass-bg)",
                       backdropFilter: "blur(20px)",
                       WebkitBackdropFilter: "blur(20px)",
-                      border: "1px solid var(--glass-border)",
                       borderRadius: "25px",
                       boxShadow: "var(--shadow)",
                     }
@@ -164,10 +154,10 @@ export default function PricingPage() {
                   style={
                     tier.highlight
                       ? { background: "rgba(255,255,255,0.2)" }
-                      : { background: "rgba(52,199,89,0.12)" }
+                      : { background: "rgba(175,82,222,0.12)" }
                   }
                 >
-                  <tier.tierIcon size={22} style={{ color: tier.highlight ? "white" : "#34C759" }} />
+                  <tier.tierIcon size={22} style={{ color: tier.highlight ? "white" : "#AF52DE" }} />
                 </div>
                 <h2
                   className="text-xl font-bold mb-1"
@@ -203,7 +193,7 @@ export default function PricingPage() {
                     <li key={f.text} className="flex items-start gap-2.5">
                       <span
                         className="mt-0.5 shrink-0"
-                        style={{ color: tier.highlight ? "rgba(255,255,255,0.9)" : "#34C759" }}
+                        style={{ color: tier.highlight ? "rgba(255,255,255,0.9)" : "#AF52DE" }}
                       >
                         <f.icon size={14} />
                       </span>
@@ -232,8 +222,8 @@ export default function PricingPage() {
                 className="w-full rounded-full py-3.5 text-center text-sm font-semibold transition-opacity hover:opacity-90"
                 style={
                   tier.highlight
-                    ? { background: "white", color: "#34C759", border: "1px solid var(--glass-border)" }
-                    : { background: "#34C759", color: "white" }
+                    ? { background: "white", color: "#AF52DE", border: "1px solid var(--glass-border)" }
+                    : { background: "#AF52DE", color: "white" }
                 }
               >
                 {tier.cta}
@@ -243,18 +233,11 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer
-        className="mt-auto py-8 px-6 text-center text-sm"
-        style={{ borderTop: "1px solid var(--glass-border)", color: "var(--text-muted)" }}
-      >
-        <div className="flex flex-wrap justify-center gap-6 mb-4">
-          <Link href="/" className="hover:opacity-70 transition-opacity">For Players</Link>
-          <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
-          <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms</Link>
-        </div>
-        <p>© {new Date().getFullYear()} Mini Mate. All rights reserved.</p>
-      </footer>
-    </div>
+      <SiteFooter links={[
+        { href: "/", label: "For Players" },
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms" },
+      ]} />
+    </PageShell>
   );
 }

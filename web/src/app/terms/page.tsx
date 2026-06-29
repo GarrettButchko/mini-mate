@@ -1,15 +1,11 @@
-import Link from "next/link";
-import MiniMateLogo from "@/components/MiniMateLogo";
+import PageShell from "@/components/PageShell";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]" style={{ background: "var(--bg)", color: "var(--text)" }}>
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4">
-        <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
-          <MiniMateLogo size={20} color="#34C759" />
-          <span className="text-[20px] font-medium tracking-tight leading-none" style={{ color: "var(--text)" }}>Mini Mate</span>
-        </Link>
-      </nav>
+    <PageShell>
+      <SiteNav />
 
       <main className="flex-1 max-w-2xl mx-auto px-6 py-16 w-full">
         <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--text)" }}>Terms of Service</h1>
@@ -89,16 +85,10 @@ export default function TermsPage() {
         </div>
       </main>
 
-      <footer
-        className="py-8 px-6 text-center text-sm"
-        style={{ borderTop: "1px solid var(--glass-border)", color: "var(--text-muted)" }}
-      >
-        <div className="flex flex-wrap justify-center gap-6 mb-4">
-          <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
-          <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
-        </div>
-        <p>© {new Date().getFullYear()} Mini Mate. All rights reserved.</p>
-      </footer>
-    </div>
+      <SiteFooter className="" links={[
+        { href: "/", label: "Home" },
+        { href: "/privacy", label: "Privacy Policy" },
+      ]} />
+    </PageShell>
   );
 }

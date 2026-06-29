@@ -13,16 +13,11 @@ import shared_user
 import shared_admin
 #endif
 
-extension Color {
-    static let managerBlue = Color(red: 0.12, green: 0.25, blue: 0.45)
-    static let managerGreen = Color(red: 0.18, green: 0.45, blue: 0.38)
-}
-
 struct WelcomeView: View {
     @StateObject private var viewModel: WelcomeViewModelSwift
     let gradientColors: [Color]
 
-    init(welcomeText: String = "Welcome to MiniMate", gradientColors: [Color] = [.blue, .green]) {
+    init(welcomeText: String = "Welcome to MiniMate", gradientColors: [Color] = Color.brandGradient) {
         self.gradientColors = gradientColors
         _viewModel = StateObject(
             wrappedValue: WelcomeViewModelSwift(welcomeText: welcomeText)

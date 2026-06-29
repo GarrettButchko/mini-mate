@@ -28,7 +28,7 @@ struct ContentView: View {
                         CourseTabView(selectedTab: Int(courseTab.tab))
                         ColorPickerView(showColor: $viewModel.showColor, addTarget: $viewModel.addTarget) { color in
                             withAnimation() {
-                                guard var course = viewModel.selectedCourse else { return }
+                                guard let course = viewModel.selectedCourse else { return }
                                 
                                 switch viewModel.addTarget {
                                 case .scoreCardColor:
@@ -59,9 +59,9 @@ struct ContentView: View {
                 case .courseList:
                     CourseListView()
                 case .welcome:
-                    WelcomeView(welcomeText: "Mini Mate Manager", gradientColors: [.managerBlue, .managerGreen])
+                    WelcomeView(welcomeText: "Mini Mate Manager", gradientColors: Color.brandGradient)
                 case .signIn:
-                    SignInView(gradientColors: [.managerBlue, .managerGreen])
+                    SignInView(gradientColors: Color.brandGradient)
                 }
             }
         }

@@ -106,10 +106,11 @@ struct EmailPasswordView: View {
                                         authModel.signUpUIManage(email: $email, password: $password, confirmPassword: $confirmPassword, isTextFieldFocused: isTextFieldFocused, errorMessage: $errorMessage, showSignUp: $showSignUp, guestGame: $guestGame)
                                     }
                                 } label: {
+                                    
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 25)
                                             .frame(width: 150, height: 50)
-                                            .foregroundColor(.green)
+                                            .foregroundColor(.brand)
                                         if isLoading {
                                             ProgressView()
                                                 .tint(Color.white)
@@ -158,14 +159,17 @@ struct EmailPasswordView: View {
                         }
                         
                     }) {
+                        
                         Circle()
                             .ifAvailableGlassEffect()
                             .frame(width: 40, height: 40)
                             .overlay(
+                                
                                 Image(systemName: "arrow.left")
                                     .font(.headline)
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(.brand)
                             )
+                        
                     }
                     Spacer()
                 }

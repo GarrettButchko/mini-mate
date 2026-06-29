@@ -2,10 +2,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MapPin, Users, Smartphone, Map } from "lucide-react";
-import MiniMateLogo from "@/components/MiniMateLogo";
 import type { MapItemDTO } from "@/lib/foursquare";
 import { resolveContactRoute, getAllContactRoutes } from "@/lib/contactRouter";
 import { SearchResultBusinessLogic } from "@/lib/SearchResultBusinessLogic";
+import PageShell from "@/components/PageShell";
+import SiteNav from "@/components/SiteNav";
 
 const searchLogic = new SearchResultBusinessLogic();
 
@@ -63,23 +64,16 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]" style={{ background: "var(--bg)", color: "var(--text)" }}>
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4">
-        <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
-          <MiniMateLogo size={20} color="#34C759" />
-          <span className="text-[20px] font-medium tracking-tight leading-none" style={{ color: "var(--text)" }}>Mini Mate</span>
+    <PageShell>
+      <SiteNav>
+        <Link
+          href="/pricing"
+          className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 transition-opacity"
+          style={{ background: "#34C759" }}
+        >
+          Course Pricing
         </Link>
-        <div className="glass-pill flex items-center px-2 py-2">
-          <Link
-            href="/pricing"
-            className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 transition-opacity"
-            style={{ background: "#34C759" }}
-          >
-            Course Pricing
-          </Link>
-        </div>
-      </nav>
+      </SiteNav>
 
       {/* Hero */}
       <section className="pt-20 pb-12 px-6 text-center">
@@ -180,7 +174,7 @@ export default function CoursesPage() {
 
         {selected && <ContactCard course={selected} />}
       </section>
-    </div>
+    </PageShell>
   );
 }
 

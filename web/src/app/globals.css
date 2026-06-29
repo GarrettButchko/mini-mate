@@ -48,8 +48,33 @@ body {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
   border-radius: 9999px;
+  box-shadow: var(--shadow);
+}
+
+@keyframes gradient-pan {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-gradient-courses {
+  background: linear-gradient(-45deg, #AF52DE, #AF52DE, #007AFF, #AF52DE, #AF52DE);
+  background-size: 400% 400%;
+  animation: gradient-pan 28s ease infinite;
+}
+
+.hero-gradient-user {
+  background: linear-gradient(-45deg, #34C759, #34C759, #007AFF, #34C759, #34C759);
+  background-size: 400% 400%;
+  animation: gradient-pan 28s ease infinite;
+}
+
+.pricing-highlight-card {
+  background: linear-gradient(-45deg, #AF52DE, #AF52DE, #007AFF, #AF52DE, #AF52DE);
+  background-size: 400% 400%;
+  animation: gradient-pan 28s ease infinite;
+  border-radius: 25px;
   box-shadow: var(--shadow);
 }
 
@@ -57,7 +82,6 @@ body {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
   border-radius: 25px;
   box-shadow: var(--shadow);
 }

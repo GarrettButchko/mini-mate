@@ -1,7 +1,11 @@
 import Link from "next/link";
-import ScreenshotFrame from "@/components/ScreenshotFrame";
 import { MapPin, Users, BarChart2, Palette, Megaphone, Trophy } from "lucide-react";
-import MiniMateLogo from "@/components/MiniMateLogo";
+import PageShell from "@/components/PageShell";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
+import FaqSection from "@/components/FaqSection";
+import TestimonialGrid from "@/components/TestimonialGrid";
+import FeatureGrid from "@/components/FeatureGrid";
 
 const steps = [
   { num: "1", title: "List your course — free", desc: "Your course appears on the Mini Mate map. Players find you when searching for mini golf nearby." },
@@ -34,24 +38,18 @@ const faqs = [
 
 export default function ForCoursesPage() {
   return (
-    <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]" style={{ background: "var(--bg)", color: "var(--text)" }}>
-      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-4">
-        <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
-          <MiniMateLogo size={20} color="#34C759" />
-          <span className="text-[20px] font-medium tracking-tight leading-none" style={{ color: "var(--text)" }}>Mini Mate</span>
+    <PageShell>
+      <SiteNav position="fixed" logoColor="#AF52DE">
+        <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
+          For Players
         </Link>
-        <div className="glass-pill flex items-center gap-1 px-2 py-2">
-          <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
-            For Players
-          </Link>
-          <Link href="/pricing" className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 transition-opacity" style={{ background: "#AF52DE" }}>
-            View Pricing
-          </Link>
-        </div>
-      </nav>
+        <Link href="/pricing" className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 transition-opacity" style={{ background: "#AF52DE" }}>
+          View Pricing
+        </Link>
+      </SiteNav>
 
       {/* Hero */}
-      <section className="text-white" style={{ background: "linear-gradient(135deg, #0A84FF 0%, #AF52DE 100%)" }}>
+      <section className="hero-gradient-courses text-white">
         <div className="max-w-6xl mx-auto px-6 pt-36 pb-24 flex flex-col lg:flex-row lg:items-center gap-16">
           <div className="flex-1 text-center lg:text-left">
             <span className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold mb-6" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}>
@@ -97,62 +95,11 @@ export default function ForCoursesPage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 px-6" style={{ background: "var(--surface-sub)" }}>
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>Everything in the admin app</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {highlights.map((h) => (
-              <div key={h.title} className="glass-card p-8 flex flex-row items-center gap-6">
-                <div className="flex-1">
-                  <div className="mb-4" style={{ color: "#AF52DE" }}><h.icon size={32} /></div>
-                  <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>{h.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{h.desc}</p>
-                </div>
-                <ScreenshotFrame imageSrc={h.imageSrc} imageAlt={h.imageAlt} frameWidth={100} frameHeight={200}>
-                  <h.icon size={28} style={{ color: "var(--text-muted)", opacity: 0.2 }} />
-                </ScreenshotFrame>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FeatureGrid heading="Everything in the admin app" features={highlights} accentColor="#AF52DE" />
 
-      {/* Social proof */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>What course owners say</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {testimonials.map((t) => (
-              <div key={t.name} className="glass-card p-8">
-                <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-sub)" }}>&ldquo;{t.quote}&rdquo;</p>
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>{t.name}</p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TestimonialGrid heading="What course owners say" testimonials={testimonials} />
 
-      {/* FAQ */}
-      <section className="py-20 px-6" style={{ background: "var(--surface-sub)" }}>
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>Frequently asked questions</h2>
-          <div className="space-y-4">
-            {faqs.map((item) => (
-              <details key={item.q} className="glass-card group">
-                <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-medium text-sm" style={{ color: "var(--text)" }}>
-                  {item.q}
-                  <span className="ml-4 shrink-0 text-lg leading-none" style={{ color: "var(--text-muted)" }}>+</span>
-                </summary>
-                <p className="px-6 pb-5 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{item.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FaqSection faqs={faqs} />
 
       {/* CTA */}
       <section className="py-20 px-6 text-center">
@@ -168,17 +115,14 @@ export default function ForCoursesPage() {
         </div>
       </section>
 
-      <footer className="mt-auto py-8 px-6 text-center text-sm" style={{ borderTop: "1px solid var(--glass-border)", color: "var(--text-muted)" }}>
-        <div className="flex flex-wrap justify-center gap-6 mb-4">
-          <Link href="/" className="hover:opacity-70 transition-opacity">For Players</Link>
-          <Link href="/pricing" className="hover:opacity-70 transition-opacity">Pricing</Link>
-          <Link href="/courses" className="hover:opacity-70 transition-opacity">Find Your Course</Link>
-          <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
-          <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms</Link>
-          <a href="mailto:garrettwm2005@gmail.com" className="hover:opacity-70 transition-opacity">Support</a>
-        </div>
-        <p>© {new Date().getFullYear()} Mini Mate. All rights reserved.</p>
-      </footer>
-    </div>
+      <SiteFooter links={[
+        { href: "/", label: "For Players" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/courses", label: "Find Your Course" },
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms" },
+        { href: "mailto:garrettwm2005@gmail.com", label: "Support" },
+      ]} />
+    </PageShell>
   );
 }
