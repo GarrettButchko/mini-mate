@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mini-Mate — Mini Golf Scoring App",
+  title: "Mini Mate — Mini Golf Scoring App",
   description: "The smartest mini golf scorecard for courses and players.",
 };
 

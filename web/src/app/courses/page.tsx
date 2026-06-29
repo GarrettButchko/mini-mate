@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { MapPin, Users, Smartphone, Map } from "lucide-react";
+import MiniMateLogo from "@/components/MiniMateLogo";
 import type { MapItemDTO } from "@/lib/foursquare";
 import { resolveContactRoute, getAllContactRoutes } from "@/lib/contactRouter";
 import { SearchResultBusinessLogic } from "@/logic/SearchResultBusinessLogic";
@@ -61,37 +63,49 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 font-[family-name:var(--font-geist-sans)]">
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-zinc-100 dark:border-zinc-800">
-        <Link href="/" className="text-xl font-bold tracking-tight text-green-600">⛳ Mini-Mate</Link>
-        <Link href="/pricing" className="rounded-full bg-green-600 px-4 py-2 text-sm text-white font-medium hover:bg-green-700 transition-colors">
-          Player Pricing
+    <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]" style={{ background: "var(--bg)", color: "var(--text)" }}>
+      {/* Nav */}
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4">
+        <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
+          <MiniMateLogo size={20} color="#34C759" />
+          <span className="text-[20px] font-medium tracking-tight leading-none" style={{ color: "var(--text)" }}>Mini Mate</span>
         </Link>
+        <div className="glass-pill flex items-center px-2 py-2">
+          <Link
+            href="/pricing"
+            className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 transition-opacity"
+            style={{ background: "#34C759" }}
+          >
+            Course Pricing
+          </Link>
+        </div>
       </nav>
 
       {/* Hero */}
       <section className="pt-20 pb-12 px-6 text-center">
-        <h1 className="text-4xl font-bold text-zinc-900 dark:text-white mb-4">
-          List your mini golf course on Mini-Mate
+        <h1 className="text-4xl font-bold mb-4" style={{ color: "var(--text)" }}>
+          List your mini golf course on Mini Mate
         </h1>
-        <p className="max-w-xl mx-auto text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed">
+        <p className="max-w-xl mx-auto text-lg leading-relaxed" style={{ color: "var(--text-muted)" }}>
           Get discovered by players near you. We verify your venue exists on the map before reaching
           out — so you know we&apos;re the real deal.
         </p>
       </section>
 
       {/* Benefits */}
-      <section className="bg-zinc-50 dark:bg-zinc-900 py-14 px-6 mb-12">
+      <section className="py-14 px-6 mb-12" style={{ background: "var(--surface-sub)" }}>
         <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           {[
-            { icon: "📍", title: "Verified Listing", desc: "We confirm your business on the map before contacting you." },
-            { icon: "👥", title: "Player Discovery", desc: "Thousands of players search for courses near them every day." },
-            { icon: "📲", title: "Digital Scorecards", desc: "Players score their rounds at your course inside the app." },
+            { icon: MapPin, title: "Verified Listing", desc: "We confirm your business on the map before contacting you." },
+            { icon: Users, title: "Player Discovery", desc: "Thousands of players search for courses near them every day." },
+            { icon: Smartphone, title: "Digital Scorecards", desc: "Players score their rounds at your course inside the app." },
           ].map((b) => (
             <div key={b.title}>
-              <div className="text-3xl mb-3">{b.icon}</div>
-              <h3 className="font-semibold text-zinc-900 dark:text-white mb-1">{b.title}</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">{b.desc}</p>
+              <div className="flex justify-center mb-3" style={{ color: "#34C759" }}>
+                <b.icon size={28} />
+              </div>
+              <h3 className="font-semibold mb-1" style={{ color: "var(--text)" }}>{b.title}</h3>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>{b.desc}</p>
             </div>
           ))}
         </div>
@@ -99,9 +113,11 @@ export default function CoursesPage() {
 
       {/* Course Finder */}
       <section className="max-w-3xl mx-auto px-6 pb-24">
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8">
-          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Find your course</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm mb-6">
+        <div className="glass-card p-8">
+          <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--text)" }}>
+            Find your course
+          </h2>
+          <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
             We&apos;ll search Foursquare to verify your business is on the map, then show you the best way
             to reach you — email first, then phone, website, or mail as a last resort.
           </p>
@@ -109,13 +125,19 @@ export default function CoursesPage() {
           <button
             onClick={findNearMe}
             disabled={search.loading}
-            className="w-full rounded-xl bg-green-600 py-3 text-white font-semibold hover:bg-green-700 disabled:opacity-60 transition-colors mb-4"
+            className="w-full rounded-full py-3.5 text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity mb-4"
+            style={{ background: "#34C759" }}
           >
-            {search.loading ? "Searching nearby…" : "🗺️ Search mini golf courses near me"}
+            {search.loading ? "Searching nearby…" : (
+              <span className="flex items-center justify-center gap-2">
+                <Map size={16} />
+                Search mini golf courses near me
+              </span>
+            )}
           </button>
 
           {search.error && (
-            <p className="text-sm text-red-500 mb-4">{search.error}</p>
+            <p className="text-sm mb-4" style={{ color: "#FF383C" }}>{search.error}</p>
           )}
 
           {search.results.length > 0 && (
@@ -125,21 +147,29 @@ export default function CoursesPage() {
                 placeholder="Filter by name…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-700 px-4 py-2.5 text-sm text-zinc-900 dark:text-white mb-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-[25px] px-5 py-3 text-sm mb-4 focus:outline-none"
+                style={{
+                  background: "var(--surface-input)",
+                  color: "var(--text)",
+                  border: "1px solid var(--glass-border)",
+                }}
               />
-              <ul className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              <ul className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {displayed.map((item) => (
                   <li key={item.placeID}>
                     <button
                       onClick={() => setSelected(item)}
-                      className={`w-full text-left rounded-xl border px-4 py-3 transition-colors ${
+                      className="w-full text-left rounded-[17px] px-4 py-3 transition-all hover:opacity-90"
+                      style={
                         selected?.placeID === item.placeID
-                          ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                          : "border-zinc-100 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-                      }`}
+                          ? { background: "rgba(52,199,89,0.15)", border: "1px solid #34C759" }
+                          : { background: "var(--surface-input)", border: "1px solid var(--glass-border)" }
+                      }
                     >
-                      <p className="font-medium text-zinc-900 dark:text-white text-sm">{item.name}</p>
-                      <p className="text-xs text-zinc-400 mt-0.5">{distanceLabel(item) ?? item.address.shortAddress}</p>
+                      <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{item.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        {distanceLabel(item) ?? item.address.shortAddress}
+                      </p>
                     </button>
                   </li>
                 ))}
@@ -148,7 +178,6 @@ export default function CoursesPage() {
           )}
         </div>
 
-        {/* Selected course contact card */}
         {selected && <ContactCard course={selected} />}
       </section>
     </div>
@@ -157,7 +186,7 @@ export default function CoursesPage() {
 
 function ContactCard({ course }: { course: MapItemDTO }) {
   const contact = {
-    email: null, // Foursquare doesn't return email — collected after verification
+    email: null,
     phone: course.phoneNumber,
     website: course.url,
     address: course.address.fullAddress,
@@ -172,13 +201,13 @@ function ContactCard({ course }: { course: MapItemDTO }) {
   };
 
   return (
-    <div className="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8">
-      <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">{course.name}</h3>
-      <p className="text-sm text-zinc-400 mb-6">{course.address.fullAddress}</p>
+    <div className="glass-card mt-6 p-8">
+      <h3 className="text-lg font-bold mb-1" style={{ color: "var(--text)" }}>{course.name}</h3>
+      <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>{course.address.fullAddress}</p>
 
       {primary ? (
         <>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+          <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>
             Best contact method for this business:
           </p>
           <a
@@ -193,7 +222,8 @@ function ContactCard({ course }: { course: MapItemDTO }) {
             }
             target={primary.method === "website" ? "_blank" : undefined}
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-xl bg-green-600 px-5 py-3 text-white font-semibold text-sm hover:bg-green-700 transition-colors mb-4"
+            className="flex items-center gap-3 rounded-full px-6 py-3.5 text-white font-semibold text-sm hover:opacity-90 transition-opacity mb-4"
+            style={{ background: "#34C759" }}
           >
             <span>{methodIcons[primary.method]}</span>
             {primary.label}
@@ -201,12 +231,13 @@ function ContactCard({ course }: { course: MapItemDTO }) {
 
           {all.length > 1 && (
             <div>
-              <p className="text-xs text-zinc-400 mb-2">All available contacts:</p>
+              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>All available contacts:</p>
               <div className="flex flex-wrap gap-2">
                 {all.map((c) => (
                   <span
                     key={c.method}
-                    className="rounded-full border border-zinc-200 dark:border-zinc-600 px-3 py-1 text-xs text-zinc-500 dark:text-zinc-300"
+                    className="rounded-full px-3 py-1 text-xs"
+                    style={{ background: "var(--surface-input)", color: "var(--text-sub)", border: "1px solid var(--glass-border)" }}
                   >
                     {methodIcons[c.method]} {c.value}
                   </span>
@@ -216,15 +247,15 @@ function ContactCard({ course }: { course: MapItemDTO }) {
           )}
         </>
       ) : (
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           No direct contact info found. We&apos;ll reach out by mail:{" "}
-          <span className="font-medium text-zinc-700 dark:text-zinc-200">{course.address.fullAddress}</span>
+          <span className="font-medium" style={{ color: "var(--text)" }}>{course.address.fullAddress}</span>
         </p>
       )}
 
-      <div className="mt-6 pt-6 border-t border-zinc-100 dark:border-zinc-700">
-        <p className="text-xs text-zinc-400">
-          Foursquare ID: <code className="font-mono text-zinc-500">{course.placeID}</code>
+      <div className="mt-6 pt-6" style={{ borderTop: "1px solid var(--glass-border)" }}>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          Foursquare ID: <code className="font-mono" style={{ color: "var(--text-sub)" }}>{course.placeID}</code>
         </p>
       </div>
     </div>

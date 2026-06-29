@@ -32,6 +32,18 @@ fun Modifier.colorCardLayout(makeColor: Color?, typeFill: Modifier = Modifier.fi
     if (makeColor != null) this.then(typeFill)
     else this.then(typeFill).subtleShadow()
 
+fun Modifier.colorCardLayoutHealth(makeColor: Color?, tier: Int, typeFill: Modifier = Modifier.fillMaxWidth()): Modifier =
+    if (makeColor != null) {
+        this.then(typeFill)
+    }
+    else {
+        if (tier < 3) {
+            this.then(typeFill)
+        } else {
+            this.then(typeFill).subtleShadow()
+        }
+    }
+
 fun Modifier.subtleShadow(
     elevation: Dp = 8.dp,
     shape: Shape = RoundedCornerShape(25.dp),

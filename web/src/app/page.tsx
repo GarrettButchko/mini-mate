@@ -1,126 +1,223 @@
 import Link from "next/link";
+import ScreenshotFrame from "@/components/ScreenshotFrame";
+import { Target, Globe, BarChart2, Map, Smartphone, Building2, Download } from "lucide-react";
+import MiniMateLogo from "@/components/MiniMateLogo";
 import { MainViewBusinessLogic } from "@/logic/MainViewBusinessLogic";
 
 const logic = new MainViewBusinessLogic();
 
 const features = [
-  {
-    icon: "⛳",
-    title: "Instant Scorecards",
-    desc: "Start a round in seconds. Track every hole with live par comparison.",
-  },
-  {
-    icon: "🌐",
-    title: "Online Multiplayer",
-    desc: logic.getInfoMessage(true),
-  },
-  {
-    icon: "📊",
-    title: "Stats & Recap",
-    desc: "See your best rounds, stroke averages, and course records.",
-  },
-  {
-    icon: "🗺️",
-    title: "Course Discovery",
-    desc: "Find verified mini golf venues near you powered by Foursquare.",
-  },
+  { icon: Target, title: "Instant Scorecards", desc: "Start a round in seconds. Track every hole with live par comparison.", imageSrc: "/screenshots/test.jpg", imageAlt: "Scorecard screen" },
+  { icon: Globe, title: "Online Multiplayer", desc: logic.getInfoMessage(true), imageSrc: null as string | null, imageAlt: "Multiplayer lobby screen" },
+  { icon: BarChart2, title: "Stats & Recap", desc: "See your best rounds, stroke averages, and course records.", imageSrc: null as string | null, imageAlt: "Stats and recap screen" },
+  { icon: Map, title: "Course Discovery", desc: "Find verified mini golf venues near you powered by Foursquare.", imageSrc: null as string | null, imageAlt: "Course discovery screen" },
+];
+
+const steps = [
+  { num: "1", title: "Download Mini Mate", desc: "Free on iOS and Android. No account required to start playing." },
+  { num: "2", title: "Find or start a game", desc: "Search for a verified course near you, or start a local game anywhere." },
+  { num: "3", title: "Play, track, and compete", desc: "Score every hole, follow friends in real-time, and review your stats after every round." },
+];
+
+const faqs = [
+  { q: "Is Mini Mate really free?", a: "Yes — forever for casual play. You get up to 2 saved games, local scorecards, basic stats, and course discovery at no cost." },
+  { q: "What does Pro include?", a: "Unlimited saved games, no Google-served ads (course ads still support venues), and early access to new features as they ship." },
+  { q: "Is Pro a subscription?", a: "No. Pro is a one-time $2 purchase made inside the app through the App Store or Google Play. Pay once, keep it forever." },
+  { q: "How does course discovery work?", a: "We use Foursquare to find and verify mini golf venues near you. Tap 'Find Near Me' on the course search screen and we'll show you what's around." },
+  { q: "Does it work offline?", a: "Scorecards and local games work offline. Online multiplayer and course discovery require an internet connection." },
+];
+
+const testimonials = [
+  { quote: "Finally a scorecard app that doesn't get in the way. Clean, fast, and the multiplayer is actually fun.", name: "Alex R.", detail: "Casual golfer" },
+  { quote: "We use it every time we go out. Keeping score on paper feels ancient now.", name: "Jordan M.", detail: "Frequent player" },
 ];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 font-[family-name:var(--font-geist-sans)]">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-zinc-100 dark:border-zinc-800">
-        <span className="text-xl font-bold tracking-tight text-green-600">⛳ Mini-Mate</span>
-        <div className="flex items-center gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          <Link href="/pricing" className="hover:text-zinc-900 dark:hover:text-white transition-colors">
-            Pricing
-          </Link>
-          <Link href="/courses" className="hover:text-zinc-900 dark:hover:text-white transition-colors">
+    <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]" style={{ background: "var(--bg)", color: "var(--text)" }}>
+      <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-4">
+        <div className="glass-pill flex items-center gap-2 px-4 py-3.5">
+          <MiniMateLogo size={20} color="#34C759" />
+          <span className="text-[20px] font-medium tracking-tight leading-none" style={{ color: "var(--text)" }}>Mini Mate</span>
+        </div>
+        <div className="glass-pill flex items-center gap-1 px-2 py-2">
+          <Link href="/for-courses" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
             For Courses
-          </Link>
-          <Link
-            href="/pricing"
-            className="rounded-full bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors"
-          >
-            Get Started
           </Link>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="flex flex-col items-center text-center px-6 pt-24 pb-20">
-        <span className="inline-block rounded-full bg-green-50 dark:bg-green-900/30 px-4 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400 mb-6">
-          Now on iOS & Android
-        </span>
-        <h1 className="max-w-2xl text-5xl sm:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white leading-tight">
-          The smartest mini golf scorecard, ever.
-        </h1>
-        <p className="mt-6 max-w-xl text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          {logic.getInfoMessage(false)} Built for players who want real-time multiplayer, verified
-          course data, and beautiful stats — all in one app.
-        </p>
-        <div className="mt-10 flex flex-wrap gap-4 justify-center">
-          <Link
-            href="/pricing"
-            className="rounded-full bg-green-600 px-8 py-3.5 text-base font-semibold text-white hover:bg-green-700 transition-colors shadow-sm"
-          >
-            View Plans
-          </Link>
-          <Link
-            href="/courses"
-            className="rounded-full border border-zinc-200 dark:border-zinc-700 px-8 py-3.5 text-base font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-          >
-            List Your Course →
-          </Link>
+      <section className="text-white" style={{ background: "linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%)" }}>
+        <div className="max-w-6xl mx-auto px-6 pt-36 pb-24 flex flex-col lg:flex-row lg:items-center gap-16">
+          <div className="flex-1 text-center lg:text-left">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold mb-6" style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}>
+              <Smartphone size={13} />
+              Now on iOS & Android
+            </span>
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-tight mb-5">
+              The smartest mini golf scorecard, ever.
+            </h1>
+            <p className="text-lg leading-relaxed mb-10 max-w-lg mx-auto lg:mx-0" style={{ color: "rgba(255,255,255,0.85)" }}>
+              Real-time multiplayer, verified course data, and beautiful stats — free for everyone.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
+              <a href="#app-store" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "white", color: "#1C1C1E" }}>
+                <AppleIcon />
+                App Store
+              </a>
+              <a href="#google-play" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+                <GooglePlayIcon />
+                Google Play
+              </a>
+            </div>
+            <Link href="/for-courses" className="inline-flex items-center gap-1 text-sm hover:opacity-80 transition-opacity" style={{ color: "rgba(255,255,255,0.65)" }}>
+              Are you a course owner? →
+            </Link>
+          </div>
+          <div className="shrink-0 flex justify-center">
+            <div className="rounded-[44px]" style={{ width: 260, height: 520, border: "2px solid rgba(255,255,255,0.25)", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(20px)" }} />
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-zinc-50 dark:bg-zinc-900 py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-center text-3xl font-bold text-zinc-900 dark:text-white mb-14">
-            Everything you need on the course
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl bg-white dark:bg-zinc-800 p-8 shadow-sm border border-zinc-100 dark:border-zinc-700"
-              >
-                <div className="text-4xl mb-4">{f.icon}</div>
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">{f.title}</h3>
-                <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{f.desc}</p>
+      {/* How it works */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>How it works</h2>
+          <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-8">
+            <div className="hidden sm:block absolute top-6 left-[16.67%] right-[16.67%]" style={{ height: "2px", borderTop: "2px dashed var(--glass-border)" }} />
+            {steps.map((s) => (
+              <div key={s.num} className="text-center">
+                <div className="relative z-10 inline-flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold text-white mb-4" style={{ background: "#34C759" }}>
+                  {s.num}
+                </div>
+                <h3 className="font-semibold mb-2" style={{ color: "var(--text)" }}>{s.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-6 text-center">
-        <h2 className="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
-          Ready to play smarter?
-        </h2>
-        <p className="text-zinc-500 dark:text-zinc-400 mb-8 max-w-md mx-auto">
-          Free forever for casual players. Upgrade to Pro for unlimited games and online multiplayer.
-        </p>
-        <Link
-          href="/pricing"
-          className="inline-block rounded-full bg-green-600 px-10 py-4 text-lg font-semibold text-white hover:bg-green-700 transition-colors"
-        >
-          See Pricing
-        </Link>
+      {/* Features */}
+      <section className="py-20 px-6" style={{ background: "var(--surface-sub)" }}>
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>Everything you need on the course</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {features.map((f) => (
+              <div key={f.title} className="glass-card p-8 flex flex-row items-center gap-6">
+                <div className="flex-1">
+                  <div className="mb-4" style={{ color: "#34C759" }}><f.icon size={32} /></div>
+                  <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{f.desc}</p>
+                </div>
+                <ScreenshotFrame imageSrc={f.imageSrc} imageAlt={f.imageAlt} frameWidth={100} frameHeight={200}>
+                  <f.icon size={28} style={{ color: "var(--text-muted)", opacity: 0.2 }} />
+                </ScreenshotFrame>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-100 dark:border-zinc-800 py-8 px-6 text-center text-sm text-zinc-400">
-        <div className="flex flex-wrap justify-center gap-6 mb-4">
-          <Link href="/pricing" className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">Pricing</Link>
-          <Link href="/courses" className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">For Courses</Link>
+      {/* Social proof */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>What players say</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {testimonials.map((t) => (
+              <div key={t.name} className="glass-card p-8">
+                <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-sub)" }}>&ldquo;{t.quote}&rdquo;</p>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>{t.name}</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <a href="#app-store" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "var(--surface)", border: "1px solid var(--glass-border)", color: "var(--text)" }}>
+              <AppleIcon />
+              Download on App Store
+            </a>
+            <a href="#google-play" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "var(--surface)", border: "1px solid var(--glass-border)", color: "var(--text)" }}>
+              <GooglePlayIcon />
+              Get it on Google Play
+            </a>
+          </div>
         </div>
-        <p>© {new Date().getFullYear()} Mini-Mate. All rights reserved.</p>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 px-6" style={{ background: "var(--surface-sub)" }}>
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>Frequently asked questions</h2>
+          <div className="space-y-4">
+            {faqs.map((item) => (
+              <details key={item.q} className="glass-card group">
+                <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-medium text-sm" style={{ color: "var(--text)" }}>
+                  {item.q}
+                  <span className="ml-4 shrink-0 text-lg leading-none" style={{ color: "var(--text-muted)" }}>+</span>
+                </summary>
+                <p className="px-6 pb-5 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Fork */}
+      <section className="py-20 px-6">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-center text-2xl font-bold mb-10" style={{ color: "var(--text)" }}>What brings you here?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="glass-card p-8 text-center flex flex-col items-center">
+              <div className="mb-4" style={{ color: "#34C759" }}><Download size={32} /></div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>I want to track my golf</h3>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>Download the app, play for free, and upgrade to Pro for $2.</p>
+              <a href="#app-store" className="rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: "#34C759" }}>
+                Download the App
+              </a>
+            </div>
+            <div className="glass-card p-8 text-center flex flex-col items-center">
+              <div className="mb-4" style={{ color: "#AF52DE" }}><Building2 size={32} /></div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>I own a mini golf course</h3>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>Get listed, build your brand in the app, and track your players.</p>
+              <Link href="/for-courses" className="rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: "#AF52DE" }}>
+                Learn More
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="mt-auto py-8 px-6 text-center text-sm" style={{ borderTop: "1px solid var(--glass-border)", color: "var(--text-muted)" }}>
+        <div className="flex flex-wrap justify-center gap-6 mb-4">
+          <Link href="/pricing" className="hover:opacity-70 transition-opacity">Pricing</Link>
+          <Link href="/for-courses" className="hover:opacity-70 transition-opacity">For Courses</Link>
+          <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
+          <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms</Link>
+          <a href="mailto:garrettwm2005@gmail.com" className="hover:opacity-70 transition-opacity">Support</a>
+        </div>
+        <p>© {new Date().getFullYear()} Mini Mate. All rights reserved.</p>
       </footer>
     </div>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+    </svg>
+  );
+}
+
+function GooglePlayIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8 5v14l11-7z"/>
+    </svg>
   );
 }

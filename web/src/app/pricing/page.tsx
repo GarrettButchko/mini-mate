@@ -1,137 +1,240 @@
-"use client";
 import Link from "next/link";
-import { MainViewBusinessLogic } from "@/logic/MainViewBusinessLogic";
+import MiniMateLogo from "@/components/MiniMateLogo";
+import {
+  MapPin,
+  Sliders,
+  Link2,
+  Palette,
+  Megaphone,
+  Image,
+  Trophy,
+  Zap,
+  Gift,
+  Nfc,
+  TrendingUp,
+  RefreshCw,
+  Star,
+  Mail,
+  Download,
+  BarChart2,
+  Building2,
+  Layers,
+} from "lucide-react";
 
-const logic = new MainViewBusinessLogic();
+type TierFeature = { icon: React.ElementType; text: string; soon?: boolean };
 
-const tiers = [
+const tiers: {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  tierIcon: React.ElementType;
+  inherits?: string;
+  features: TierFeature[];
+  cta: string;
+  href: string;
+  highlight: boolean;
+}[] = [
   {
-    name: "Free",
-    price: "$0",
+    name: "Listed",
+    price: "Free",
     period: "forever",
-    description: "Perfect for casual rounds with friends.",
+    description: "Get discovered. Put your course on the Mini Mate map.",
+    tierIcon: MapPin,
     features: [
-      `Up to 2 saved games`,
-      "Local scorecard",
-      "Basic stats",
-      "Course discovery",
+      { icon: MapPin, text: "Course listed on the Mini Mate map" },
+      { icon: Sliders, text: "Custom par info for every hole" },
+      { icon: Link2, text: "Social links on your course profile" },
     ],
-    cta: "Download Free",
-    href: "#download",
+    cta: "Subscribe",
+    href: "#checkout-listed",
     highlight: false,
-    priceId: null,
   },
   {
-    name: "Pro",
-    price: "$2.99",
+    name: "Partner",
+    price: "$29",
     period: "/ month",
-    description: "Unlimited games and real-time online multiplayer.",
+    description: "Full brand presence across the Mini Mate app and real-world marketing.",
+    tierIcon: Building2,
+    inherits: "Everything in Listed, plus:",
     features: [
-      "Unlimited saved games",
-      "Online multiplayer — host & join",
-      "Full stats & recap",
-      "Course discovery",
-      "No ads",
+      { icon: Palette, text: "Custom scorecard colors & accent" },
+      { icon: Megaphone, text: "Your ad in scorecards & app pages" },
+      { icon: Image, text: "Your logo in the app home & scorecard" },
+      { icon: Trophy, text: "Managed course leaderboard" },
+      { icon: Zap, text: "Tournament mode access", soon: true },
+      { icon: Gift, text: "Mini Mate pitch tent & marketing kit" },
+      { icon: Nfc, text: "NFC-enabled tent tag (Mini Mate branded)" },
     ],
-    cta: "Start Pro",
-    href: "#checkout-pro",
+    cta: "Subscribe",
+    href: "#checkout-partner",
     highlight: true,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ?? "price_pro",
   },
   {
-    name: "Premium",
-    price: "$6.99",
+    name: "Analytics",
+    price: "$69",
     period: "/ month",
-    description: "Everything in Pro, plus advanced analytics and priority support.",
+    description: "Everything in Partner plus deep player insights and data exports.",
+    tierIcon: BarChart2,
+    inherits: "Everything in Partner, plus:",
     features: [
-      "Everything in Pro",
-      "Advanced round analytics",
-      "Leaderboards",
-      "Priority support",
-      "Early access to new features",
+      { icon: TrendingUp, text: "Growth analytics dashboard" },
+      { icon: RefreshCw, text: "Player retention tracking" },
+      { icon: Star, text: "Experience score metrics" },
+      { icon: Mail, text: "Player email list from your course" },
+      { icon: Download, text: "CSV export — all data, any time" },
+      { icon: Layers, text: "Beautiful analytics interface" },
     ],
-    cta: "Start Premium",
-    href: "#checkout-premium",
+    cta: "Subscribe",
+    href: "#checkout-analytics",
     highlight: false,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID ?? "price_premium",
   },
 ];
 
 export default function PricingPage() {
-  // Uses MainViewBusinessLogic.isPlayDisabled to explain the free limit inline
-  const freeGameLimit = 2;
-  const proStopperMessage = logic.shouldShowProStopper(false, freeGameLimit)
-    ? `Free accounts are limited to ${freeGameLimit} games. Upgrade to play more.`
-    : null;
-
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 font-[family-name:var(--font-geist-sans)]">
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-zinc-100 dark:border-zinc-800">
-        <Link href="/" className="text-xl font-bold tracking-tight text-green-600">⛳ Mini-Mate</Link>
-        <Link href="/courses" className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-          For Courses →
+    <div className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]" style={{ background: "var(--bg)", color: "var(--text)" }}>
+      {/* Nav */}
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4">
+        <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
+          <MiniMateLogo size={20} color="#34C759" />
+          <span className="text-[20px] font-medium tracking-tight leading-none" style={{ color: "var(--text)" }}>Mini Mate</span>
         </Link>
+        <div className="glass-pill flex items-center gap-1 px-2 py-2">
+          <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
+            For Players
+          </Link>
+        </div>
       </nav>
 
-      <section className="pt-20 pb-10 px-6 text-center">
-        <h1 className="text-4xl font-bold text-zinc-900 dark:text-white mb-4">Simple, honest pricing</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
-          Start free. Upgrade when you&apos;re ready to play more.
+      {/* Header */}
+      <section className="pt-20 pb-12 px-6 text-center">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold mb-6"
+          style={{ background: "rgba(52,199,89,0.12)", color: "#34C759" }}
+        >
+          <Building2 size={13} />
+          For Course Owners
+        </span>
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight" style={{ color: "var(--text)" }}>
+          Grow your course with Mini Mate
+        </h1>
+        <p className="max-w-lg mx-auto text-lg leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          From getting on the map to owning your brand in the app — pick the tier that fits where your course is headed.
         </p>
-        {proStopperMessage && (
-          <div className="mt-6 inline-block rounded-full bg-amber-50 dark:bg-amber-900/30 px-5 py-2 text-sm font-medium text-amber-700 dark:text-amber-400">
-            {proStopperMessage}
-          </div>
-        )}
       </section>
 
-      <section className="pb-24 px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+      {/* Tiers */}
+      <section className="pb-28 px-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className={`relative rounded-2xl p-8 flex flex-col border ${
+              className="relative flex flex-col p-8"
+              style={
                 tier.highlight
-                  ? "bg-green-600 border-green-600 text-white shadow-xl scale-105"
-                  : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white shadow-sm"
-              }`}
+                  ? {
+                      background: "linear-gradient(145deg, var(--gradient-start) 0%, var(--gradient-end) 100%)",
+                      borderRadius: "25px",
+                      boxShadow: "var(--shadow)",
+                    }
+                  : {
+                      background: "var(--glass-bg)",
+                      backdropFilter: "blur(20px)",
+                      WebkitBackdropFilter: "blur(20px)",
+                      border: "1px solid var(--glass-border)",
+                      borderRadius: "25px",
+                      boxShadow: "var(--shadow)",
+                    }
+              }
             >
               {tier.highlight && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 text-amber-900 text-xs font-bold px-4 py-1">
+                <span
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full text-xs font-bold px-4 py-1 whitespace-nowrap"
+                  style={{ background: "#FFD60A", color: "#1C1C1E" }}
+                >
                   MOST POPULAR
                 </span>
               )}
+
+              {/* Tier header */}
               <div className="mb-6">
-                <h2 className={`text-xl font-bold mb-1 ${tier.highlight ? "text-white" : ""}`}>{tier.name}</h2>
-                <div className="flex items-baseline gap-1">
-                  <span className={`text-4xl font-extrabold ${tier.highlight ? "text-white" : "text-zinc-900 dark:text-white"}`}>
+                <div
+                  className="inline-flex items-center justify-center w-11 h-11 rounded-[14px] mb-4"
+                  style={
+                    tier.highlight
+                      ? { background: "rgba(255,255,255,0.2)" }
+                      : { background: "rgba(52,199,89,0.12)" }
+                  }
+                >
+                  <tier.tierIcon size={22} style={{ color: tier.highlight ? "white" : "#34C759" }} />
+                </div>
+                <h2
+                  className="text-xl font-bold mb-1"
+                  style={{ color: tier.highlight ? "white" : "var(--text)" }}
+                >
+                  {tier.name}
+                </h2>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-4xl font-extrabold" style={{ color: tier.highlight ? "white" : "var(--text)" }}>
                     {tier.price}
                   </span>
-                  <span className={`text-sm ${tier.highlight ? "text-green-100" : "text-zinc-400"}`}>
+                  <span className="text-sm" style={{ color: tier.highlight ? "rgba(255,255,255,0.65)" : "var(--text-muted)" }}>
                     {tier.period}
                   </span>
                 </div>
-                <p className={`mt-2 text-sm ${tier.highlight ? "text-green-100" : "text-zinc-500 dark:text-zinc-400"}`}>
+                <p className="text-sm leading-relaxed" style={{ color: tier.highlight ? "rgba(255,255,255,0.8)" : "var(--text-muted)" }}>
                   {tier.description}
                 </p>
               </div>
 
-              <ul className="flex-1 space-y-3 mb-8">
-                {tier.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <span className={tier.highlight ? "text-green-200" : "text-green-500"}>✓</span>
-                    <span className={tier.highlight ? "text-green-50" : "text-zinc-600 dark:text-zinc-300"}>{f}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* Features */}
+              <div className="flex-1 mb-8">
+                {tier.inherits && (
+                  <p
+                    className="text-xs font-semibold uppercase tracking-wide mb-3"
+                    style={{ color: tier.highlight ? "rgba(255,255,255,0.55)" : "var(--text-muted)" }}
+                  >
+                    {tier.inherits}
+                  </p>
+                )}
+                <ul className="space-y-3">
+                  {tier.features.map((f) => (
+                    <li key={f.text} className="flex items-start gap-2.5">
+                      <span
+                        className="mt-0.5 shrink-0"
+                        style={{ color: tier.highlight ? "rgba(255,255,255,0.9)" : "#34C759" }}
+                      >
+                        <f.icon size={14} />
+                      </span>
+                      <span className="text-sm leading-snug flex items-center gap-2" style={{ color: tier.highlight ? "rgba(255,255,255,0.85)" : "var(--text-sub)" }}>
+                        {f.text}
+                        {f.soon && (
+                          <span
+                            className="text-[10px] font-semibold rounded-full px-2 py-0.5 shrink-0"
+                            style={
+                              tier.highlight
+                                ? { background: "rgba(255,255,255,0.2)", color: "white" }
+                                : { background: "rgba(255,149,0,0.15)", color: "#FF9500" }
+                            }
+                          >
+                            Coming Soon
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
               <a
                 href={tier.href}
-                className={`w-full rounded-full py-3 text-center text-sm font-semibold transition-colors ${
+                className="w-full rounded-full py-3.5 text-center text-sm font-semibold transition-opacity hover:opacity-90"
+                style={
                   tier.highlight
-                    ? "bg-white text-green-700 hover:bg-green-50"
-                    : "bg-green-600 text-white hover:bg-green-700"
-                }`}
+                    ? { background: "white", color: "#34C759", border: "1px solid var(--glass-border)" }
+                    : { background: "#34C759", color: "white" }
+                }
               >
                 {tier.cta}
               </a>
@@ -140,8 +243,17 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-zinc-100 dark:border-zinc-800 py-8 px-6 text-center text-sm text-zinc-400">
-        <p>© {new Date().getFullYear()} Mini-Mate. Pricing is in USD and billed monthly.</p>
+      {/* Footer */}
+      <footer
+        className="mt-auto py-8 px-6 text-center text-sm"
+        style={{ borderTop: "1px solid var(--glass-border)", color: "var(--text-muted)" }}
+      >
+        <div className="flex flex-wrap justify-center gap-6 mb-4">
+          <Link href="/" className="hover:opacity-70 transition-opacity">For Players</Link>
+          <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
+          <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms</Link>
+        </div>
+        <p>© {new Date().getFullYear()} Mini Mate. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -63,6 +63,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.ui.res.colorResource
 import com.garrettbutchko.minimate.content.helper.modifiers.colorCardLayout
+import com.garrettbutchko.minimate.content.helper.modifiers.colorCardLayoutHealth
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.HealthRatingChart
 import com.garrettbutchko.minimate.content.tabviews.analytics.charts.SectionHealthDetailView
@@ -302,7 +303,7 @@ private fun HealthSection(course: Course?, analyticsVM: AnalyticsViewModel) {
     val cardBackground = Color.subVsColor(makeColor = scoreCardColor)
     var showHealthSheet by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.colorCardLayout(scoreCardColor)) {
+    Box(modifier = Modifier.colorCardLayoutHealth(scoreCardColor, course?.tier ?: 0)) {
         // Content — blurred when tier-gated, matching iOS .blur(radius: 6)
         Box(
             modifier = Modifier
