@@ -50,6 +50,7 @@ fun EmailPasswordView(
     confirmPassword: String,
     onConfirmPasswordChange: (String) -> Unit,
     initialShowSignUp: Boolean = false,
+    isMiniMateApp: Boolean = true,
     onBack: () -> Unit
 ) {
     var showSignUp by remember { mutableStateOf(initialShowSignUp) }
@@ -233,8 +234,8 @@ fun EmailPasswordView(
                     enabled = !disabled && !isLoading,
                     shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colorResource(id = R.color.swiftGreen),
-                        disabledContainerColor = colorResource(id = R.color.swiftGreen).copy(alpha = 0.5f)
+                        containerColor = colorResource(id = if (isMiniMateApp) R.color.swiftGreen else R.color.swiftPurple),
+                        disabledContainerColor = colorResource(id = if (isMiniMateApp) R.color.swiftGreen else R.color.swiftPurple).copy(alpha = 0.5f)
                     ),
                     modifier = Modifier
                         .height(50.dp)
@@ -278,7 +279,7 @@ fun EmailPasswordView(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = colorResource(id = R.color.swiftGreen)
+                tint = colorResource(id = if (isMiniMateApp) R.color.swiftGreen else R.color.swiftPurple)
             )
         }
     }

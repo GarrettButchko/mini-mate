@@ -153,8 +153,8 @@ fun ContentView(
                     WelcomeView(
                         welcomeText = "Mini Mate Manager",
                         gradientColors = listOf(
-                            Color(0xFF1F4073),
-                            Color(0xFF2E7361)
+                            Color(0xFF0088FF),
+                            Color(0xFFCB30E0)
                         )
                     )
                 }

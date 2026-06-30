@@ -55,8 +55,8 @@ fun SignInView(
         )
     } else {
         listOf(
-            colorResource(id = R.color.MMMBlue),
-            colorResource(id = R.color.MMMGreen)
+            colorResource(id = R.color.swiftBlue),
+            colorResource(id = R.color.swiftPurple)
         )
     }
 
@@ -111,6 +111,7 @@ fun SignInView(
                             onPasswordChange = { password = it },
                             confirmPassword = confirmPassword,
                             onConfirmPasswordChange = { confirmPassword = it },
+                            isMiniMateApp = isMiniMateApp,
                             onBack = { showEmailSignIn = false }
                         )
                     }
@@ -277,7 +278,7 @@ fun StartButtons(
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(25.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.swiftGreen))
+            colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = if (isMiniMateApp) R.color.swiftGreen else R.color.swiftPurple))
         ) {
             Icon(Icons.Default.Email, contentDescription = null)
             Spacer(Modifier.width(8.dp))
