@@ -219,7 +219,7 @@ export default function PricingPage() {
 
               <a
                 href={tier.href}
-                className="w-full rounded-full py-3.5 text-center text-sm font-semibold transition-opacity hover:opacity-90"
+                className="w-full rounded-full py-3.5 text-center text-sm font-semibold transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
                 style={
                   tier.highlight
                     ? { background: "white", color: "#AF52DE", border: "1px solid var(--glass-border)" }

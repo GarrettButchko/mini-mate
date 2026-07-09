@@ -65,11 +65,11 @@ export default function CoursesPage() {
 
   return (
     <PageShell>
-      <SiteNav>
+      <SiteNav logoColor="#AF52DE" wrapChildren={false}>
         <Link
           href="/pricing"
-          className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 transition-opacity"
-          style={{ background: "#34C759" }}
+          className="rounded-full px-4 py-2.5 text-base text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200"
+          style={{ background: "#AF52DE" }}
         >
           Course Pricing
         </Link>
@@ -87,7 +87,7 @@ export default function CoursesPage() {
       </section>
 
       {/* Benefits */}
-      <section className="py-14 px-6 mb-12" style={{ background: "var(--surface-sub)" }}>
+      <section className="py-14 px-6 mb-12">
         <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           {[
             { icon: MapPin, title: "Verified Listing", desc: "We confirm your business on the map before contacting you." },
@@ -95,7 +95,7 @@ export default function CoursesPage() {
             { icon: Smartphone, title: "Digital Scorecards", desc: "Players score their rounds at your course inside the app." },
           ].map((b) => (
             <div key={b.title}>
-              <div className="flex justify-center mb-3" style={{ color: "#34C759" }}>
+              <div className="flex justify-center mb-3" style={{ color: "#AF52DE" }}>
                 <b.icon size={28} />
               </div>
               <h3 className="font-semibold mb-1" style={{ color: "var(--text)" }}>{b.title}</h3>
@@ -119,8 +119,8 @@ export default function CoursesPage() {
           <button
             onClick={findNearMe}
             disabled={search.loading}
-            className="w-full rounded-full py-3.5 text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity mb-4"
-            style={{ background: "#34C759" }}
+            className="w-full rounded-full py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 mb-4"
+            style={{ background: "#AF52DE" }}
           >
             {search.loading ? "Searching nearby…" : (
               <span className="flex items-center justify-center gap-2">
@@ -156,7 +156,7 @@ export default function CoursesPage() {
                       className="w-full text-left rounded-[17px] px-4 py-3 transition-all hover:opacity-90"
                       style={
                         selected?.placeID === item.placeID
-                          ? { background: "rgba(52,199,89,0.15)", border: "1px solid #34C759" }
+                          ? { background: "rgba(175,82,222,0.15)", border: "1px solid #AF52DE" }
                           : { background: "var(--surface-input)", border: "1px solid var(--glass-border)" }
                       }
                     >
@@ -216,8 +216,8 @@ function ContactCard({ course }: { course: MapItemDTO }) {
             }
             target={primary.method === "website" ? "_blank" : undefined}
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-full px-6 py-3.5 text-white font-semibold text-sm hover:opacity-90 transition-opacity mb-4"
-            style={{ background: "#34C759" }}
+            className="flex items-center gap-3 rounded-full px-6 py-3.5 text-white font-semibold text-sm hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200 mb-4"
+            style={{ background: "#AF52DE" }}
           >
             <span>{methodIcons[primary.method]}</span>
             {primary.label}

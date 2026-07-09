@@ -43,7 +43,7 @@ export default function ForCoursesPage() {
         <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
           For Players
         </Link>
-        <Link href="/pricing" className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 transition-opacity" style={{ background: "#AF52DE" }}>
+        <Link href="/pricing" className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "#AF52DE" }}>
           View Pricing
         </Link>
       </SiteNav>
@@ -62,10 +62,10 @@ export default function ForCoursesPage() {
               Get discovered by players near you, run in-app ads, and track your business — all from the Mini Mate admin app.
             </p>
             <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-              <Link href="/pricing" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "white", color: "#1F4073" }}>
+              <Link href="/pricing" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "white", color: "#1F4073" }}>
                 See Pricing
               </Link>
-              <Link href="/courses" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+              <Link href="/courses" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
                 Find Your Course
               </Link>
             </div>
@@ -106,10 +106,10 @@ export default function ForCoursesPage() {
         <h2 className="text-3xl font-bold mb-4" style={{ color: "var(--text)" }}>Ready to get listed?</h2>
         <p className="mb-8 max-w-md mx-auto" style={{ color: "var(--text-muted)" }}>Start free. Upgrade when you need more. No lock-in.</p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Link href="/pricing" className="rounded-full px-10 py-4 text-base font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: "#AF52DE" }}>
+          <Link href="/pricing" className="rounded-full px-10 py-4 text-base font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "#AF52DE" }}>
             View Plans
           </Link>
-          <Link href="/courses" className="rounded-full px-10 py-4 text-base font-semibold hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)", border: "1px solid var(--glass-border)" }}>
+          <Link href="/courses" className="rounded-full px-10 py-4 text-base font-semibold hover:opacity-70 hover:scale-105 active:scale-95 transition-all duration-200" style={{ color: "var(--text-sub)", border: "1px solid var(--glass-border)" }}>
             Find Your Course
           </Link>
         </div>

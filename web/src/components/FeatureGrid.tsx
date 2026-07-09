@@ -16,7 +16,7 @@ interface FeatureGridProps {
 
 export default function FeatureGrid({ heading, features, accentColor = "#34C759" }: FeatureGridProps) {
   return (
-    <section className="py-20 px-6" style={{ background: "var(--surface-sub)" }}>
+    <section className="py-20 px-6">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>{heading}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

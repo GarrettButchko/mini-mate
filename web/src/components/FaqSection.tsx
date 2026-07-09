@@ -10,7 +10,7 @@ export default function FaqSection({ faqs }: { faqs: FaqItem[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-20 px-6" style={{ background: "var(--surface-sub)" }}>
+    <section className="py-20 px-6">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-center text-3xl font-bold mb-14" style={{ color: "var(--text)" }}>
           Frequently asked questions
@@ -22,7 +22,7 @@ export default function FaqSection({ faqs }: { faqs: FaqItem[] }) {
               <div key={item.q} className="glass-card">
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className="w-full flex items-center justify-between px-6 py-5 text-left font-medium text-sm"
+                  className="w-full flex items-center justify-between px-6 py-5 text-left font-medium text-sm cursor-pointer"
                   style={{ color: "var(--text)" }}
                 >
                   {item.q}

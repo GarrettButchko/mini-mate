@@ -5,10 +5,11 @@ interface SiteNavProps {
   position?: "fixed" | "sticky";
   logoLinked?: boolean;
   logoColor?: string;
+  wrapChildren?: boolean;
   children?: React.ReactNode;
 }
 
-export default function SiteNav({ position = "sticky", logoLinked = true, logoColor = "#34C759", children }: SiteNavProps) {
+export default function SiteNav({ position = "sticky", logoLinked = true, logoColor = "#34C759", wrapChildren = true, children }: SiteNavProps) {
   const positionClass = position === "fixed" ? "fixed inset-x-0 top-0" : "sticky top-0";
 
   const logoContent = (
@@ -32,9 +33,15 @@ export default function SiteNav({ position = "sticky", logoLinked = true, logoCo
         </div>
       )}
       {children && (
-        <div className="glass-pill flex items-center gap-1 px-2 py-2">
-          {children}
-        </div>
+        wrapChildren ? (
+          <div className="glass-pill flex items-center gap-1 px-2 py-2">
+            {children}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            {children}
+          </div>
+        )
       )}
     </nav>
   );

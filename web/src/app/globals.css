@@ -18,19 +18,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --gradient-start: #1F4073;
-    --gradient-end: #2E7361;
+    --gradient-start: #2B4C7E;
+    --gradient-end: #35806A;
     --gradient-shadow: rgba(31, 64, 115, 0.3);
-    --bg: #000000;
-    --surface: #1C1C1E;
-    --surface-sub: #2A2A2E;
-    --surface-input: #3A3A3C;
-    --text: #F2F2F7;
-    --text-sub: #EEEEEF;
-    --text-muted: #636366;
-    --glass-bg: rgba(28, 28, 30, 0.76);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    --bg: #121214;
+    --surface: #1E1E21;
+    --surface-sub: #28282C;
+    --surface-input: #35353A;
+    --text: #D9D9DE;
+    --text-sub: #C7C7CC;
+    --text-muted: #86868B;
+    --glass-bg: rgba(30, 30, 33, 0.76);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 }
 

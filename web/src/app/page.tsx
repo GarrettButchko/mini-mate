@@ -60,11 +60,11 @@ export default function Home() {
               Real-time multiplayer, verified course data, and beautiful stats — free for everyone.
             </p>
             <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
-              <a href="#app-store" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "white", color: "#1C1C1E" }}>
+              <a href="#app-store" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "var(--surface)", color: "var(--text)" }}>
                 <AppleIcon />
                 App Store
               </a>
-              <a href="#google-play" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+              <a href="#google-play" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "var(--surface)", color: "var(--text)" }}>
                 <GooglePlayIcon />
                 Google Play
               </a>
@@ -102,11 +102,11 @@ export default function Home() {
 
       <TestimonialGrid heading="What players say" testimonials={testimonials}>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <a href="#app-store" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "var(--surface)", border: "1px solid var(--glass-border)", color: "var(--text)" }}>
+          <a href="#app-store" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "var(--surface)", border: "1px solid var(--glass-border)", color: "var(--text)" }}>
             <AppleIcon />
             Download on App Store
           </a>
-          <a href="#google-play" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity" style={{ background: "var(--surface)", border: "1px solid var(--glass-border)", color: "var(--text)" }}>
+          <a href="#google-play" className="flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "var(--surface)", border: "1px solid var(--glass-border)", color: "var(--text)" }}>
             <GooglePlayIcon />
             Get it on Google Play
           </a>
@@ -123,8 +123,8 @@ export default function Home() {
             <div className="glass-card p-8 text-center flex flex-col items-center">
               <div className="mb-4" style={{ color: "#34C759" }}><Download size={32} /></div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>I want to track my golf</h3>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>Download the app, play for free, and upgrade to Pro for $2.</p>
-              <a href="#app-store" className="rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: "#34C759" }}>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>Download the app, play for free.</p>
+              <a href="#app-store" className="rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "#34C759" }}>
                 Download the App
               </a>
             </div>
@@ -132,7 +132,7 @@ export default function Home() {
               <div className="mb-4" style={{ color: "#AF52DE" }}><Building2 size={32} /></div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>I own a mini golf course</h3>
               <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>Get listed, build your brand in the app, and track your players.</p>
-              <Link href="/for-courses" className="rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity" style={{ background: "#AF52DE" }}>
+              <Link href="/for-courses" className="rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "#AF52DE" }}>
                 Learn More
               </Link>
             </div>
