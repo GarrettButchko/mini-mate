@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Target, Globe, BarChart2, Map, Smartphone, Building2, Download } from "lucide-react";
-import { MainViewBusinessLogic } from "@/lib/MainViewBusinessLogic";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
@@ -8,11 +7,9 @@ import FaqSection from "@/components/FaqSection";
 import TestimonialGrid from "@/components/TestimonialGrid";
 import FeatureGrid from "@/components/FeatureGrid";
 
-const logic = new MainViewBusinessLogic();
-
 const features = [
   { icon: Target, title: "Instant Scorecards", desc: "Start a round in seconds. Track every hole with live par comparison.", imageSrc: "/screenshots/test.jpg", imageAlt: "Scorecard screen" },
-  { icon: Globe, title: "Online Multiplayer", desc: logic.getInfoMessage(true), imageSrc: null as string | null, imageAlt: "Multiplayer lobby screen" },
+  { icon: Globe, title: "Online Multiplayer", desc: "Play with friends online in real-time.", imageAlt: "Multiplayer lobby screen" },
   { icon: BarChart2, title: "Stats & Recap", desc: "See your best rounds, stroke averages, and course records.", imageSrc: null as string | null, imageAlt: "Stats and recap screen" },
   { icon: Map, title: "Course Discovery", desc: "Find verified mini golf venues near you powered by Foursquare.", imageSrc: null as string | null, imageAlt: "Course discovery screen" },
 ];

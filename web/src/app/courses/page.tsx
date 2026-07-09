@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { MapPin, Users, Smartphone, Map } from "lucide-react";
+import { MapPin, Users, Smartphone, Map, Mail, Phone, Globe, Send, Search } from "lucide-react";
 import type { MapItemDTO } from "@/lib/foursquare";
 import { resolveContactRoute, getAllContactRoutes } from "@/lib/contactRouter";
 import { SearchResultBusinessLogic } from "@/lib/SearchResultBusinessLogic";
@@ -135,123 +135,213 @@ export default function CoursesPage() {
           )}
 
           {search.results.length > 0 && (
-            <>
-              <input
-                type="text"
-                placeholder="Filter by name…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-[25px] px-5 py-3 text-sm mb-4 focus:outline-none"
+            <div className="relative mt-4 animate-fade-in" style={{ height: 340 }}>
+              {/* List scrolls behind the search bar */}
+              <div className="absolute inset-0 -mx-1 px-1 overflow-y-auto no-scrollbar">
+                <ul className="space-y-2 pb-2" style={{ paddingTop: 62 }}>
+                  {displayed.map((item, i) => (
+                    <li key={item.placeID} className="animate-fade-in-up" style={{ animationDelay: `${i * 40}ms` }}>
+                      <button
+                        onClick={() => setSelected(item)}
+                        className="w-full text-left rounded-[25px] px-4 py-3 transition-all hover:opacity-80"
+                        style={
+                          selected?.placeID === item.placeID
+                            ? { background: "rgba(175,82,222,0.12)", outline: "2px solid #AF52DE", outlineOffset: 0 }
+                            : { background: "var(--surface-two)" }
+                        }
+                      >
+                        <p className="font-semibold text-sm" style={{ color: "var(--text)" }}>{item.name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          {distanceLabel(item) ?? item.address.shortAddress}
+                        </p>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Glass search bar — floats on top */}
+              <div
+                className="absolute top-0 left-0 right-0 z-10 flex items-center gap-3 px-4"
                 style={{
-                  background: "var(--surface-input)",
-                  color: "var(--text)",
-                  border: "1px solid var(--glass-border)",
+                  height: 50,
+                  borderRadius: 25,
+                  background: "var(--glass-bg)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  boxShadow: "var(--shadow)",
                 }}
-              />
-              <ul className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                {displayed.map((item) => (
-                  <li key={item.placeID}>
-                    <button
-                      onClick={() => setSelected(item)}
-                      className="w-full text-left rounded-[17px] px-4 py-3 transition-all hover:opacity-90"
-                      style={
-                        selected?.placeID === item.placeID
-                          ? { background: "rgba(175,82,222,0.15)", border: "1px solid #AF52DE" }
-                          : { background: "var(--surface-input)", border: "1px solid var(--glass-border)" }
-                      }
-                    >
-                      <p className="font-medium text-sm" style={{ color: "var(--text)" }}>{item.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        {distanceLabel(item) ?? item.address.shortAddress}
-                      </p>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
+              >
+                <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="flex-1 bg-transparent text-sm focus:outline-none"
+                  style={{ color: "var(--text)" }}
+                />
+              </div>
+            </div>
           )}
         </div>
 
-        {selected && <ContactCard course={selected} />}
+        {selected && (
+          <div className="animate-fade-in-up">
+            <ContactCard course={selected} />
+          </div>
+        )}
       </section>
     </PageShell>
   );
 }
 
+const TIERS = [
+  { id: "listed", label: "Listed", price: "Free" },
+  { id: "partner", label: "Partner", price: "$29/mo" },
+  { id: "analytics", label: "Analytics", price: "$69/mo" },
+] as const;
+type TierId = (typeof TIERS)[number]["id"];
+
 function ContactCard({ course }: { course: MapItemDTO }) {
+  const [selectedTier, setSelectedTier] = useState<TierId>("listed");
+  const [claiming, setClaiming] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+
   const contact = {
-    email: null,
+    email: course.email,
     phone: course.phoneNumber,
     website: course.url,
     address: course.address.fullAddress,
   };
   const primary = resolveContactRoute(contact);
   const all = getAllContactRoutes(contact);
-  const methodIcons: Record<string, string> = {
-    email: "✉️",
-    phone: "📞",
-    website: "🌐",
-    mail: "📬",
+  const methodIcons: Record<string, React.ReactElement> = {
+    email: <Mail size={16} />,
+    phone: <Phone size={16} />,
+    website: <Globe size={16} />,
+    mail: <Send size={16} />,
   };
+
+  async function handleClaim() {
+    setClaiming(true);
+    setClaimError(null);
+
+    const body = {
+      placeId: course.placeID,
+      courseName: course.name,
+      contact: {
+        email: course.email,
+        phoneNumber: course.phoneNumber,
+        url: course.url,
+        address: course.address,
+        coordinate: course.coordinate,
+      },
+    };
+
+    if (selectedTier === "listed") {
+      const res = await fetch("/api/claim-course", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setClaiming(false);
+      if (!res.ok) { setClaimError(data.error ?? "Something went wrong."); return; }
+      window.location.href = `/courses/success?method=${data.method ?? "pending"}&course=${encodeURIComponent(course.name)}`;
+    } else {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...body, tier: selectedTier }),
+      });
+      const data = await res.json();
+      setClaiming(false);
+      if (!res.ok) { setClaimError(data.error ?? "Something went wrong."); return; }
+      window.location.href = data.url;
+    }
+  }
 
   return (
     <div className="glass-card mt-6 p-8">
       <h3 className="text-lg font-bold mb-1" style={{ color: "var(--text)" }}>{course.name}</h3>
       <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>{course.address.fullAddress}</p>
 
-      {primary ? (
-        <>
-          <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>
-            Best contact method for this business:
-          </p>
-          <a
-            href={
-              primary.method === "email"
-                ? `mailto:${primary.value}`
-                : primary.method === "phone"
-                ? `tel:${primary.value}`
-                : primary.method === "website"
-                ? primary.value
-                : "#"
-            }
-            target={primary.method === "website" ? "_blank" : undefined}
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-full px-6 py-3.5 text-white font-semibold text-sm hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200 mb-4"
-            style={{ background: "#AF52DE" }}
-          >
-            <span>{methodIcons[primary.method]}</span>
-            {primary.label}
-          </a>
-
-          {all.length > 1 && (
-            <div>
-              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>All available contacts:</p>
-              <div className="flex flex-wrap gap-2">
-                {all.map((c) => (
-                  <span
-                    key={c.method}
-                    className="rounded-full px-3 py-1 text-xs"
-                    style={{ background: "var(--surface-input)", color: "var(--text-sub)", border: "1px solid var(--glass-border)" }}
-                  >
-                    {methodIcons[c.method]} {c.value}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          No direct contact info found. We&apos;ll reach out by mail:{" "}
-          <span className="font-medium" style={{ color: "var(--text)" }}>{course.address.fullAddress}</span>
+      {/* Delivery contact */}
+      <div className="mb-6">
+        <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+          {primary ? "Your course code will be sent to:" : "No digital contact found — your code will be mailed to:"}
         </p>
+        {primary ? (
+          <>
+            <div
+              className="flex items-center gap-3 rounded-full px-4 py-3"
+              style={{ background: "var(--surface-two)" }}
+            >
+              <span style={{ color: "#AF52DE" }}>{methodIcons[primary.method]}</span>
+              <span className="text-sm font-medium" style={{ color: "var(--text)" }}>{primary.value}</span>
+            </div>
+            {all.length > 1 && (
+              <div className="mt-3">
+                <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>All available contacts:</p>
+                <div className="flex flex-wrap gap-2">
+                  {all.map((c) => (
+                    <span
+                      key={c.method}
+                      className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs"
+                      style={{ background: "var(--surface-two)", color: "var(--text-muted)" }}
+                    >
+                      <span style={{ color: "#AF52DE" }}>{methodIcons[c.method]}</span>
+                      {c.value}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-sm font-medium" style={{ color: "var(--text)" }}>{course.address.fullAddress}</p>
+        )}
+      </div>
+
+      {/* Tier picker */}
+      <div className="mb-6">
+        <p className="text-sm font-semibold mb-3" style={{ color: "var(--text)" }}>Choose your plan</p>
+        <div className="flex gap-2">
+          {TIERS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setSelectedTier(t.id)}
+              className="flex-1 rounded-[20px] px-3 py-3 text-center transition-all duration-200"
+              style={
+                selectedTier === t.id
+                  ? { background: "rgba(175,82,222,0.12)", outline: "2px solid #AF52DE", outlineOffset: 0 }
+                  : { background: "var(--surface-two)" }
+              }
+            >
+              <p className="text-xs font-bold mb-0.5" style={{ color: selectedTier === t.id ? "#AF52DE" : "var(--text)" }}>{t.label}</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t.price}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {claimError && (
+        <p className="text-sm mb-3 px-1" style={{ color: "#FF383C" }}>{claimError}</p>
       )}
 
-      <div className="mt-6 pt-6" style={{ borderTop: "1px solid var(--glass-border)" }}>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          Foursquare ID: <code className="font-mono" style={{ color: "var(--text-sub)" }}>{course.placeID}</code>
-        </p>
-      </div>
+      <button
+        onClick={handleClaim}
+        disabled={claiming}
+        className="w-full rounded-full py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
+        style={{ background: "#AF52DE" }}
+      >
+        {claiming
+          ? "Setting things up…"
+          : selectedTier === "listed"
+          ? "Claim free listing"
+          : `Subscribe to ${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)}`}
+      </button>
     </div>
   );
 }

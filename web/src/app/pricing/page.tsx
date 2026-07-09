@@ -49,7 +49,7 @@ const tiers: {
       { icon: Link2, text: "Social links on your course profile" },
     ],
     cta: "Subscribe",
-    href: "#checkout-listed",
+    href: "/courses",
     highlight: false,
   },
   {
@@ -69,7 +69,7 @@ const tiers: {
       { icon: Nfc, text: "NFC-enabled tent tag (Mini Mate branded)" },
     ],
     cta: "Subscribe",
-    href: "#checkout-partner",
+    href: "/courses",
     highlight: true,
   },
   {
@@ -88,7 +88,7 @@ const tiers: {
       { icon: Layers, text: "Beautiful analytics interface" },
     ],
     cta: "Subscribe",
-    href: "#checkout-analytics",
+    href: "/courses",
     highlight: false,
   },
 ];
@@ -217,7 +217,7 @@ export default function PricingPage() {
                 </ul>
               </div>
 
-              <a
+              <Link
                 href={tier.href}
                 className="w-full rounded-full py-3.5 text-center text-sm font-semibold transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
                 style={
@@ -227,7 +227,7 @@ export default function PricingPage() {
                 }
               >
                 {tier.cta}
-              </a>
+              </Link>
             </div>
           ))}
         </div>

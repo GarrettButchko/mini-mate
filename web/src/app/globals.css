@@ -6,6 +6,7 @@
   --gradient-shadow: rgba(0, 136, 255, 0.25);
   --bg: #F4F5F5;
   --surface: #FFFFFF;
+  --surface-two: #F4F4F4;
   --surface-sub: #F0F0F2;
   --surface-input: #E1DFE6;
   --text: #000000;
@@ -13,7 +14,7 @@
   --text-muted: #8E8E93;
   --glass-bg: rgba(255, 255, 255, 0.88);
   --glass-border: rgba(0, 0, 0, 0.14);
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow: 0 5px 10px rgba(0, 0, 0, 0.10);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +24,7 @@
     --gradient-shadow: rgba(31, 64, 115, 0.3);
     --bg: #121214;
     --surface: #1E1E21;
+    --surface-two: #2A2A2E;
     --surface-sub: #28282C;
     --surface-input: #35353A;
     --text: #D9D9DE;
@@ -30,7 +32,7 @@
     --text-muted: #86868B;
     --glass-bg: rgba(30, 30, 33, 0.76);
     --glass-border: rgba(255, 255, 255, 0.08);
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow: 0 5px 10px rgba(0, 0, 0, 0.30);
   }
 }
 
@@ -77,6 +79,22 @@ body {
   border-radius: 25px;
   box-shadow: var(--shadow);
 }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in     { animation: fadeIn    0.25s ease both; }
+.animate-fade-in-up  { animation: fadeInUp  0.30s ease both; }
 
 .glass-card {
   background: var(--glass-bg);

@@ -12,6 +12,7 @@ export interface AddressDTO {
 export interface MapItemDTO {
   placeID: string;
   name: string;
+  email: string | null;
   phoneNumber: string | null;
   url: string | null;
   address: AddressDTO;
@@ -25,6 +26,7 @@ interface FsqPlace {
   longitude: number;
   location?: { formatted_address?: string; address?: string };
   distance?: number;
+  email?: string;
   tel?: string;
   website?: string;
 }
@@ -47,7 +49,7 @@ export async function searchMiniGolf(
     query: "mini golf",
     sort: "DISTANCE",
     limit: "50",
-    fields: "fsq_place_id,name,categories,latitude,longitude,location,distance,tel,website",
+    fields: "fsq_place_id,name,categories,latitude,longitude,location,distance,email,tel,website",
   });
 
   const res = await fetch(`https://places-api.foursquare.com/places/search?${params}`, {
@@ -65,6 +67,7 @@ export async function searchMiniGolf(
   return body.results.slice(0, limit).map((r) => ({
     placeID: r.fsq_place_id,
     name: r.name,
+    email: r.email ?? null,
     phoneNumber: r.tel ?? null,
     url: r.website ?? null,
     address: {
