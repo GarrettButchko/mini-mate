@@ -40,10 +40,11 @@ export async function POST(req: NextRequest) {
 
     const method = await deliverCode(contact, courseName, code);
 
-    // Record subscription details on the course doc
+    const tierNumber = meta.tier === "analytics" ? 3 : 2;
+
     await db.collection("courses").doc(placeId).set(
       {
-        tier: session.metadata?.tier ?? "partner",
+        tier: tierNumber,
         stripeCustomerId: session.customer,
         stripeSubscriptionId: session.subscription,
         deliveryMethod: method,

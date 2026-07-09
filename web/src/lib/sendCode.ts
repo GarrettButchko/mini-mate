@@ -11,7 +11,7 @@ export type DeliveryMethod = "email" | "sms" | "mail" | "pending";
 
 export async function sendCodeByEmail(to: string, courseName: string, code: string) {
   await resend.emails.send({
-    from: "Mini Mate <noreply@minimategolf.com>",
+    from: process.env.RESEND_FROM ?? "Mini Mate <onboarding@resend.dev>",
     to,
     subject: `Your Mini Mate course code for ${courseName}`,
     html: `

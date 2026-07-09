@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle, Mail, MessageSquare, MapPin, Clock } from "lucide-react";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 const methodConfig = {
   email: { icon: Mail, heading: "Check your email", body: "We sent your course code to the email address on file with Foursquare. Open it and follow the instructions inside." },
@@ -33,7 +34,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
           </div>
 
           <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text)" }}>
-            You&apos;re on the map!
+            Code sent!
           </h1>
           {course && (
             <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
@@ -54,7 +55,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
           <div className="rounded-[20px] p-5 mb-8 text-left" style={{ background: "var(--surface-two)" }}>
             <p className="font-semibold text-sm mb-2" style={{ color: "var(--text)" }}>Next steps</p>
             <ol className="space-y-2">
-              {["Download Mini Mate Manager from the App Store", 'Tap "Add a Course"', "Enter the code we sent you"].map((step, i) => (
+              {["Download Mini Mate Manager from the App Store", 'Tap "Add a Course"', "Enter the code we sent you", "Configure your course settings in the app"].map((step, i) => (
                 <li key={i} className="flex items-center gap-3 text-sm" style={{ color: "var(--text-muted)" }}>
                   <span className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: "#AF52DE" }}>{i + 1}</span>
                   {step}
@@ -73,6 +74,15 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
           </div>
         </div>
       </section>
+
+      <SiteFooter links={[
+        { href: "/", label: "For Players" },
+        { href: "/for-courses", label: "For Courses" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms" },
+        { href: "mailto:garrettwm2005@gmail.com", label: "Support" },
+      ]} />
     </PageShell>
   );
 }

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const customers = await stripe.customers.list({ email, limit: 1 });
   if (!customers.data.length) {
-    return NextResponse.json({ error: "No subscription found for that email." }, { status: 404 });
+    return NextResponse.json({ freeTier: true });
   }
 
   const session = await stripe.billingPortal.sessions.create({

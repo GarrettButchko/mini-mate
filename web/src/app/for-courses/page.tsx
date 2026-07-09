@@ -43,6 +43,9 @@ export default function ForCoursesPage() {
         <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
           For Players
         </Link>
+        <Link href="/manage" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
+          Manage
+        </Link>
         <Link href="/pricing" className="rounded-full px-4 py-1.5 text-sm text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "#AF52DE" }}>
           View Pricing
         </Link>
@@ -67,6 +70,9 @@ export default function ForCoursesPage() {
               </Link>
               <Link href="/courses" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
                 Find Your Course
+              </Link>
+              <Link href="/manage" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+                Manage Subscription
               </Link>
             </div>
           </div>

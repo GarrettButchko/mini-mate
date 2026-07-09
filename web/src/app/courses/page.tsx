@@ -7,8 +7,19 @@ import { resolveContactRoute, getAllContactRoutes } from "@/lib/contactRouter";
 import { SearchResultBusinessLogic } from "@/lib/SearchResultBusinessLogic";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 const searchLogic = new SearchResultBusinessLogic();
+
+const TEST_COURSE: MapItemDTO = {
+  placeID: "test-minimatehq",
+  name: "Mini Mate HQ (Test)",
+  address: { fullAddress: "412 Greenbriar Dr", shortAddress: "412 Greenbriar Dr" },
+  coordinate: { latitude: 41.497, longitude: -82.004 },
+  phoneNumber: "+14403207664",
+  url: null,
+  email: "garrettwm2005@gmail.com",
+};
 
 interface SearchState {
   loading: boolean;
@@ -48,9 +59,11 @@ export default function CoursesPage() {
     );
   }
 
-  const displayed = query
+  const foursquareFiltered = query
     ? search.results.filter((r) => r.name.toLowerCase().includes(query.toLowerCase()))
     : search.results;
+  const testVisible = !query || TEST_COURSE.name.toLowerCase().includes(query.toLowerCase());
+  const displayed = [...(testVisible ? [TEST_COURSE] : []), ...foursquareFiltered];
 
   function distanceLabel(item: MapItemDTO): string | null {
     if (search.userLat == null || search.userLng == null) return null;
@@ -134,8 +147,7 @@ export default function CoursesPage() {
             <p className="text-sm mb-4" style={{ color: "#FF383C" }}>{search.error}</p>
           )}
 
-          {search.results.length > 0 && (
-            <div className="relative mt-4 animate-fade-in" style={{ height: 340 }}>
+          <div className="relative mt-4 animate-fade-in" style={{ height: 340 }}>
               {/* List scrolls behind the search bar */}
               <div className="absolute inset-0 -mx-1 px-1 overflow-y-auto no-scrollbar">
                 <ul className="space-y-2 pb-2" style={{ paddingTop: 62 }}>
@@ -183,7 +195,6 @@ export default function CoursesPage() {
                 />
               </div>
             </div>
-          )}
         </div>
 
         {selected && (
@@ -192,6 +203,15 @@ export default function CoursesPage() {
           </div>
         )}
       </section>
+
+      <SiteFooter links={[
+        { href: "/", label: "For Players" },
+        { href: "/for-courses", label: "For Courses" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms" },
+        { href: "mailto:garrettwm2005@gmail.com", label: "Support" },
+      ]} />
     </PageShell>
   );
 }
