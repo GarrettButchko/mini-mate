@@ -176,9 +176,9 @@ exports.deleteUnverifiedAccounts = (0, scheduler_1.onSchedule)("every 24 hours",
     await Promise.all(uidsToDelete.map((uid) => auth.deleteUser(uid)));
 });
 // When a new Firebase Auth user is created (any platform), create their Firestore doc.
-// Mirrors the UserRepository.createUser() logic in Kotlin — same field names as UserModel.
+// Mirror of UserRepository.createUser() in shared/.../userRepos/UserRepository.kt — keep both in sync if fields change.
 exports.onUserCreated = functionsV1.auth.user().onCreate(async (user) => {
-    var _c, _d, _e;
+    var _c, _d, _e, _f, _g;
     const userRef = db.collection("users").doc(user.uid);
     // Don't overwrite an existing doc (e.g. Apple stub left from a previous deletion)
     const existing = await userRef.get();
@@ -199,8 +199,8 @@ exports.onUserCreated = functionsV1.auth.user().onCreate(async (user) => {
         googleId: user.uid,
         appleId: null,
         name: (_c = user.displayName) !== null && _c !== void 0 ? _c : `User#${user.uid.slice(0, 5)}`,
-        email: (_d = user.email) !== null && _d !== void 0 ? _d : null,
-        photoURL: (_e = user.photoURL) !== null && _e !== void 0 ? _e : null,
+        email: (_f = (_d = user.email) !== null && _d !== void 0 ? _d : (_e = user.providerData[0]) === null || _e === void 0 ? void 0 : _e.email) !== null && _f !== void 0 ? _f : null,
+        photoURL: (_g = user.photoURL) !== null && _g !== void 0 ? _g : null,
         isPro: false,
         gameIDs: [],
         adminCourses: [],
