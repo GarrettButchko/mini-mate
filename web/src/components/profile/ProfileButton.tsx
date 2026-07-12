@@ -66,6 +66,7 @@ export default function ProfileButton() {
             border: "none", padding: 0, cursor: "pointer",
             background: "var(--surface)", display: "flex",
             alignItems: "center", justifyContent: "center", flexShrink: 0,
+            boxShadow: "var(--shadow)"
           }}
         >
           {user.photoURL ? (

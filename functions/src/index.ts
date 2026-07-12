@@ -213,7 +213,7 @@ export const onUserCreated = functionsV1.auth.user().onCreate(async (user) => {
         googleId: user.uid,
         appleId: null,
         name: user.displayName ?? `User#${user.uid.slice(0, 5)}`,
-        email: user.email ?? null,
+        email: user.email ?? user.providerData[0]?.email ?? null,
         photoURL: user.photoURL ?? null,
         isPro: false,
         gameIDs: [],

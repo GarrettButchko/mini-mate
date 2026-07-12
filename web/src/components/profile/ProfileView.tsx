@@ -9,7 +9,7 @@ const ORANGE = "#FF9500";
 const RED    = "#FF3B30";
 
 export function ProfileView({ onClose }: { onClose: () => void }) {
-  const { user, signOut, updateName, sendPasswordReset, deleteAccount } = useAuth();
+  const { user, signOut, updateName, sendPasswordReset, deleteAccount, firestoreUser } = useAuth();
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
   const [profileBusy, setProfileBusy] = useState(false);
@@ -54,7 +54,8 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
       <div style={{ borderRadius: 12, background: "var(--surface-two)", overflow: "hidden", marginBottom: 18 }}>
         {[
           { label: "Name", value: user.displayName ?? "—" },
-          { label: "Email", value: user.email ?? "—" },
+          { label: "Email", value: firestoreUser?.email ?? "—" },
+          { label: "Google ID", value: firestoreUser?.googleId ?? "—" },
           { label: "Provider", value: providerLabel },
         ].map((row, i, arr) => (
           <div

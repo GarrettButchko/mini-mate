@@ -97,6 +97,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (u.photoURL && !data.photoURL) {
             updateDoc(userRef, { photoURL: u.photoURL });
           }
+
+          // Sync email from auth if Firestore doc is missing it
+          const authEmail = u.email ?? u.providerData[0]?.email ?? null;
+          if (authEmail && !data.email) {
+            updateDoc(userRef, { email: authEmail });
+          }
         } else {
           // Backfill: user exists in Auth but has no Firestore doc
           const providerType = providerIdToAccountType(u.providerData[0]?.providerId);
@@ -104,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             googleId: u.uid,
             appleId: null,
             name: u.displayName ?? `User#${u.uid.slice(0, 5)}`,
-            email: u.email ?? null,
+            email: u.email ?? u.providerData[0]?.email ?? null,
             photoURL: u.photoURL ?? null,
             isPro: false,
             gameIDs: [],
