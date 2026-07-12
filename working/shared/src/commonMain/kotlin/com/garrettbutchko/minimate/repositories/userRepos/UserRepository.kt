@@ -153,7 +153,8 @@ class UserRepository(
             lastUpdated = Timestamp.now()
         )
 
-        // Save to both sources
+        // Save to both sources.
+        // Mirror of onUserCreated in functions/src/index.ts — keep both in sync if fields change.
         localRepo.save(newUserModel, false)
         remoteRepo.save(newUserModel, false)
         return newUserModel

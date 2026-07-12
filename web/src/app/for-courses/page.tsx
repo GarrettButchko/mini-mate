@@ -36,6 +36,8 @@ const faqs = [
   { q: "How long does setup take?", a: "Usually within 24 hours of subscribing. We verify your Foursquare listing and configure your account before going live." },
 ];
 
+const heroGhostStyle = { background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" } as const;
+
 export default function ForCoursesPage() {
   return (
     <PageShell>
@@ -68,10 +70,10 @@ export default function ForCoursesPage() {
               <Link href="/pricing" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "white", color: "#1F4073" }}>
                 See Pricing
               </Link>
-              <Link href="/courses" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+              <Link href="/courses" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={heroGhostStyle}>
                 Find Your Course
               </Link>
-              <Link href="/manage" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+              <Link href="/manage" className="rounded-full px-6 py-3 text-sm font-semibold hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={heroGhostStyle}>
                 Manage Subscription
               </Link>
             </div>

@@ -132,7 +132,7 @@ export default function CoursesPage() {
           <button
             onClick={findNearMe}
             disabled={search.loading}
-            className="w-full rounded-full py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 mb-4"
+            className="w-full rounded-xl py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 mb-4"
             style={{ background: "#AF52DE" }}
           >
             {search.loading ? "Searching nearby…" : (
@@ -155,7 +155,7 @@ export default function CoursesPage() {
                     <li key={item.placeID} className="animate-fade-in-up" style={{ animationDelay: `${i * 40}ms` }}>
                       <button
                         onClick={() => setSelected(item)}
-                        className="w-full text-left rounded-[25px] px-4 py-3 transition-all hover:opacity-80"
+                        className="w-full text-left rounded-xl px-4 py-3 transition-all hover:opacity-80"
                         style={
                           selected?.placeID === item.placeID
                             ? { background: "rgba(175,82,222,0.12)", outline: "2px solid #AF52DE", outlineOffset: 0 }
@@ -332,7 +332,7 @@ function ContactCard({ course }: { course: MapItemDTO }) {
             <button
               key={t.id}
               onClick={() => setSelectedTier(t.id)}
-              className="flex-1 rounded-[20px] px-3 py-3 text-center transition-all duration-200"
+              className="flex-1 rounded-xl px-3 py-3 text-center transition-all duration-200"
               style={
                 selectedTier === t.id
                   ? { background: "rgba(175,82,222,0.12)", outline: "2px solid #AF52DE", outlineOffset: 0 }
@@ -353,7 +353,7 @@ function ContactCard({ course }: { course: MapItemDTO }) {
       <button
         onClick={handleClaim}
         disabled={claiming}
-        className="w-full rounded-full py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
+        className="w-full rounded-xl py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
         style={{ background: "#AF52DE" }}
       >
         {claiming

@@ -65,10 +65,10 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
           </div>
 
           <div className="flex flex-col gap-3">
-            <Link href="/manage" className="w-full rounded-full py-3 text-sm font-semibold text-center hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200 text-white" style={{ background: "#AF52DE" }}>
+            <Link href="/manage" className="w-full rounded-xl py-3 text-sm font-semibold text-center hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200 text-white" style={{ background: "#AF52DE" }}>
               Manage my subscription
             </Link>
-            <Link href="/for-courses" className="w-full rounded-full py-3 text-sm font-semibold text-center hover:opacity-70 transition-all duration-200" style={{ color: "var(--text-muted)" }}>
+            <Link href="/for-courses" className="w-full rounded-xl py-3 text-sm font-semibold text-center hover:opacity-70 transition-all duration-200" style={{ color: "var(--text-muted)" }}>
               Back to for course owners
             </Link>
           </div>

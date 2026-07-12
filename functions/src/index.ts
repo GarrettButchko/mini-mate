@@ -192,6 +192,38 @@ export const deleteUnverifiedAccounts = onSchedule("every 24 hours", async () =>
     await Promise.all(uidsToDelete.map((uid) => auth.deleteUser(uid)));
 });
 
+// When a new Firebase Auth user is created (any platform), create their Firestore doc.
+// Mirror of UserRepository.createUser() in shared/.../userRepos/UserRepository.kt — keep both in sync if fields change.
+export const onUserCreated = functionsV1.auth.user().onCreate(async (user) => {
+    const userRef = db.collection("users").doc(user.uid);
+
+    // Don't overwrite an existing doc (e.g. Apple stub left from a previous deletion)
+    const existing = await userRef.get();
+    if (existing.exists) return;
+
+    const providerType = (() => {
+        const id = user.providerData[0]?.providerId;
+        if (id === "google.com") return "google";
+        if (id === "apple.com") return "apple";
+        if (id === "password") return "email";
+        return id ?? null;
+    })();
+
+    await userRef.set({
+        googleId: user.uid,
+        appleId: null,
+        name: user.displayName ?? `User#${user.uid.slice(0, 5)}`,
+        email: user.email ?? null,
+        photoURL: user.photoURL ?? null,
+        isPro: false,
+        gameIDs: [],
+        adminCourses: [],
+        accountType: providerType ? [providerType] : [],
+        ballColorDT: null,
+        lastUpdated: FieldValue.serverTimestamp(),
+    });
+});
+
 // When a Firebase Auth user is deleted, clean up their Firestore data.
 // Apple users: keep a minimal stub (name, email, appleId) — Apple only provides
 // these fields on first sign-in so they can't be recovered if deleted.

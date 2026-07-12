@@ -67,14 +67,14 @@ export default function ManagePage() {
               <div className="space-y-3">
                 <Link
                   href="/courses"
-                  className="w-full rounded-full py-3.5 text-white font-semibold text-center block hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200"
+                  className="w-full rounded-xl py-3.5 text-white font-semibold text-center block hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200"
                   style={{ background: "#AF52DE" }}
                 >
                   Find my course to upgrade
                 </Link>
                 <button
                   onClick={() => { setState("idle"); setEmail(""); }}
-                  className="w-full rounded-full py-3 text-sm font-semibold text-center hover:opacity-70 transition-opacity"
+                  className="w-full rounded-xl py-3 text-sm font-semibold text-center hover:opacity-70 transition-opacity"
                   style={{ color: "var(--text-muted)" }}
                 >
                   Try a different email
@@ -93,7 +93,7 @@ export default function ManagePage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div
                   className="flex items-center gap-3 px-4"
-                  style={{ height: 50, borderRadius: 25, background: "var(--surface-two)" }}
+                  style={{ height: 50, borderRadius: 12, background: "var(--surface-two)" }}
                 >
                   <Mail size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                   <input
@@ -114,7 +114,7 @@ export default function ManagePage() {
                 <button
                   type="submit"
                   disabled={state === "loading" || !email}
-                  className="w-full rounded-full py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
+                  className="w-full rounded-xl py-3.5 text-white font-semibold hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
                   style={{ background: "#AF52DE" }}
                 >
                   {state === "loading" ? "Looking up your account…" : "Go to billing portal"}

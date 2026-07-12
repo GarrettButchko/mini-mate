@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MiniMateLogo from "./MiniMateLogo";
+import ProfileButton from "./profile/ProfileButton";
 
 interface SiteNavProps {
   position?: "fixed" | "sticky";
@@ -32,17 +33,20 @@ export default function SiteNav({ position = "sticky", logoLinked = true, logoCo
           {logoContent}
         </div>
       )}
-      {children && (
-        wrapChildren ? (
-          <div className="glass-pill flex items-center gap-1 px-2 py-2">
-            {children}
-          </div>
-        ) : (
-          <div className="flex items-center gap-1">
-            {children}
-          </div>
-        )
-      )}
+      <div className="flex items-center gap-3">
+        {children && (
+          wrapChildren ? (
+            <div className="glass-pill flex items-center gap-1 px-2 py-2">
+              {children}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              {children}
+            </div>
+          )
+        )}
+        <ProfileButton />
+      </div>
     </nav>
   );
 }

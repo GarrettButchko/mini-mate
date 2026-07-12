@@ -11,7 +11,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupDeletedAuthUser = exports.deleteUnverifiedAccounts = exports.cleanupStaleLiveGames = exports.clearTierDowngradeData = exports.cleanupOrphanedGames = exports.syncUserLastUpdated = exports.removeAdminFromCourse = void 0;
+exports.cleanupDeletedAuthUser = exports.onUserCreated = exports.deleteUnverifiedAccounts = exports.cleanupStaleLiveGames = exports.clearTierDowngradeData = exports.cleanupOrphanedGames = exports.syncUserLastUpdated = exports.removeAdminFromCourse = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const firestore_1 = require("firebase-functions/v2/firestore");
 const functionsV1 = require("firebase-functions/v1");
@@ -21,41 +21,35 @@ const database_1 = require("firebase-admin/database");
 const auth_1 = require("firebase-admin/auth");
 const app_1 = require("firebase-admin/app");
 (0, app_1.initializeApp)();
-const db = (0, firestore_2.getFirestore)();
+const db = (0, firestore_2.getFirestore)(); // v2
 exports.removeAdminFromCourse = (0, https_1.onCall)(async (request) => {
     var _c, _d;
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Must be signed in.");
     }
-    const { email, courseId } = request.data;
-    if (!email || !courseId) {
-        throw new https_1.HttpsError("invalid-argument", "email and courseId are required.");
+    const { userId, courseId } = request.data;
+    if (!userId || !courseId) {
+        throw new https_1.HttpsError("invalid-argument", "userId and courseId are required.");
     }
     const courseRef = db.collection("courses").doc(courseId);
     const courseSnap = await courseRef.get();
     if (!courseSnap.exists) {
         throw new https_1.HttpsError("not-found", "Course not found.");
     }
-    const callerEmail = request.auth.token.email;
+    const callerUid = request.auth.uid;
     const adminIDs = (_d = (_c = courseSnap.data()) === null || _c === void 0 ? void 0 : _c.adminIDs) !== null && _d !== void 0 ? _d : [];
-    if (!callerEmail || !adminIDs.includes(callerEmail)) {
+    if (!adminIDs.includes(callerUid)) {
         throw new https_1.HttpsError("permission-denied", "You are not an admin of this course.");
     }
-    // Find the user by email and update their adminCourses
-    const usersSnap = await db.collection("users")
-        .where("email", "==", email)
-        .limit(1)
-        .get();
+    const userRef = db.collection("users").doc(userId);
     const batch = db.batch();
     batch.update(courseRef, {
-        adminIDs: firestore_2.FieldValue.arrayRemove(email),
+        adminIDs: firestore_2.FieldValue.arrayRemove(userId),
     });
-    if (!usersSnap.empty) {
-        batch.update(usersSnap.docs[0].ref, {
-            adminCourses: firestore_2.FieldValue.arrayRemove(courseId),
-            lastUpdated: firestore_2.FieldValue.serverTimestamp(),
-        });
-    }
+    batch.update(userRef, {
+        adminCourses: firestore_2.FieldValue.arrayRemove(courseId),
+        lastUpdated: firestore_2.FieldValue.serverTimestamp(),
+    });
     await batch.commit();
     return { success: true };
 });
@@ -180,6 +174,40 @@ exports.deleteUnverifiedAccounts = (0, scheduler_1.onSchedule)("every 24 hours",
     // Delete one-by-one so onUserDeleted fires for each, triggering
     // cleanupDeletedAuthUser to wipe their Firestore doc automatically.
     await Promise.all(uidsToDelete.map((uid) => auth.deleteUser(uid)));
+});
+// When a new Firebase Auth user is created (any platform), create their Firestore doc.
+// Mirrors the UserRepository.createUser() logic in Kotlin — same field names as UserModel.
+exports.onUserCreated = functionsV1.auth.user().onCreate(async (user) => {
+    var _c, _d, _e;
+    const userRef = db.collection("users").doc(user.uid);
+    // Don't overwrite an existing doc (e.g. Apple stub left from a previous deletion)
+    const existing = await userRef.get();
+    if (existing.exists)
+        return;
+    const providerType = (() => {
+        var _c;
+        const id = (_c = user.providerData[0]) === null || _c === void 0 ? void 0 : _c.providerId;
+        if (id === "google.com")
+            return "google";
+        if (id === "apple.com")
+            return "apple";
+        if (id === "password")
+            return "email";
+        return id !== null && id !== void 0 ? id : null;
+    })();
+    await userRef.set({
+        googleId: user.uid,
+        appleId: null,
+        name: (_c = user.displayName) !== null && _c !== void 0 ? _c : `User#${user.uid.slice(0, 5)}`,
+        email: (_d = user.email) !== null && _d !== void 0 ? _d : null,
+        photoURL: (_e = user.photoURL) !== null && _e !== void 0 ? _e : null,
+        isPro: false,
+        gameIDs: [],
+        adminCourses: [],
+        accountType: providerType ? [providerType] : [],
+        ballColorDT: null,
+        lastUpdated: firestore_2.FieldValue.serverTimestamp(),
+    });
 });
 // When a Firebase Auth user is deleted, clean up their Firestore data.
 // Apple users: keep a minimal stub (name, email, appleId) — Apple only provides
