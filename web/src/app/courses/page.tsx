@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { MapPin, Users, Smartphone, Map, Mail, Phone, Globe, Send, Search } from "lucide-react";
 import type { MapItemDTO } from "@/lib/foursquare";
 import { resolveContactRoute, getAllContactRoutes } from "@/lib/contactRouter";
@@ -147,12 +148,30 @@ export default function CoursesPage() {
             <p className="text-sm mb-4" style={{ color: "#FF383C" }}>{search.error}</p>
           )}
 
-          <div className="relative mt-4 animate-fade-in" style={{ height: 340 }}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
+            className="relative mt-4"
+            style={{ height: 340 }}
+          >
               {/* List scrolls behind the search bar */}
               <div className="absolute inset-0 -mx-1 px-1 overflow-y-auto no-scrollbar">
-                <ul className="space-y-2 pb-2" style={{ paddingTop: 62 }}>
-                  {displayed.map((item, i) => (
-                    <li key={item.placeID} className="animate-fade-in-up" style={{ animationDelay: `${i * 40}ms` }}>
+                <motion.ul
+                  className="space-y-2 pb-2"
+                  style={{ paddingTop: 62 }}
+                  initial="hidden"
+                  animate="show"
+                  variants={{ show: { transition: { staggerChildren: 0.04 } } }}
+                >
+                  {displayed.map((item) => (
+                    <motion.li
+                      key={item.placeID}
+                      variants={{
+                        hidden: { opacity: 0, y: 8 },
+                        show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
+                      }}
+                    >
                       <button
                         onClick={() => setSelected(item)}
                         className="w-full text-left rounded-xl px-4 py-3 transition-all hover:opacity-80"
@@ -167,9 +186,9 @@ export default function CoursesPage() {
                           {distanceLabel(item) ?? item.address.shortAddress}
                         </p>
                       </button>
-                    </li>
+                    </motion.li>
                   ))}
-                </ul>
+                </motion.ul>
               </div>
 
               {/* Glass search bar — floats on top */}
@@ -194,14 +213,21 @@ export default function CoursesPage() {
                   style={{ color: "var(--text)" }}
                 />
               </div>
-            </div>
+          </motion.div>
         </div>
 
-        {selected && (
-          <div className="animate-fade-in-up">
-            <ContactCard course={selected} />
-          </div>
-        )}
+        <AnimatePresence>
+          {selected && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <ContactCard course={selected} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       <SiteFooter links={[

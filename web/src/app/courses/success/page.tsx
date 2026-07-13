@@ -3,6 +3,7 @@ import { CheckCircle, Mail, MessageSquare, MapPin, Clock } from "lucide-react";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { FadeUp } from "@/components/FadeUp";
 
 const methodConfig = {
   email: { icon: Mail, heading: "Check your email", body: "We sent your course code to the email address on file with Foursquare. Open it and follow the instructions inside." },
@@ -26,7 +27,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
       </SiteNav>
 
       <section className="min-h-screen flex items-center justify-center px-6 py-24">
-        <div className="glass-card p-10 max-w-md w-full text-center animate-fade-in-up">
+        <FadeUp className="glass-card p-10 max-w-md w-full text-center">
           <div className="flex justify-center mb-6">
             <div className="rounded-full p-4" style={{ background: "rgba(175,82,222,0.12)" }}>
               <CheckCircle size={36} style={{ color: "#AF52DE" }} />
@@ -65,14 +66,11 @@ export default async function SuccessPage({ searchParams }: { searchParams: Prom
           </div>
 
           <div className="flex flex-col gap-3">
-            <Link href="/manage" className="w-full rounded-xl py-3 text-sm font-semibold text-center hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200 text-white" style={{ background: "#AF52DE" }}>
-              Manage my subscription
-            </Link>
             <Link href="/for-courses" className="w-full rounded-xl py-3 text-sm font-semibold text-center hover:opacity-70 transition-all duration-200" style={{ color: "var(--text-muted)" }}>
               Back to for course owners
             </Link>
           </div>
-        </div>
+        </FadeUp>
       </section>
 
       <SiteFooter links={[

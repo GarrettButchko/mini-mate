@@ -2,18 +2,17 @@
 import { useState } from "react";
 import { ArrowLeft, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { AnimatePresence, motion } from "framer-motion";
 
-export function ProfileEmailForm({ onBack, onClose, emailExiting }: {
+export function ProfileEmailForm({ onBack, onClose }: {
   onBack: () => void;
   onClose: () => void;
-  emailExiting: boolean;
 }) {
   const { signInWithEmail, createAccountWithEmail } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showSignUp, setShowSignUp] = useState(false);
-  const [confirmExiting, setConfirmExiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,7 +29,7 @@ export function ProfileEmailForm({ onBack, onClose, emailExiting }: {
   }
 
   return (
-    <div style={{ padding: 16, animation: emailExiting ? "slideToRight 0.2s ease forwards" : "slideFromRight 0.22s ease" }}>
+    <div style={{ padding: 16 }}>
       <button
         onClick={onBack}
         style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--glass-bg)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "var(--shadow)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}
@@ -50,11 +49,19 @@ export function ProfileEmailForm({ onBack, onClose, emailExiting }: {
         <FormField label="Email" type="email" placeholder="example@example.com" value={email} onChange={setEmail} icon={Mail} required />
         <FormField label="Password" type="password" placeholder="••••••" value={password} onChange={setPassword} icon={Lock} required />
 
-        {(showSignUp || confirmExiting) && (
-          <div style={{ animation: confirmExiting ? "slideToRight 0.18s ease forwards" : "slideFromRight 0.2s ease" }}>
-            <FormField label="Confirm Password" type="password" placeholder="••••••" value={confirmPassword} onChange={setConfirmPassword} icon={Lock} required={showSignUp} />
-          </div>
-        )}
+        <AnimatePresence>
+          {showSignUp && (
+            <motion.div
+              key="confirm"
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 24 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+            >
+              <FormField label="Confirm Password" type="password" placeholder="••••••" value={confirmPassword} onChange={setConfirmPassword} icon={Lock} required={showSignUp} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {error && <p style={{ margin: 0, fontSize: 12, color: "#FF383C" }}>{error}</p>}
 
@@ -71,13 +78,8 @@ export function ProfileEmailForm({ onBack, onClose, emailExiting }: {
         <button
           type="button"
           onClick={() => {
-            if (showSignUp) {
-              setConfirmExiting(true);
-              setTimeout(() => { setConfirmExiting(false); setShowSignUp(false); setConfirmPassword(""); setError(null); }, 180);
-            } else {
-              setShowSignUp(true);
-              setError(null);
-            }
+            if (showSignUp) { setShowSignUp(false); setConfirmPassword(""); setError(null); }
+            else { setShowSignUp(true); setError(null); }
           }}
           style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--text-muted)", padding: "0 0 4px" }}
         >

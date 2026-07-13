@@ -5,39 +5,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ProfileSignInOptions } from "./ProfileSignInOptions";
 import { ProfileEmailForm } from "./ProfileEmailForm";
 import { ProfileView } from "./ProfileView";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function ProfileButton() {
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
-  const [closing, setClosing] = useState(false);
   const [mode, setMode] = useState<"options" | "email">("options");
-  const [emailExiting, setEmailExiting] = useState(false);
-  const [returning, setReturning] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   function close() {
-    setClosing(true);
-    setTimeout(() => {
-      setOpen(false);
-      setClosing(false);
-      setMode("options");
-      setReturning(false);
-    }, 140);
+    setOpen(false);
+    setMode("options");
   }
 
   function toggle() {
-    if (open) { close(); } else { setOpen(true); setMode("options"); setReturning(false); }
-  }
-
-  function goToEmail() { setReturning(false); setMode("email"); }
-
-  function goBack() {
-    setEmailExiting(true);
-    setTimeout(() => {
-      setEmailExiting(false);
-      setReturning(true);
-      setMode("options");
-    }, 200);
+    if (open) { close(); } else { setOpen(true); setMode("options"); }
   }
 
   useEffect(() => {
@@ -56,7 +38,6 @@ export default function ProfileButton() {
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
-      {/* Trigger */}
       {user ? (
         <button
           onClick={toggle}
@@ -66,7 +47,7 @@ export default function ProfileButton() {
             border: "none", padding: 0, cursor: "pointer",
             background: "var(--surface)", display: "flex",
             alignItems: "center", justifyContent: "center", flexShrink: 0,
-            boxShadow: "var(--shadow)"
+            boxShadow: "var(--shadow)",
           }}
         >
           {user.photoURL ? (
@@ -78,67 +59,64 @@ export default function ProfileButton() {
       ) : (
         <button
           onClick={toggle}
-          className="glass-pill"
-          style={{
-            display: "flex", alignItems: "center", padding: "14px 16px",
-            fontSize: 15, fontWeight: 500, color: "#AF52DE",
-            cursor: "pointer", border: "none", whiteSpace: "nowrap",
-          }}
+          className="glass-pill flex items-center px-4 py-3.5"
+          style={{ fontSize: 14, fontWeight: 500, color: "#AF52DE", cursor: "pointer", border: "none", whiteSpace: "nowrap" }}
         >
           Sign In
         </button>
       )}
 
-      {/* Dropdown */}
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 10px)",
-            right: 0,
-            width: 300,
-            borderRadius: 28,
-            background: "var(--glass-bg)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            boxShadow: "var(--shadow)",
-            zIndex: 100,
-            overflow: "hidden",
-            animation: closing ? "fadeScaleOut 0.14s ease forwards" : "fadeScaleIn 0.15s ease",
-          }}
-        >
-          {user ? (
-            <ProfileView onClose={close} />
-          ) : mode === "options" ? (
-            <ProfileSignInOptions onEmailClick={goToEmail} returning={returning} onClose={close} />
-          ) : (
-            <ProfileEmailForm onBack={goBack} onClose={close} emailExiting={emailExiting} />
-          )}
-        </div>
-      )}
-
-      <style>{`
-        @keyframes fadeScaleIn {
-          from { opacity: 0; transform: scale(0.95) translateY(-4px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes fadeScaleOut {
-          from { opacity: 1; transform: scale(1) translateY(0); }
-          to   { opacity: 0; transform: scale(0.95) translateY(-4px); }
-        }
-        @keyframes slideFromRight {
-          from { opacity: 0; transform: translateX(24px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes slideToRight {
-          from { opacity: 1; transform: translateX(0); }
-          to   { opacity: 0; transform: translateX(24px); }
-        }
-        @keyframes slideFromLeft {
-          from { opacity: 0; transform: translateX(-24px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              top: "calc(100% + 10px)",
+              right: 0,
+              width: 300,
+              borderRadius: 28,
+              background: "var(--glass-bg)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              boxShadow: "var(--shadow)",
+              zIndex: 100,
+              overflow: "hidden",
+            }}
+          >
+            {user ? (
+              <ProfileView onClose={close} />
+            ) : (
+              <AnimatePresence mode="wait" initial={false}>
+                {mode === "options" ? (
+                  <motion.div
+                    key="options"
+                    initial={{ opacity: 0, x: -24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -24 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <ProfileSignInOptions onEmailClick={() => setMode("email")} onClose={close} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="email"
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 24 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <ProfileEmailForm onBack={() => setMode("options")} onClose={close} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

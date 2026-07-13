@@ -22,11 +22,11 @@
     --gradient-start: #2B4C7E;
     --gradient-end: #35806A;
     --gradient-shadow: rgba(31, 64, 115, 0.3);
-    --bg: #121214;
-    --surface: #1E1E21;
+    --bg: #000000;
+    --surface: #1C1C1E;
     --surface-two: #2A2A2E;
-    --surface-sub: #28282C;
-    --surface-input: #35353A;
+    --surface-sub: #272727;
+    --surface-input: #3A3A3C;
     --text: #D9D9DE;
     --text-sub: #C7C7CC;
     --text-muted: #86868B;
@@ -61,19 +61,19 @@ body {
 }
 
 .hero-gradient-courses {
-  background: linear-gradient(-45deg, #AF52DE, #AF52DE, #007AFF, #AF52DE, #AF52DE);
+  background: linear-gradient(-45deg, #AF52DE, #AF52DE, #0088FF, #AF52DE, #AF52DE);
   background-size: 400% 400%;
   animation: gradient-pan 28s ease infinite;
 }
 
 .hero-gradient-user {
-  background: linear-gradient(-45deg, #34C759, #34C759, #007AFF, #34C759, #34C759);
+  background: linear-gradient(-45deg, #34C759, #34C759, #0088FF, #34C759, #34C759);
   background-size: 400% 400%;
   animation: gradient-pan 28s ease infinite;
 }
 
 .pricing-highlight-card {
-  background: linear-gradient(-45deg, #AF52DE, #AF52DE, #007AFF, #AF52DE, #AF52DE);
+  background: linear-gradient(-45deg, #AF52DE, #AF52DE, #0088FF, #AF52DE, #AF52DE);
   background-size: 400% 400%;
   animation: gradient-pan 28s ease infinite;
   border-radius: 25px;
@@ -83,18 +83,6 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in     { animation: fadeIn    0.25s ease both; }
-.animate-fade-in-up  { animation: fadeInUp  0.30s ease both; }
 
 .glass-card {
   background: var(--glass-bg);

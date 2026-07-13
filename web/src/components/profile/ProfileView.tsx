@@ -1,12 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
+import { AnimatePresence, motion } from "framer-motion";
 
 const PURPLE = "#AF52DE";
-const BLUE   = "#007AFF";
+const BLUE   = "#0088FF";
 const ORANGE = "#FF9500";
-const RED    = "#FF3B30";
+const RED    = "#FF383C";
 
 export function ProfileView({ onClose }: { onClose: () => void }) {
   const { user, signOut, updateName, sendPasswordReset, deleteAccount, firestoreUser } = useAuth();
@@ -31,7 +32,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
   })();
 
   return (
-    <div style={{ padding: 16, maxHeight: 520, overflowY: "auto" }}>
+    <div style={{ padding: 16, position: "relative" }}>
       {/* Avatar + name header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
         {user.photoURL ? (
@@ -41,11 +42,11 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
             <span style={{ fontSize: 17, fontWeight: 700, color: PURPLE }}>{initials}</span>
           </div>
         )}
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, overflow: "hidden" }}>
           {user.displayName && (
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName}</p>
+            <OverflowMarquee style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{user.displayName}</OverflowMarquee>
           )}
-          <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</p>
+          <OverflowMarquee style={{ fontSize: 12, color: "var(--text-muted)" }}>{user.email ?? ""}</OverflowMarquee>
         </div>
       </div>
 
@@ -54,50 +55,23 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
       <div style={{ borderRadius: 12, background: "var(--surface-two)", overflow: "hidden", marginBottom: 18 }}>
         {[
           { label: "Name", value: user.displayName ?? "—" },
-          { label: "Email", value: firestoreUser?.email ?? "—" },
-          { label: "Google ID", value: firestoreUser?.googleId ?? "—" },
-          { label: "Provider", value: providerLabel },
+          { label: "Email", value: firestoreUser?.email ?? user.email ?? "—" },
+          { label: "UID", value: firestoreUser?.googleId ?? "—" },
         ].map((row, i, arr) => (
           <div
             key={row.label}
             style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 14px", borderBottom: i < arr.length - 1 ? "1px solid var(--glass-border, rgba(255,255,255,0.08))" : undefined }}
           >
             <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{row.label}</span>
-            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.value}</span>
+            <OverflowMarquee style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", maxWidth: 160 }}>{row.value}</OverflowMarquee>
           </div>
         ))}
       </div>
 
       {/* Section: Account Management */}
       <SectionLabel>Account Management</SectionLabel>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-
-        {editingName ? (
-          <div style={{ borderRadius: 12, background: "var(--surface-two)", padding: "12px 14px" }}>
-            <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)" }}>New display name</p>
-            <input
-              autoFocus
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder={user.displayName ?? "Your name"}
-              style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)", marginBottom: 10 }}
-            />
-            <InlineActionRow
-              onCancel={() => { setEditingName(false); setNewName(""); setProfileMsg(null); }}
-              onConfirm={async () => {
-                setProfileBusy(true);
-                try { await updateName(newName.trim()); setEditingName(false); setNewName(""); setProfileMsg("Name updated!"); setTimeout(() => setProfileMsg(null), 2500); }
-                catch { setProfileMsg("Failed to update name."); }
-                finally { setProfileBusy(false); }
-              }}
-              confirmLabel="Save"
-              confirmBg={BLUE}
-              disabled={profileBusy || !newName.trim()}
-            />
-          </div>
-        ) : (
-          <AccountButton label="Edit Name" background={BLUE} onClick={() => { setNewName(user.displayName ?? ""); setEditingName(true); setProfileMsg(null); }} />
-        )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <AccountButton label="Edit Name" background={BLUE} onClick={() => { setNewName(user.displayName ?? ""); setEditingName(true); setProfileMsg(null); }} />
 
         {user.providerData[0]?.providerId === "password" && (
           <AccountButton
@@ -139,6 +113,140 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
           <AccountButton label="Delete Account" background={RED} onClick={() => setShowDeleteConfirm(true)} />
         )}
       </div>
+
+      {/* Edit Name overlay */}
+      <AnimatePresence>
+        {editingName && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: "absolute", inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              borderRadius: 28,
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              style={{ width: "100%", borderRadius: 16, background: "var(--surface)", padding: "16px 14px", boxShadow: "var(--shadow)" }}
+            >
+              <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)" }}>New display name</p>
+              <input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder={user.displayName ?? "Your name"}
+                style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)", marginBottom: 10 }}
+              />
+              <InlineActionRow
+                onCancel={() => { setEditingName(false); setNewName(""); setProfileMsg(null); }}
+                onConfirm={async () => {
+                  setProfileBusy(true);
+                  try { await updateName(newName.trim()); setEditingName(false); setNewName(""); setProfileMsg("Name updated!"); setTimeout(() => setProfileMsg(null), 2500); }
+                  catch { setProfileMsg("Failed to update name."); }
+                  finally { setProfileBusy(false); }
+                }}
+                confirmLabel="Save"
+                confirmBg={BLUE}
+                disabled={profileBusy || !newName.trim()}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+const MARQUEE_SPEED = 30; // px/s — matches iOS (stringWidth / 30 duration)
+const MARQUEE_PAUSE_MS = 3000;
+
+function OverflowMarquee({ children, style }: { children: string; style?: React.CSSProperties }) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const loopWidthRef = useRef(0);
+  const gapRef = useRef(32);
+  const [scrolling, setScrolling] = useState(false);
+
+  // Measure overflow; re-runs when children change or container resizes
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const text = textRef.current;
+    if (!wrapper || !text) return;
+    const check = () => {
+      const tw = text.scrollWidth;
+      const gap = text.offsetHeight * 2; // same as iOS: stringHeight * 2
+      const ww = wrapper.clientWidth;
+      const overflows = tw > ww;
+      gapRef.current = gap;
+      loopWidthRef.current = tw + gap;
+      setScrolling(overflows);
+    };
+    let raf = requestAnimationFrame(() => { raf = requestAnimationFrame(check); });
+    const ro = new ResizeObserver(check);
+    ro.observe(wrapper);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [children]);
+
+  // JS-driven animation — direct DOM manipulation, no React re-renders per frame
+  useEffect(() => {
+    const inner = innerRef.current;
+    if (!scrolling || !inner) return;
+
+    let rafId: number;
+    let offset = 0;
+    let lastTime: number | null = null;
+    let pauseRemaining = MARQUEE_PAUSE_MS;
+    let pausing = true;
+
+    const animate = (time: number) => {
+      const delta = lastTime !== null ? time - lastTime : 0;
+      lastTime = time;
+
+      if (pausing) {
+        pauseRemaining -= delta;
+        if (pauseRemaining <= 0) pausing = false;
+      } else {
+        offset += delta * MARQUEE_SPEED / 1000;
+        if (offset >= loopWidthRef.current) {
+          offset = 0;
+          pausing = true;
+          pauseRemaining = MARQUEE_PAUSE_MS;
+        }
+        inner.style.transform = `translateX(-${offset}px)`;
+      }
+
+      rafId = requestAnimationFrame(animate);
+    };
+
+    rafId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafId);
+  }, [scrolling]);
+
+  return (
+    <div ref={wrapperRef} style={{ overflow: "hidden", position: "relative", width: "100%", ...style }}>
+      <span ref={textRef} style={{ whiteSpace: "nowrap", display: "block", visibility: scrolling ? "hidden" : "visible" }}>
+        {children}
+      </span>
+      {scrolling && (
+        <div ref={innerRef} style={{ position: "absolute", top: 0, left: 0, display: "inline-flex" }}>
+          <span style={{ whiteSpace: "nowrap", paddingRight: gapRef.current }}>{children}</span>
+          <span style={{ whiteSpace: "nowrap" }} aria-hidden>{children}</span>
+        </div>
+      )}
     </div>
   );
 }

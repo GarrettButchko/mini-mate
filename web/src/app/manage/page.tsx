@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Mail, ArrowUpCircle } from "lucide-react";
+import { FadeUp } from "@/components/FadeUp";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
@@ -49,7 +50,7 @@ export default function ManagePage() {
       </SiteNav>
 
       <section className="min-h-screen flex items-center justify-center px-6 py-24">
-        <div className="glass-card p-10 max-w-md w-full animate-fade-in-up">
+        <FadeUp className="glass-card p-10 max-w-md w-full">
 
           {state === "free-tier" ? (
             <>
@@ -127,7 +128,7 @@ export default function ManagePage() {
               </p>
             </>
           )}
-        </div>
+        </FadeUp>
       </section>
 
       <SiteFooter links={[
