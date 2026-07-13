@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
-import { AnimatePresence, motion } from "framer-motion";
+import { OverlayCard } from "@/components/OverlayCard";
 
 const PURPLE = "#AF52DE";
 const BLUE   = "#0088FF";
@@ -22,14 +22,6 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
   const initials = user.displayName
     ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : user.email?.[0]?.toUpperCase() ?? "?";
-
-  const providerLabel = (() => {
-    const id = user.providerData[0]?.providerId;
-    if (id === "google.com") return "Google";
-    if (id === "apple.com") return "Apple";
-    if (id === "password") return "Email";
-    return id ?? "—";
-  })();
 
   return (
     <div style={{ padding: 16, position: "relative" }}>
@@ -91,86 +83,57 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
           <p style={{ margin: 0, fontSize: 12, color: profileMsg.includes("!") ? "#34C759" : RED, textAlign: "center" }}>{profileMsg}</p>
         )}
 
-        <AccountButton label="Sign Out" background={ORANGE} onClick={async () => { await signOut(); onClose(); }} />
-
-        {showDeleteConfirm ? (
-          <div style={{ borderRadius: 12, background: "var(--surface-two)", padding: "12px 14px", textAlign: "center" }}>
-            <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text)", fontWeight: 500 }}>Delete your account? This cannot be undone.</p>
-            <InlineActionRow
-              onCancel={() => setShowDeleteConfirm(false)}
-              onConfirm={async () => {
-                setProfileBusy(true);
-                try { await deleteAccount(); onClose(); }
-                catch { setProfileMsg("Sign in again then retry."); setShowDeleteConfirm(false); }
-                finally { setProfileBusy(false); }
-              }}
-              confirmLabel="Delete"
-              confirmBg={RED}
-              disabled={profileBusy}
-            />
-          </div>
-        ) : (
-          <AccountButton label="Delete Account" background={RED} onClick={() => setShowDeleteConfirm(true)} />
-        )}
+        <AccountButton label="Sign Out" background={ORANGE} onClick={() => { onClose(); setTimeout(signOut, 180); }} />
+        <AccountButton label="Delete Account" background={RED} onClick={() => setShowDeleteConfirm(true)} />
       </div>
 
       {/* Edit Name overlay */}
-      <AnimatePresence>
-        {editingName && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              position: "absolute", inset: 0,
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(6px)",
-              WebkitBackdropFilter: "blur(6px)",
-              zIndex: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 16,
-              borderRadius: 28,
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 16 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              style={{ width: "100%", borderRadius: 16, background: "var(--surface)", padding: "16px 14px", boxShadow: "var(--shadow)" }}
-            >
-              <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)" }}>New display name</p>
-              <input
-                autoFocus
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder={user.displayName ?? "Your name"}
-                style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)", marginBottom: 10 }}
-              />
-              <InlineActionRow
-                onCancel={() => { setEditingName(false); setNewName(""); setProfileMsg(null); }}
-                onConfirm={async () => {
-                  setProfileBusy(true);
-                  try { await updateName(newName.trim()); setEditingName(false); setNewName(""); setProfileMsg("Name updated!"); setTimeout(() => setProfileMsg(null), 2500); }
-                  catch { setProfileMsg("Failed to update name."); }
-                  finally { setProfileBusy(false); }
-                }}
-                confirmLabel="Save"
-                confirmBg={BLUE}
-                disabled={profileBusy || !newName.trim()}
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <OverlayCard open={editingName}>
+        <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)" }}>New display name</p>
+        <div style={{ borderRadius: 10, background: "var(--surface-two)", padding: "10px 12px", marginBottom: 10 }}>
+          <input
+            autoFocus
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={user.displayName ?? "Your name"}
+            style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)" }}
+          />
+        </div>
+        <InlineActionRow
+          onCancel={() => { setEditingName(false); setNewName(""); setProfileMsg(null); }}
+          onConfirm={async () => {
+            setProfileBusy(true);
+            try { await updateName(newName.trim()); setEditingName(false); setNewName(""); setProfileMsg("Name updated!"); setTimeout(() => setProfileMsg(null), 2500); }
+            catch { setProfileMsg("Failed to update name."); }
+            finally { setProfileBusy(false); }
+          }}
+          confirmLabel="Save"
+          confirmBg={BLUE}
+          disabled={profileBusy || !newName.trim()}
+        />
+      </OverlayCard>
+
+      {/* Delete Account overlay */}
+      <OverlayCard open={showDeleteConfirm}>
+        <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text)", fontWeight: 500, textAlign: "center" }}>Delete your account? This cannot be undone.</p>
+        <InlineActionRow
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={async () => {
+            setProfileBusy(true);
+            try { await deleteAccount(); onClose(); }
+            catch { setProfileMsg("Sign in again then retry."); setShowDeleteConfirm(false); }
+            finally { setProfileBusy(false); }
+          }}
+          confirmLabel="Delete"
+          confirmBg={RED}
+          disabled={profileBusy}
+        />
+      </OverlayCard>
     </div>
   );
 }
 
-const MARQUEE_SPEED = 30; // px/s — matches iOS (stringWidth / 30 duration)
+const MARQUEE_SPEED = 30;
 const MARQUEE_PAUSE_MS = 3000;
 
 function OverflowMarquee({ children, style }: { children: string; style?: React.CSSProperties }) {
@@ -181,14 +144,13 @@ function OverflowMarquee({ children, style }: { children: string; style?: React.
   const gapRef = useRef(32);
   const [scrolling, setScrolling] = useState(false);
 
-  // Measure overflow; re-runs when children change or container resizes
   useEffect(() => {
     const wrapper = wrapperRef.current;
     const text = textRef.current;
     if (!wrapper || !text) return;
     const check = () => {
       const tw = text.scrollWidth;
-      const gap = text.offsetHeight * 2; // same as iOS: stringHeight * 2
+      const gap = text.offsetHeight * 2;
       const ww = wrapper.clientWidth;
       const overflows = tw > ww;
       gapRef.current = gap;
@@ -201,7 +163,6 @@ function OverflowMarquee({ children, style }: { children: string; style?: React.
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, [children]);
 
-  // JS-driven animation — direct DOM manipulation, no React re-renders per frame
   useEffect(() => {
     const inner = innerRef.current;
     if (!scrolling || !inner) return;
@@ -287,7 +248,7 @@ function InlineActionRow({ onCancel, onConfirm, confirmLabel, confirmBg, disable
     <div style={{ display: "flex", gap: 8 }}>
       <button
         onClick={onCancel}
-        style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: "var(--glass-bg)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}
+        style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}
       >Cancel</button>
       <button
         disabled={disabled}
