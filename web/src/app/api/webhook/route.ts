@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { getOrCreateCoursePassword } from "@/lib/coursePassword";
 import { deliverCode } from "@/lib/sendCode";
 import { db } from "@/lib/firebaseAdmin";
 
 export const dynamic = "force-dynamic";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: NextRequest) {
   const body = await req.text();

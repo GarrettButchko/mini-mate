@@ -5,12 +5,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MapPin, Users, Smartphone, Map, Mail, Phone, Globe, Send, Search } from "lucide-react";
 import type { MapItemDTO } from "@/lib/foursquare";
 import { resolveContactRoute, getAllContactRoutes } from "@/lib/contactRouter";
-import { SearchResultBusinessLogic } from "@/lib/SearchResultBusinessLogic";
+import { distanceInMeters, metersToMiles, buildSubtitle } from "@/lib/SearchResultBusinessLogic";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
-
-const searchLogic = new SearchResultBusinessLogic();
 
 const TEST_COURSE: MapItemDTO = {
   placeID: "test-minimatehq",
@@ -68,13 +66,13 @@ export default function CoursesPage() {
 
   function distanceLabel(item: MapItemDTO): string | null {
     if (search.userLat == null || search.userLng == null) return null;
-    const meters = searchLogic.distanceInMeters(
+    const meters = distanceInMeters(
       search.userLat,
       search.userLng,
       item.coordinate.latitude,
       item.coordinate.longitude
     );
-    return searchLogic.buildSubtitle(searchLogic.metersToMiles(meters), item.address.shortAddress);
+    return buildSubtitle(metersToMiles(meters), item.address.shortAddress);
   }
 
   return (

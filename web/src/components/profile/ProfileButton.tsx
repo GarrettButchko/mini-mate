@@ -77,14 +77,8 @@ export default function ProfileButton() {
               position: "absolute",
               top: "calc(100% + 10px)",
               right: 0,
-              width: 300,
-              borderRadius: 28,
-              background: "var(--glass-bg)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              boxShadow: "var(--shadow)",
+              width: 320,
               zIndex: 100,
-              overflow: "hidden",
             }}
           >
             {user ? (
@@ -98,6 +92,7 @@ export default function ProfileButton() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -24 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
+                    style={{ borderRadius: 20, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", overflow: "hidden" }}
                   >
                     <ProfileSignInOptions onEmailClick={() => setMode("email")} onClose={close} />
                   </motion.div>
@@ -108,6 +103,7 @@ export default function ProfileButton() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 24 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
+                    style={{ borderRadius: 20, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", overflow: "hidden" }}
                   >
                     <ProfileEmailForm onBack={() => setMode("options")} onClose={close} />
                   </motion.div>

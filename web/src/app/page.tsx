@@ -9,7 +9,7 @@ import FeatureGrid from "@/components/FeatureGrid";
 
 const features = [
   { icon: Target, title: "Instant Scorecards", desc: "Start a round in seconds. Track every hole with live par comparison.", imageSrc: "/screenshots/test.jpg", imageAlt: "Scorecard screen" },
-  { icon: Globe, title: "Online Multiplayer", desc: "Play with friends online in real-time.", imageAlt: "Multiplayer lobby screen" },
+  { icon: Globe, title: "Online Multiplayer", desc: "Play with friends online in real-time.", imageSrc: null, imageAlt: "Multiplayer lobby screen" },
   { icon: BarChart2, title: "Stats & Recap", desc: "See your best rounds, stroke averages, and course records.", imageSrc: null as string | null, imageAlt: "Stats and recap screen" },
   { icon: Map, title: "Course Discovery", desc: "Find verified mini golf venues near you powered by Foursquare.", imageSrc: null as string | null, imageAlt: "Course discovery screen" },
 ];

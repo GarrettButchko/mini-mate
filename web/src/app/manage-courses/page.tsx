@@ -1,0 +1,315 @@
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
+import { MapPin, Plus, Lock, ArrowRight, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAdminCourses } from "@/lib/useAdminCourses";
+import { TIER_LABEL, TIER_COLOR } from "@/lib/course";
+import PageShell from "@/components/PageShell";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
+
+const PURPLE = "#AF52DE";
+const BLUE   = "#0088FF";
+const RED    = "#FF383C";
+const GREEN  = "#34C759";
+
+const FAILED_LIMIT = 5;
+const COOLDOWN_SECS = 30;
+
+export default function ManageCoursesPage() {
+  const { user, firestoreUser, loading: authLoading } = useAuth();
+  const { courses, loading: coursesLoading } = useAdminCourses(
+    user ? (firestoreUser?.adminCourses ?? []) : []
+  );
+
+  const [showForm, setShowForm] = useState(false);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [banner, setBanner] = useState<{ text: string; kind: "error" | "cooldown" | "success" } | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+
+  useEffect(() => {
+    if (!cooldownEnd) return;
+    const id = setInterval(() => {
+      const left = Math.max(0, Math.ceil((cooldownEnd - Date.now()) / 1000));
+      setSecondsLeft(left);
+      if (left === 0) {
+        setCooldownEnd(null);
+        setBanner(null);
+        setFailedAttempts(0);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [cooldownEnd]);
+
+  const locked = cooldownEnd !== null && secondsLeft > 0;
+
+  async function tryAdd() {
+    if (!user || !code.trim()) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/add-course", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: code.trim(), uid: user.uid }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setShowForm(false);
+        setCode("");
+        setFailedAttempts(0);
+        setBanner({ text: "Course added successfully!", kind: "success" });
+        setTimeout(() => setBanner(null), 4000);
+        return;
+      }
+
+      if (data.error === "already_added") {
+        setShowForm(false);
+        setCode("");
+        setBanner({ text: "That course is already on your account.", kind: "error" });
+        return;
+      }
+
+      setFailedAttempts((prev) => {
+        const next = prev + 1;
+        if (next >= FAILED_LIMIT) {
+          setShowForm(false);
+          setCode("");
+          const end = Date.now() + COOLDOWN_SECS * 1000;
+          setCooldownEnd(end);
+          setSecondsLeft(COOLDOWN_SECS);
+          setBanner({ text: "Too many attempts — please wait.", kind: "cooldown" });
+        } else {
+          setBanner({
+            text: `Incorrect code. ${FAILED_LIMIT - next} attempt${FAILED_LIMIT - next === 1 ? "" : "s"} remaining.`,
+            kind: "error",
+          });
+        }
+        return next;
+      });
+    } catch {
+      setBanner({ text: "Network error — please try again.", kind: "error" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <PageShell>
+      <SiteNav logoColor={PURPLE}>
+        <Link href="/for-courses" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
+          For Courses
+        </Link>
+      </SiteNav>
+
+      <section className="max-w-2xl mx-auto w-full px-6 py-16 flex-1">
+
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--text)" }}>Manage Courses</h1>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            Add and view the courses tied to your account.
+          </p>
+        </div>
+
+        {/* Auth gate */}
+        {authLoading ? null : !user ? (
+          <div className="glass-card p-8 text-center">
+            <p className="font-semibold mb-1" style={{ color: "var(--text)" }}>Sign in to manage your courses</p>
+            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>Use the profile button in the top-right to sign in.</p>
+            <Link href="/" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: PURPLE }}>
+              Back to home
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+
+            {/* Course list */}
+            {coursesLoading && courses.length === 0 ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="glass-card p-5 flex items-center gap-4">
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--surface-two)", flexShrink: 0 }} />
+                    <div className="flex-1 space-y-2">
+                      <div style={{ height: 13, width: "50%", borderRadius: 6, background: "var(--surface-two)" }} />
+                      <div style={{ height: 11, width: "30%", borderRadius: 6, background: "var(--surface-two)" }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : courses.length > 0 ? (
+              <div className="space-y-3">
+                {courses.map((course) => {
+                  const tierColor = TIER_COLOR[course.tier] ?? PURPLE;
+                  const tierLabel = TIER_LABEL[course.tier] ?? "Listed";
+                  return (
+                    <div key={course.id} className="glass-card p-5 flex items-center gap-4">
+                      {/* Icon */}
+                      <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: `${tierColor}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <MapPin size={20} color={tierColor} />
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate" style={{ color: "var(--text)" }}>{course.name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          {course.numHoles ?? 18} holes
+                          {course.isClaimed ? " · Claimed" : " · Unclaimed"}
+                        </p>
+                      </div>
+
+                      {/* Tier badge */}
+                      <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", padding: "4px 10px", borderRadius: 999, background: `${tierColor}18`, color: tierColor }}>
+                        {tierLabel}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="glass-card p-8 text-center">
+                <p className="font-semibold mb-1" style={{ color: "var(--text)" }}>No courses yet</p>
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>Add your first course below.</p>
+              </div>
+            )}
+
+            {/* Banner */}
+            <AnimatePresence>
+              {banner && (
+                <motion.div
+                  key="banner"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="rounded-2xl px-5 py-4 flex items-start gap-3"
+                  style={{
+                    background: banner.kind === "success" ? `${GREEN}18` : banner.kind === "cooldown" ? `${BLUE}18` : `${RED}18`,
+                  }}
+                >
+                  {banner.kind === "success" && <CheckCircle size={16} color={GREEN} style={{ flexShrink: 0, marginTop: 1 }} />}
+                  {banner.kind === "cooldown" && <Lock size={16} color={BLUE} style={{ flexShrink: 0, marginTop: 1 }} />}
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: banner.kind === "success" ? GREEN : banner.kind === "cooldown" ? BLUE : RED }}>
+                      {banner.text}
+                    </p>
+                    {banner.kind === "cooldown" && secondsLeft > 0 && (
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Try again in {secondsLeft}s</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Add button + get password link */}
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => { setShowForm(true); setBanner(null); setCode(""); }}
+                disabled={locked}
+                className="w-full rounded-2xl py-3.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: locked ? "var(--surface-two)" : PURPLE, color: locked ? "var(--text-muted)" : "#fff" }}
+              >
+                {locked ? <Lock size={14} /> : <Plus size={14} />}
+                {locked ? `Too many attempts — wait ${secondsLeft}s` : "Add a course"}
+              </button>
+
+              <Link
+                href="/courses"
+                className="w-full rounded-2xl py-3.5 text-sm font-semibold flex items-center justify-between px-5 transition-opacity hover:opacity-70"
+                style={{ background: "var(--surface-two)", color: "var(--text-sub)" }}
+              >
+                Need your course password?
+                <ArrowRight size={15} style={{ color: "var(--text-muted)" }} />
+              </Link>
+            </div>
+
+            {/* Add course overlay */}
+            <AnimatePresence>
+              {showForm && (
+                <motion.div
+                  key="overlay"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    position: "fixed", inset: 0,
+                    background: "rgba(0,0,0,0.5)",
+                    zIndex: 50,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 24,
+                  }}
+                  onClick={(e) => { if (e.target === e.currentTarget) { setShowForm(false); setCode(""); } }}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 16 }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    style={{
+                      width: "100%",
+                      maxWidth: 360,
+                      borderRadius: 16,
+                      background: "var(--surface)",
+                      padding: "16px 14px",
+                      boxShadow: "var(--shadow)",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Course password</p>
+                    <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-muted)" }}>Enter the password we sent to your course.</p>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 12px", height: 46, borderRadius: 10, background: "var(--surface-two)", marginBottom: 12 }}
+                    >
+                      <Lock size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                      <input
+                        autoFocus
+                        type="text"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" && code.trim() && !busy) tryAdd(); }}
+                        placeholder="Enter password"
+                        style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em" }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => { setShowForm(false); setCode(""); }}
+                        style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={tryAdd}
+                        disabled={busy || !code.trim()}
+                        style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: BLUE, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: busy || !code.trim() ? 0.5 : 1 }}
+                      >
+                        {busy ? "…" : "Add Course"}
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+          </div>
+        )}
+      </section>
+
+      <SiteFooter links={[
+        { href: "/", label: "For Players" },
+        { href: "/for-courses", label: "For Courses" },
+        { href: "/pricing", label: "Pricing" },
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms" },
+        { href: "mailto:garrettwm2005@gmail.com", label: "Support" },
+      ]} />
+    </PageShell>
+  );
+}

@@ -19,6 +19,7 @@ import {
   onSnapshot,
   setDoc,
   updateDoc,
+  deleteDoc,
   arrayUnion,
   serverTimestamp,
 } from "firebase/firestore";
@@ -134,10 +135,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     provider.addScope("email");
     provider.addScope("profile");
     await signInWithPopup(auth, provider);
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      await updateCurrentUser(auth, auth.currentUser);
-    }
   }
 
   async function signInWithApple() {
@@ -145,10 +142,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     provider.addScope("email");
     provider.addScope("name");
     await signInWithPopup(auth, provider);
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      await updateCurrentUser(auth, auth.currentUser);
-    }
   }
 
   async function signInWithEmail(email: string, password: string) {
@@ -176,7 +169,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function deleteAccount() {
     if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
     await deleteUser(auth.currentUser);
+    await deleteDoc(doc(db, "users", uid));
   }
 
   async function signOut() {

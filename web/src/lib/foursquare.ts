@@ -48,7 +48,7 @@ export async function searchMiniGolf(
     radius: String(radiusInMeters),
     query: "mini golf",
     sort: "DISTANCE",
-    limit: "50",
+    limit: String(limit),
     fields: "fsq_place_id,name,categories,latitude,longitude,location,distance,email,tel,website",
   });
 
@@ -64,7 +64,7 @@ export async function searchMiniGolf(
 
   const body: FsqSearchResponse = await res.json();
 
-  return body.results.slice(0, limit).map((r) => ({
+  return body.results.map((r) => ({
     placeID: r.fsq_place_id,
     name: r.name,
     email: r.email ?? null,
