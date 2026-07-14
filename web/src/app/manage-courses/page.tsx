@@ -233,10 +233,10 @@ export default function ManageCoursesPage() {
               <Link
                 href="/find-course"
                 className="flex-1 rounded-2xl py-3.5 text-sm font-semibold flex items-center justify-center gap-2 transition-opacity hover:opacity-70"
-                style={{ background: "var(--surface-two)", color: "var(--text-sub)" }}
+                style={{ background: "var(--surface)", color: PURPLE, boxShadow: "var(--shadow)" }}
               >
                 Get a code
-                <ArrowRight size={15} style={{ color: "var(--text-muted)" }} />
+                <ArrowRight size={15} style={{ color: PURPLE }} />
               </Link>
             </div>
 

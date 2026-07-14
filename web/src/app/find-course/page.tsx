@@ -160,10 +160,7 @@ export default function CoursesPage() {
               style={{
                 height: 50,
                 borderRadius: 17,
-                background: "var(--glass-bg)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                boxShadow: "var(--shadow)",
+                background: "var(--surface-two)",
               }}
             >
               <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />

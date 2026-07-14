@@ -61,12 +61,12 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
         {/* Detail rows */}
         <div style={{ borderRadius: 12, background: "var(--surface-two)", overflow: "hidden", marginBottom: 10 }}>
           {detailRows.map((row, i, arr) => (
-            <div
-              key={row.label}
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px", borderBottom: i < arr.length - 1 ? "1px solid var(--glass-border)" : undefined }}
-            >
-              <span style={{ fontSize: 12, color: "var(--text-muted)", flexShrink: 0 }}>{row.label}</span>
-              <OverflowMarquee style={{ fontSize: 12, fontWeight: 500, color: "var(--text)", maxWidth: 150, marginLeft: 12 }}>{row.value}</OverflowMarquee>
+            <div key={row.label}>
+              {i > 0 && <div style={{ height: 1, background: "var(--glass-border)", marginLeft: 12 }} />}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px" }}>
+                <span style={{ fontSize: 12, color: "var(--text-muted)", flexShrink: 0 }}>{row.label}</span>
+                <OverflowMarquee style={{ fontSize: 12, fontWeight: 500, color: "var(--text)", maxWidth: 150, marginLeft: 12 }}>{row.value}</OverflowMarquee>
+              </div>
             </div>
           ))}
         </div>

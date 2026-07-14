@@ -6,6 +6,17 @@ const PRICE_IDS: Record<string, string> = {
   analytics: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID ?? "",
 };
 
+function predictDeliveryMethod(contact: {
+  email?: string | null;
+  phoneNumber?: string | null;
+  address?: { fullAddress?: string } | null;
+}): string {
+  if (contact.email) return "email";
+  if (contact.phoneNumber) return "sms";
+  if (contact.address?.fullAddress) return "mail";
+  return "pending";
+}
+
 export async function POST(req: NextRequest) {
   const { placeId, courseName, tier, contact } = await req.json();
 
@@ -14,6 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   const base = process.env.NEXT_PUBLIC_BASE_URL;
+  const method = predictDeliveryMethod(contact);
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -32,7 +44,7 @@ export async function POST(req: NextRequest) {
         latitude: String(contact.coordinate?.latitude ?? ""),
         longitude: String(contact.coordinate?.longitude ?? ""),
       },
-      success_url: `${base}/find-course/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${base}/find-course/success?course=${encodeURIComponent(courseName)}&method=${method}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/find-course`,
     });
 
