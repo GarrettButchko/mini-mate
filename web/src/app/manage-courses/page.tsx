@@ -121,9 +121,13 @@ export default function ManageCoursesPage() {
         {authLoading ? null : !user ? (
           <div className="glass-card p-8 text-center">
             <p className="font-semibold mb-1" style={{ color: "var(--text)" }}>Sign in to manage your courses</p>
-            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>Use the profile button in the top-right to sign in.</p>
-            <Link href="/" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: PURPLE }}>
-              Back to home
+            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>Create an account or sign in to view and manage your course listings.</p>
+            <Link
+              href="/signin?next=/manage-courses"
+              className="inline-block rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200"
+              style={{ background: PURPLE }}
+            >
+              Sign In
             </Link>
           </div>
         ) : (
@@ -163,10 +167,18 @@ export default function ManageCoursesPage() {
                         </p>
                       </div>
 
-                      {/* Tier badge */}
+                      {/* Tier badge + upgrade */}
                       <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", padding: "4px 10px", borderRadius: 999, background: `${tierColor}18`, color: tierColor }}>
                         {tierLabel}
                       </span>
+                      {course.tier === 1 && (
+                        <Link
+                          href="/pricing"
+                          style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 999, background: PURPLE, color: "#fff", textDecoration: "none" }}
+                        >
+                          Upgrade
+                        </Link>
+                      )}
                     </div>
                   );
                 })}
@@ -207,23 +219,23 @@ export default function ManageCoursesPage() {
             </AnimatePresence>
 
             {/* Add button + get password link */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-row gap-3">
               <button
                 onClick={() => { setShowForm(true); setBanner(null); setCode(""); }}
                 disabled={locked}
-                className="w-full rounded-2xl py-3.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-2xl py-3.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: locked ? "var(--surface-two)" : PURPLE, color: locked ? "var(--text-muted)" : "#fff" }}
               >
                 {locked ? <Lock size={14} /> : <Plus size={14} />}
-                {locked ? `Too many attempts — wait ${secondsLeft}s` : "Add a course"}
+                {locked ? `Wait ${secondsLeft}s` : "Add a course"}
               </button>
 
               <Link
-                href="/courses"
-                className="w-full rounded-2xl py-3.5 text-sm font-semibold flex items-center justify-between px-5 transition-opacity hover:opacity-70"
+                href="/find-course"
+                className="flex-1 rounded-2xl py-3.5 text-sm font-semibold flex items-center justify-center gap-2 transition-opacity hover:opacity-70"
                 style={{ background: "var(--surface-two)", color: "var(--text-sub)" }}
               >
-                Need your course password?
+                Get a code
                 <ArrowRight size={15} style={{ color: "var(--text-muted)" }} />
               </Link>
             </div>
@@ -256,16 +268,16 @@ export default function ManageCoursesPage() {
                     style={{
                       width: "100%",
                       maxWidth: 360,
-                      borderRadius: 16,
+                      borderRadius: 28,
                       background: "var(--surface)",
                       padding: "16px 14px",
                       boxShadow: "var(--shadow)",
                     }}
                   >
-                    <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Course password</p>
-                    <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-muted)" }}>Enter the password we sent to your course.</p>
+                    <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Enter your course code</p>
+                    <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-muted)" }}>We sent this code to the contact on file for your course.</p>
                     <div
-                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 12px", height: 46, borderRadius: 10, background: "var(--surface-two)", marginBottom: 12 }}
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 12px", height: 46, borderRadius: 14, background: "var(--surface-two)", marginBottom: 12 }}
                     >
                       <Lock size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                       <input
@@ -281,14 +293,14 @@ export default function ManageCoursesPage() {
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
                         onClick={() => { setShowForm(false); setCode(""); }}
-                        style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}
+                        style={{ flex: 1, height: 38, borderRadius: 14, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}
                       >
                         Cancel
                       </button>
                       <button
                         onClick={tryAdd}
                         disabled={busy || !code.trim()}
-                        style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: BLUE, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: busy || !code.trim() ? 0.5 : 1 }}
+                        style={{ flex: 1, height: 38, borderRadius: 14, border: "none", background: BLUE, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: busy || !code.trim() ? 0.5 : 1 }}
                       >
                         {busy ? "…" : "Add Course"}
                       </button>

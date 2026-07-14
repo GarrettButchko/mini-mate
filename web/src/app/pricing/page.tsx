@@ -1,126 +1,67 @@
 import Link from "next/link";
-import {
-  MapPin,
-  Sliders,
-  Link2,
-  Palette,
-  Megaphone,
-  Image,
-  Trophy,
-  Zap,
-  Gift,
-  Nfc,
-  TrendingUp,
-  RefreshCw,
-  Star,
-  Mail,
-  Download,
-  BarChart2,
-  Building2,
-  Layers,
-} from "lucide-react";
+import { Building2, MapPin, ChevronRight } from "lucide-react";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { tiers, type Tier } from "@/lib/tiers";
 
-type TierFeature = { icon: React.ElementType; text: string; soon?: boolean };
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ courseId?: string; courseName?: string }>;
+}) {
+  const { courseId, courseName: rawCourseName } = await searchParams;
+  const courseName = rawCourseName ? decodeURIComponent(rawCourseName) : undefined;
+  const hasCourse = Boolean(courseId && courseName);
 
-const tiers: {
-  name: string;
-  price: string;
-  period: string;
-  description: string;
-  tierIcon: React.ElementType;
-  inherits?: string;
-  features: TierFeature[];
-  cta: string;
-  href: string;
-  highlight: boolean;
-}[] = [
-  {
-    name: "Listed",
-    price: "Free",
-    period: "forever",
-    description: "Get discovered. Put your course on the Mini Mate map.",
-    tierIcon: MapPin,
-    features: [
-      { icon: MapPin, text: "Course listed on the Mini Mate map" },
-      { icon: Sliders, text: "Custom par info for every hole" },
-      { icon: Link2, text: "Social links on your course profile" },
-    ],
-    cta: "Subscribe",
-    href: "/courses",
-    highlight: false,
-  },
-  {
-    name: "Partner",
-    price: "$29",
-    period: "/ month",
-    description: "Full brand presence across the Mini Mate app and real-world marketing.",
-    tierIcon: Building2,
-    inherits: "Everything in Listed, plus:",
-    features: [
-      { icon: Palette, text: "Custom scorecard colors & accent" },
-      { icon: Megaphone, text: "Your ad in scorecards & app pages" },
-      { icon: Image, text: "Your logo in the app home & scorecard" },
-      { icon: Trophy, text: "Managed course leaderboard" },
-      { icon: Zap, text: "Tournament mode access", soon: true },
-      { icon: Gift, text: "Mini Mate pitch tent & marketing kit" },
-      { icon: Nfc, text: "NFC-enabled tent tag (Mini Mate branded)" },
-    ],
-    cta: "Subscribe",
-    href: "/courses",
-    highlight: true,
-  },
-  {
-    name: "Analytics",
-    price: "$69",
-    period: "/ month",
-    description: "Everything in Partner plus deep player insights and data exports.",
-    tierIcon: BarChart2,
-    inherits: "Everything in Partner, plus:",
-    features: [
-      { icon: TrendingUp, text: "Growth analytics dashboard" },
-      { icon: RefreshCw, text: "Player retention tracking" },
-      { icon: Star, text: "Experience score metrics" },
-      { icon: Mail, text: "Player email list from your course" },
-      { icon: Download, text: "CSV export — all data, any time" },
-      { icon: Layers, text: "Beautiful analytics interface" },
-    ],
-    cta: "Subscribe",
-    href: "/courses",
-    highlight: false,
-  },
-];
+  function tierHref(tier: Tier): string {
+    if (hasCourse) {
+      return `/find-course/verify?courseId=${encodeURIComponent(courseId!)}&courseName=${encodeURIComponent(courseName!)}&tier=${tier.name.toLowerCase()}`;
+    }
+    return "/find-course";
+  }
 
-export default function PricingPage() {
   return (
     <PageShell>
-      <SiteNav logoColor="#AF52DE">
+      <SiteNav
+        position="fixed"
+        logoColor="#AF52DE"
+        context={hasCourse ? (
+          <Link href="/find-course" className="flex items-center gap-2 hover:opacity-70 transition-opacity no-underline">
+            <MapPin size={13} style={{ color: "#AF52DE", flexShrink: 0 }} />
+            <span className="text-sm font-medium" style={{ color: "var(--text)" }}>{courseName}</span>
+            <ChevronRight size={12} style={{ color: "var(--text-muted)" }} />
+          </Link>
+        ) : undefined}
+      >
         <Link href="/" className="px-3 py-1.5 text-sm font-medium rounded-full hover:opacity-70 transition-opacity" style={{ color: "var(--text-sub)" }}>
           For Players
         </Link>
       </SiteNav>
 
-      {/* Header */}
-      <section className="pt-20 pb-12 px-6 text-center">
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold mb-6"
-          style={{ background: "rgba(175,82,222,0.12)", color: "#AF52DE" }}
-        >
-          <Building2 size={13} />
-          For Course Owners
-        </span>
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight" style={{ color: "var(--text)" }}>
-          Grow your course with Mini Mate
-        </h1>
-        <p className="max-w-lg mx-auto text-lg leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          From getting on the map to owning your brand in the app — pick the tier that fits where your course is headed.
-        </p>
+      {/* Gradient hero */}
+      <section className="hero-gradient-courses text-white">
+        <div className="max-w-5xl mx-auto px-6 pt-36 pb-16 text-center">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold mb-6"
+            style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)" }}
+          >
+            <Building2 size={13} />
+            For Course Owners
+          </span>
+          <h1 className="text-5xl sm:text-6xl font-bold mb-4 tracking-tight">
+            {hasCourse ? "Pick your plan" : "Grow your course"}
+          </h1>
+          <p className="max-w-lg mx-auto text-lg leading-relaxed" style={{ color: "rgba(255,255,255,0.85)" }}>
+            {hasCourse
+              ? "Choose the tier that fits where your course is headed. You can upgrade anytime."
+              : "From getting on the map to owning your brand in the app — pick the tier that fits."}
+          </p>
+        </div>
       </section>
 
       {/* Tiers */}
-      <section className="pb-28 px-6">
+      <section className="py-14 px-6 pb-28">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {tiers.map((tier) => (
             <div
@@ -147,22 +88,14 @@ export default function PricingPage() {
                 </span>
               )}
 
-              {/* Tier header */}
               <div className="mb-6">
                 <div
                   className="inline-flex items-center justify-center w-11 h-11 rounded-[14px] mb-4"
-                  style={
-                    tier.highlight
-                      ? { background: "rgba(255,255,255,0.2)" }
-                      : { background: "rgba(175,82,222,0.12)" }
-                  }
+                  style={tier.highlight ? { background: "rgba(255,255,255,0.2)" } : { background: "rgba(175,82,222,0.12)" }}
                 >
                   <tier.tierIcon size={22} style={{ color: tier.highlight ? "white" : "#AF52DE" }} />
                 </div>
-                <h2
-                  className="text-xl font-bold mb-1"
-                  style={{ color: tier.highlight ? "white" : "var(--text)" }}
-                >
+                <h2 className="text-xl font-bold mb-1" style={{ color: tier.highlight ? "white" : "var(--text)" }}>
                   {tier.name}
                 </h2>
                 <div className="flex items-baseline gap-1 mb-2">
@@ -178,7 +111,6 @@ export default function PricingPage() {
                 </p>
               </div>
 
-              {/* Features */}
               <div className="flex-1 mb-8">
                 {tier.inherits && (
                   <p
@@ -191,10 +123,7 @@ export default function PricingPage() {
                 <ul className="space-y-3">
                   {tier.features.map((f) => (
                     <li key={f.text} className="flex items-start gap-2.5">
-                      <span
-                        className="mt-0.5 shrink-0"
-                        style={{ color: tier.highlight ? "rgba(255,255,255,0.9)" : "#AF52DE" }}
-                      >
+                      <span className="mt-0.5 shrink-0" style={{ color: tier.highlight ? "rgba(255,255,255,0.9)" : "#AF52DE" }}>
                         <f.icon size={14} />
                       </span>
                       <span className="text-sm leading-snug flex items-center gap-2" style={{ color: tier.highlight ? "rgba(255,255,255,0.85)" : "var(--text-sub)" }}>
@@ -202,11 +131,7 @@ export default function PricingPage() {
                         {f.soon && (
                           <span
                             className="text-[10px] font-semibold rounded-full px-2 py-0.5 shrink-0"
-                            style={
-                              tier.highlight
-                                ? { background: "rgba(255,255,255,0.2)", color: "white" }
-                                : { background: "rgba(255,149,0,0.15)", color: "#FF9500" }
-                            }
+                            style={tier.highlight ? { background: "rgba(255,255,255,0.2)", color: "white" } : { background: "rgba(255,149,0,0.15)", color: "#FF9500" }}
                           >
                             Coming Soon
                           </span>
@@ -218,12 +143,12 @@ export default function PricingPage() {
               </div>
 
               <Link
-                href={tier.href}
-                className="w-full rounded-xl py-3.5 text-center text-sm font-semibold transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
+                href={tierHref(tier)}
+                className="w-full py-3.5 text-center text-sm font-semibold transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
                 style={
                   tier.highlight
-                    ? { background: "white", color: "#AF52DE", border: "1px solid var(--glass-border)" }
-                    : { background: "#AF52DE", color: "white" }
+                    ? { background: "white", color: "#AF52DE", borderRadius: 9999, display: "block" }
+                    : { background: "#AF52DE", color: "white", borderRadius: 9999, display: "block" }
                 }
               >
                 {tier.cta}

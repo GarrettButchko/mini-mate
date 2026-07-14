@@ -43,11 +43,7 @@ export default function ManagePage() {
 
   return (
     <PageShell>
-      <SiteNav logoColor="#AF52DE" wrapChildren={false}>
-        <Link href="/pricing" className="rounded-full px-4 py-2.5 text-base text-white font-semibold hover:opacity-90 transition-all duration-200" style={{ background: "#AF52DE" }}>
-          Course Pricing
-        </Link>
-      </SiteNav>
+      <SiteNav logoColor="#AF52DE" />
 
       <section className="min-h-screen flex items-center justify-center px-6 py-24">
         <FadeUp className="glass-card p-10 max-w-md w-full">
@@ -63,15 +59,15 @@ export default function ManagePage() {
                 You&apos;re on the free plan
               </h1>
               <p className="text-sm mb-8 text-center" style={{ color: "var(--text-muted)" }}>
-                You&apos;re currently on the Listed (free) tier. Find your course below and select Partner or Analytics to upgrade.
+                You&apos;re currently on the Listed (free) tier. View pricing below and find your course to upgrade.
               </p>
               <div className="space-y-3">
                 <Link
-                  href="/courses"
+                  href="/pricing"
                   className="w-full rounded-xl py-3.5 text-white font-semibold text-center block hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200"
                   style={{ background: "#AF52DE" }}
                 >
-                  Find my course to upgrade
+                  View plans & upgrade
                 </Link>
                 <button
                   onClick={() => { setState("idle"); setEmail(""); }}
@@ -124,7 +120,7 @@ export default function ManagePage() {
 
               <p className="text-xs mt-6 text-center" style={{ color: "var(--text-muted)" }}>
                 Don&apos;t have a subscription yet?{" "}
-                <Link href="/courses" style={{ color: "#AF52DE" }}>Find your course</Link>
+                <Link href="/find-course" style={{ color: "#AF52DE" }}>Find your course</Link>
               </p>
             </>
           )}

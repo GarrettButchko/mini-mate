@@ -31,7 +31,7 @@ export function OverlayCard({ open, children }: {
             transition={{ duration: 0.22, ease: "easeOut" }}
             style={{
               width: "100%",
-              borderRadius: 16,
+              borderRadius: 12,
               background: "var(--surface)",
               padding: "16px 14px",
               boxShadow: "var(--shadow)",

@@ -80,6 +80,12 @@ body {
   box-shadow: var(--shadow);
 }
 
+.hero-gradient-signin {
+  background: linear-gradient(-45deg, #AF52DE, #0088FF, #34C759, #0088FF, #AF52DE);
+  background-size: 400% 400%;
+  animation: gradient-pan 20s ease infinite;
+}
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

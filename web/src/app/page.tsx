@@ -116,9 +116,9 @@ export default function Home() {
             <div className="glass-card p-8 text-center flex flex-col items-center">
               <div className="mb-4" style={{ color: "#AF52DE" }}><Building2 size={32} /></div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>I own a mini golf course</h3>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>Get listed, build your brand in the app, and track your players.</p>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>Get listed free, build your brand in the app, and track your players.</p>
               <Link href="/for-courses" className="rounded-xl px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200" style={{ background: "#AF52DE" }}>
-                Learn More
+                Get Started
               </Link>
             </div>
           </div>

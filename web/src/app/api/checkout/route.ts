@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
 const PRICE_IDS: Record<string, string> = {
-  partner: process.env.STRIPE_PRO_PRICE_ID ?? "",
-  analytics: process.env.STRIPE_PREMIUM_PRICE_ID ?? "",
+  partner: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ?? "",
+  analytics: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID ?? "",
 };
 
 export async function POST(req: NextRequest) {
@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
         latitude: String(contact.coordinate?.latitude ?? ""),
         longitude: String(contact.coordinate?.longitude ?? ""),
       },
-      success_url: `${base}/courses/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/courses`,
+      success_url: `${base}/find-course/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}/find-course`,
     });
 
     return NextResponse.json({ url: session.url });

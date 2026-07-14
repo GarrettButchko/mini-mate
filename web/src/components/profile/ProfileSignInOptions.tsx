@@ -3,9 +3,10 @@ import { useState } from "react";
 import { Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function ProfileSignInOptions({ onEmailClick, onClose }: {
+export function ProfileSignInOptions({ onEmailClick, onClose, buttonRadius = 12 }: {
   onEmailClick: () => void;
   onClose: () => void;
+  buttonRadius?: number;
 }) {
   const { signInWithGoogle, signInWithApple } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -27,19 +28,19 @@ export function ProfileSignInOptions({ onEmailClick, onClose }: {
 
   return (
     <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-      <SignInButton onClick={onEmailClick} disabled={busy} background="#AF52DE">
+      <SignInButton onClick={onEmailClick} disabled={busy} background="#AF52DE" radius={buttonRadius}>
         <Mail size={17} />
         Sign in with Email
       </SignInButton>
 
-      <SignInButton onClick={handleGoogle} disabled={busy} background="#4285F4">
+      <SignInButton onClick={handleGoogle} disabled={busy} background="#4285F4" radius={buttonRadius}>
         <span style={{ background: "#fff", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <GoogleIcon />
         </span>
         Sign in with Google
       </SignInButton>
 
-      <SignInButton onClick={handleApple} disabled={busy} background="#000">
+      <SignInButton onClick={handleApple} disabled={busy} background="#000" radius={buttonRadius}>
         <AppleIcon />
         Sign in with Apple
       </SignInButton>
@@ -49,10 +50,11 @@ export function ProfileSignInOptions({ onEmailClick, onClose }: {
   );
 }
 
-function SignInButton({ onClick, disabled, background, children }: {
+function SignInButton({ onClick, disabled, background, radius, children }: {
   onClick: () => void;
   disabled: boolean;
   background: string;
+  radius: number;
   children: React.ReactNode;
 }) {
   return (
@@ -60,7 +62,7 @@ function SignInButton({ onClick, disabled, background, children }: {
       onClick={onClick}
       disabled={disabled}
       style={{
-        width: "100%", height: 50, borderRadius: 12, border: "none",
+        width: "100%", height: 50, borderRadius: radius, border: "none",
         background, cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         fontSize: 15, fontWeight: 600, color: "#fff",

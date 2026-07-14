@@ -8,9 +8,10 @@ interface SiteNavProps {
   logoColor?: string;
   wrapChildren?: boolean;
   children?: React.ReactNode;
+  context?: React.ReactNode;
 }
 
-export default function SiteNav({ position = "sticky", logoLinked = true, logoColor = "#34C759", wrapChildren = true, children }: SiteNavProps) {
+export default function SiteNav({ position = "sticky", logoLinked = true, logoColor = "#34C759", wrapChildren = true, children, context }: SiteNavProps) {
   const positionClass = position === "fixed" ? "fixed inset-x-0 top-0" : "sticky top-0";
 
   const logoContent = (
@@ -24,15 +25,22 @@ export default function SiteNav({ position = "sticky", logoLinked = true, logoCo
 
   return (
     <nav className={`${positionClass} z-50 flex items-center justify-between px-6 py-4`}>
-      {logoLinked ? (
-        <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
-          {logoContent}
-        </Link>
-      ) : (
-        <div className="glass-pill flex items-center gap-2 px-4 py-3.5">
-          {logoContent}
-        </div>
-      )}
+      <div className="flex items-center gap-3">
+        {logoLinked ? (
+          <Link href="/" className="glass-pill flex items-center gap-2 px-4 py-3.5 no-underline">
+            {logoContent}
+          </Link>
+        ) : (
+          <div className="glass-pill flex items-center gap-2 px-4 py-3.5">
+            {logoContent}
+          </div>
+        )}
+        {context && (
+          <div className="glass-pill flex items-center gap-2 px-4 py-3.5">
+            {context}
+          </div>
+        )}
+      </div>
       <div className="flex items-center gap-3">
         {children && (
           wrapChildren ? (

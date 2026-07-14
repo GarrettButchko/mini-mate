@@ -39,7 +39,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
       {/* ── Island 1: Profile ── */}
-      <div style={{ borderRadius: 20, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", padding: 14, position: "relative", overflow: "hidden" }}>
+      <div style={{ borderRadius: 28, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", padding: 14, position: "relative", overflow: "hidden" }}>
 
         {/* Avatar + name */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
@@ -59,7 +59,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Detail rows */}
-        <div style={{ borderRadius: 12, background: "var(--surface-two)", overflow: "hidden", marginBottom: 12 }}>
+        <div style={{ borderRadius: 12, background: "var(--surface-two)", overflow: "hidden", marginBottom: 10 }}>
           {detailRows.map((row, i, arr) => (
             <div
               key={row.label}
@@ -72,8 +72,8 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Actions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10 }}>
             <SmallButton label="Edit Name" background={BLUE} onClick={() => { setNewName(user.displayName ?? ""); setEditingName(true); setProfileMsg(null); }} />
             {user.providerData[0]?.providerId === "password" && (
               <SmallButton label="Reset Password" background={BLUE} disabled={profileBusy}
@@ -89,7 +89,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
           {profileMsg && (
             <p style={{ margin: 0, fontSize: 11, color: profileMsg.ok ? GREEN : RED, textAlign: "center" }}>{profileMsg.text}</p>
           )}
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 10 }}>
             <SmallButton label="Sign Out" background={ORANGE} onClick={() => { onClose(); setTimeout(signOut, 180); }} />
             <SmallButton label="Delete Account" background={RED} onClick={() => setShowDeleteConfirm(true)} />
           </div>
@@ -98,7 +98,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
         {/* Edit Name overlay */}
         <OverlayCard open={editingName}>
           <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)" }}>New display name</p>
-          <div style={{ borderRadius: 10, background: "var(--surface-two)", padding: "10px 12px", marginBottom: 10 }}>
+          <div style={{ borderRadius: 8, background: "var(--surface-two)", padding: "10px 12px", marginBottom: 10 }}>
             <input
               autoFocus
               value={newName}
@@ -140,7 +140,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* ── Island 2: Courses ── */}
-      <div style={{ borderRadius: 20, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", overflow: "hidden" }}>
+      <div style={{ borderRadius: 28, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", overflow: "hidden" }}>
         <Link
           href="/manage-courses"
           onClick={onClose}
@@ -238,7 +238,7 @@ function SmallButton({ label, background, onClick, disabled = false }: {
     <button
       onClick={onClick}
       disabled={disabled}
-      style={{ flex: 1, height: 36, borderRadius: 10, border: "none", background, cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#fff", opacity: disabled ? 0.6 : 1 }}
+      style={{ flex: 1, height: 36, borderRadius: 14, border: "none", background, cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#fff", opacity: disabled ? 0.6 : 1 }}
     >
       {label}
     </button>

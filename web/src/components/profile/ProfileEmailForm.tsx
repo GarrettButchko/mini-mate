@@ -4,9 +4,10 @@ import { ArrowLeft, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 
-export function ProfileEmailForm({ onBack, onClose }: {
+export function ProfileEmailForm({ onBack, onClose, buttonRadius = 12 }: {
   onBack: () => void;
   onClose: () => void;
+  buttonRadius?: number;
 }) {
   const { signInWithEmail, createAccountWithEmail } = useAuth();
   const [email, setEmail] = useState("");
@@ -69,7 +70,7 @@ export function ProfileEmailForm({ onBack, onClose }: {
           <button
             type="submit"
             disabled={busy}
-            style={{ width: 150, height: 50, borderRadius: 12, border: "none", background: "#AF52DE", cursor: "pointer", fontSize: 16, fontWeight: 600, color: "#fff", opacity: busy ? 0.5 : 1 }}
+            style={{ width: 150, height: 50, borderRadius: buttonRadius, border: "none", background: "#AF52DE", cursor: "pointer", fontSize: 16, fontWeight: 600, color: "#fff", opacity: busy ? 0.5 : 1 }}
           >
             {busy ? "…" : showSignUp ? "Sign Up" : "Login"}
           </button>

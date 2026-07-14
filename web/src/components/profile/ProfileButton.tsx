@@ -1,26 +1,19 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { ProfileSignInOptions } from "./ProfileSignInOptions";
-import { ProfileEmailForm } from "./ProfileEmailForm";
 import { ProfileView } from "./ProfileView";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function ProfileButton() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"options" | "email">("options");
   const ref = useRef<HTMLDivElement>(null);
 
-  function close() {
-    setOpen(false);
-    setMode("options");
-  }
-
-  function toggle() {
-    if (open) { close(); } else { setOpen(true); setMode("options"); }
-  }
+  function close() { setOpen(false); }
+  function toggle() { if (open) { close(); } else { setOpen(true); } }
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -58,7 +51,7 @@ export default function ProfileButton() {
         </button>
       ) : (
         <button
-          onClick={toggle}
+          onClick={() => router.push("/signin")}
           className="glass-pill flex items-center px-4 py-3.5"
           style={{ fontSize: 14, fontWeight: 500, color: "#AF52DE", cursor: "pointer", border: "none", whiteSpace: "nowrap" }}
         >
@@ -67,49 +60,15 @@ export default function ProfileButton() {
       )}
 
       <AnimatePresence>
-        {open && (
+        {open && user && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            style={{
-              position: "absolute",
-              top: "calc(100% + 10px)",
-              right: 0,
-              width: 320,
-              zIndex: 100,
-            }}
+            style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, width: 320, zIndex: 100 }}
           >
-            {user ? (
-              <ProfileView onClose={close} />
-            ) : (
-              <AnimatePresence mode="wait" initial={false}>
-                {mode === "options" ? (
-                  <motion.div
-                    key="options"
-                    initial={{ opacity: 0, x: -24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    style={{ borderRadius: 20, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", overflow: "hidden" }}
-                  >
-                    <ProfileSignInOptions onEmailClick={() => setMode("email")} onClose={close} />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="email"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 24 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    style={{ borderRadius: 20, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", overflow: "hidden" }}
-                  >
-                    <ProfileEmailForm onBack={() => setMode("options")} onClose={close} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            )}
+            <ProfileView onClose={close} />
           </motion.div>
         )}
       </AnimatePresence>
