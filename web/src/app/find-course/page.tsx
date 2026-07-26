@@ -108,72 +108,64 @@ export default function CoursesPage() {
         )}
 
         {/* Search + results card */}
-        <div className="glass-card p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.25 }}
-            className="relative"
-            style={{ height: 330 }}
+        <div className="glass-card px-4 pt-4 overflow-hidden">
+          {/* Search bar */}
+          <div
+            className="flex items-center gap-3 px-4 mb-3"
+            style={{
+              height: 50,
+              borderRadius: 17,
+              background: "var(--surface-two)",
+            }}
           >
-            {/* Scrollable grouped list */}
-            <div className="absolute inset-0 overflow-y-auto no-scrollbar" style={{ paddingTop: 58 }}>
-              <motion.div
-                style={{ borderRadius: 17, background: "var(--surface-two)", overflow: "hidden" }}
-                initial="hidden"
-                animate="show"
-                variants={{ show: { transition: { staggerChildren: 0.04 } } }}
-              >
-                {displayed.map((item, i) => (
-                  <motion.div
-                    key={item.placeID}
-                    variants={{
-                      hidden: { opacity: 0, y: 6 },
-                      show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: "easeOut" } },
-                    }}
-                  >
-                    {i > 0 && (
-                      <div style={{ height: 1, background: "var(--glass-border)", marginLeft: 16 }} />
-                    )}
-                    <button
-                      onClick={() => setSelected(item)}
-                      className="w-full text-left px-4 py-3.5 transition-all hover:opacity-70"
-                      style={
-                        selected?.placeID === item.placeID
-                          ? { background: "rgba(175,82,222,0.12)", display: "block" }
-                          : { background: "transparent", display: "block" }
-                      }
-                    >
-                      <p className="font-semibold text-sm" style={{ color: "var(--text)" }}>{item.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                        {distanceLabel(item) ?? item.address.shortAddress}
-                      </p>
-                    </button>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
+            <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Search courses"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 bg-transparent text-sm focus:outline-none"
+              style={{ color: "var(--text)" }}
+            />
+          </div>
 
-            {/* Search bar */}
-            <div
-              className="absolute top-0 left-0 right-0 z-10 flex items-center gap-3 px-4"
-              style={{
-                height: 50,
-                borderRadius: 17,
-                background: "var(--surface-two)",
-              }}
+          {/* Scrollable grouped list */}
+          <div className="overflow-y-auto no-scrollbar" style={{ height: 272, paddingBottom: 16 }}>
+            <motion.div
+              style={{ borderRadius: 17, background: "var(--surface-two)", overflow: "hidden" }}
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.04 } } }}
             >
-              <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-              <input
-                type="text"
-                placeholder="Search courses"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent text-sm focus:outline-none"
-                style={{ color: "var(--text)" }}
-              />
-            </div>
-          </motion.div>
+              {displayed.map((item, i) => (
+                <motion.div
+                  key={item.placeID}
+                  variants={{
+                    hidden: { opacity: 0, y: 6 },
+                    show: { opacity: 1, y: 0, transition: { duration: 0.18, ease: "easeOut" } },
+                  }}
+                >
+                  {i > 0 && (
+                    <div style={{ height: 1, background: "var(--glass-border)", marginLeft: 16 }} />
+                  )}
+                  <button
+                    onClick={() => setSelected(item)}
+                    className="w-full text-left px-4 py-3.5 transition-all hover:opacity-70"
+                    style={
+                      selected?.placeID === item.placeID
+                        ? { background: "rgba(175,82,222,0.12)", display: "block" }
+                        : { background: "transparent", display: "block" }
+                    }
+                  >
+                    <p className="font-semibold text-sm" style={{ color: "var(--text)" }}>{item.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      {distanceLabel(item) ?? item.address.shortAddress}
+                    </p>
+                  </button>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </div>
 
         {/* Selected course confirm */}
