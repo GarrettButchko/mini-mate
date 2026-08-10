@@ -20,7 +20,9 @@ struct CourseListView: View {
     @State private var isSheetPresented: Bool = false
     @State private var showUnsuccessfulAlert: Bool = false
     @State private var isRotating: Bool = false
-    
+    @State private var showSuccessOverlay: Bool = false
+    @State private var showLeftCourseOverlay: Bool = false
+
     @State private var viewHeight: CGFloat = 0 // State to track the height of the view
     
     var body: some View {
@@ -44,10 +46,14 @@ struct CourseListView: View {
                 TextField("Password", text: $viewModel.password)
                 
                 Button("Add", role: .none) {
-                    viewModel.kotlin.tryPassword { _ in
+                    viewModel.kotlin.tryPassword { success in
                         Task { @MainActor in
                             viewModel.password = ""
                             viewModel.showAddCourseAlert = false
+
+                            if Bool(truncating: success) {
+                                presentTransientOverlay($showSuccessOverlay)
+                            }
                         }
                     }
                 }
@@ -86,11 +92,36 @@ struct CourseListView: View {
                         }
                     }
                 }
+
+                if viewModel.didLeaveCourse {
+                    presentTransientOverlay($showLeftCourseOverlay)
+                    viewModel.kotlin.clearDidLeaveCourse()
+                }
+            }
+            .onChange(of: viewModel.didLeaveCourse) { _, didLeave in
+                if didLeave {
+                    presentTransientOverlay($showLeftCourseOverlay)
+                    viewModel.kotlin.clearDidLeaveCourse()
+                }
             }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .overlay {
+            if showSuccessOverlay {
+                SuccessOverlay(title: "Course Added!", subtitle: "You can now manage this course.")
+            } else if showLeftCourseOverlay {
+                SuccessOverlay(
+                    title: "Left Course",
+                    subtitle: "You're no longer an admin of this course.",
+                    icon: "person.fill.xmark",
+                    tint: .secondary
+                )
+            }
+        }
+        .animation(statusOverlaySpring, value: showSuccessOverlay)
+        .animation(statusOverlaySpring, value: showLeftCourseOverlay)
     }
-    
+
     var multiCourse: some View{
         VStack{
             HStack{
@@ -182,6 +213,7 @@ struct CourseListView: View {
                         .disabled(viewModel.timeRemaining > 0)
                         Spacer()
                     }
+                    .animation(.easeInOut, value: viewModel.message)
                 }
                 .contentMargins(.top, 16)
             }

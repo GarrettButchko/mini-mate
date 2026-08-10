@@ -26,6 +26,7 @@ fun AuthViewModel.signInWithGoogleAndHandleResult(
     onClearGuestGame: (Game?) -> Unit
 ) {
     val credential = GoogleAuthProvider.credential(idToken, accessToken)
+    setLoading(true)
     coroutineScope.launch {
         val result = authRepository.signInWithCredential(credential)
         handleSignInResult(
@@ -90,9 +91,10 @@ fun AuthViewModel.signInWithApple(
         rawNonce = nonce
     )
 
+    setLoading(true)
     coroutineScope.launch {
         val result = authRepository.signInWithCredential(oauthCred)
-        
+
         // Hand over to the shared Apple sign-in result handler
         handleAppleSignInResult(
             result = result,

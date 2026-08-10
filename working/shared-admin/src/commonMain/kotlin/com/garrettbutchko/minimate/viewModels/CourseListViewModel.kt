@@ -70,6 +70,12 @@ open class CourseListViewModel(
     private val _loadingAdmins = MutableStateFlow(false)
     val loadingAdmins: StateFlow<Boolean> = _loadingAdmins.asStateFlow()
 
+    private val _removingAdmin = MutableStateFlow(false)
+    val removingAdmin: StateFlow<Boolean> = _removingAdmin.asStateFlow()
+
+    private val _didLeaveCourse = MutableStateFlow(false)
+    val didLeaveCourse: StateFlow<Boolean> = _didLeaveCourse.asStateFlow()
+
     val currentUserEmail: String?
         get() = authModel.firebaseUser.value?.email
 
@@ -252,6 +258,7 @@ open class CourseListViewModel(
     fun removeAdmin(userId: String) {
         val course = _selectedCourse.value ?: return
         val currentUserId = authModel.currentUserIdentifier
+        _removingAdmin.value = true
         coroutineScope.launch {
             removeUserFromCourse(userId, course.id)
             _adminUsers.value = _adminUsers.value.filter { it.googleId != userId }
@@ -263,10 +270,14 @@ open class CourseListViewModel(
                     if (currentUserId != null) userRepo.saveUnified(currentUserId, updated)
                 }
                 _userCourses.value = _userCourses.value.filter { it.id != course.id }
+                _didLeaveCourse.value = true
                 _selectedCourse.value = null
             }
+            _removingAdmin.value = false
         }
     }
+
+    fun clearDidLeaveCourse() { _didLeaveCourse.value = false }
 
     suspend fun removeUserFromCourse(userId: String, courseID: String) {
         try {

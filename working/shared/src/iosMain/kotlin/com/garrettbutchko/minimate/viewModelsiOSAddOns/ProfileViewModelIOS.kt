@@ -41,7 +41,7 @@ fun ProfileViewModel.startAppleReauthAndDelete(onSheetPresentChange: (Boolean) -
             deleteAppleAccount(authorization) { deletionSuccess ->
                 if (deletionSuccess) {
                     onSheetPresentChange(false)
-                    viewManager.navigateToWelcome()
+                    viewManager.navigateToSignIn()
                 }
             }
         }.onFailure { error ->

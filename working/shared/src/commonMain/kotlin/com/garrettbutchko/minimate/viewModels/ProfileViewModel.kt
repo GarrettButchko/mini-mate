@@ -116,7 +116,7 @@ class ProfileViewModel(
     }
 
     fun logOut() {
-        viewManager.navigateToWelcome()
+        viewManager.navigateToSignIn()
         authModel.logout()
     }
 
@@ -185,7 +185,7 @@ class ProfileViewModel(
                 onSuccess = {
                     cleanupLocalData()
                     isSheetPresented(false)
-                    viewManager.navigateToWelcome()
+                    viewManager.navigateToSignIn()
                 },
                 onFailure = { error ->
                     setBotMessage(error.message ?: "Unknown error")

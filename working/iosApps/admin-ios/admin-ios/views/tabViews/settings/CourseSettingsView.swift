@@ -19,10 +19,16 @@ struct CourseSettingsView: View {
         VStack {
             CourseSettingsHeaderView()
                 .padding([.horizontal, .top])
-            
+
             formView
         }
         .environmentObject(viewModel)
+        .overlay {
+            if courseViewModel.removingAdmin {
+                LoadingOverlay(message: "Removing admin...")
+            }
+        }
+        .animation(statusOverlaySpring, value: courseViewModel.removingAdmin)
     }
     
     private var formView: some View {
@@ -126,6 +132,7 @@ struct AdminsSectionView: View {
                                 .foregroundStyle(.red)
                         }
                         .buttonStyle(.plain)
+                        .disabled(courseViewModel.removingAdmin)
                     }
                     .padding(.vertical, 4)
                 }

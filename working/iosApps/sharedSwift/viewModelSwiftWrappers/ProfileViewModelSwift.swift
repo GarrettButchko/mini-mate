@@ -110,6 +110,7 @@ class ProfileViewModelSwift: ObservableObject {
             case .success(let tokens):
                 // Delegate all credential creation and deletion logic to Kotlin
                 self.kotlinVM.googleReauthAndDelete(idToken: tokens.idToken, accessToken: tokens.accessToken) { value in
+                    Self.announceAccountDeleted()
                     isSheetPresented.wrappedValue = value.boolValue
                 }
             case .failure(let error):
@@ -118,16 +119,29 @@ class ProfileViewModelSwift: ObservableObject {
             }
         }
     }
-        
+
     func emailReauthAndDelete(emailInput: String, passwordInput: String, isSheetPresented: Binding<Bool>) {
         kotlinVM.emailReauthAndDelete(emailInput: emailInput, passwordInput: passwordInput) { value in
+            Self.announceAccountDeleted()
             isSheetPresented.wrappedValue = value.boolValue
         }
     }
-    
+
     func startAppleReauthAndDelete(isSheetPresented: Binding<Bool>) {
         kotlinVM.startAppleReauthAndDelete { value in
+            Self.announceAccountDeleted()
             isSheetPresented.wrappedValue = value.boolValue
         }
+    }
+
+    /// `handleDeleteAccount` in the shared Kotlin VM only invokes this completion on the
+    /// success path (failures only set `botMessage`), so any call here means deletion succeeded.
+    private static func announceAccountDeleted() {
+        TransientStatusSignal.shared.pending = StatusMessage(
+            title: "Account Deleted",
+            subtitle: "We're sorry to see you go.",
+            icon: "trash.fill",
+            tint: .secondary
+        )
     }
 }

@@ -27,7 +27,9 @@ struct ProfileView: View {
     @State private var showingPhotoPicker = false
     
     @State private var pickedImage: UIImage? = nil
-    
+
+    @State private var isDeletingAccount = false
+
     #if MINIMATE
     @State private var showPro: Bool = false
     #endif
@@ -156,11 +158,17 @@ struct ProfileView: View {
                         }
                         
                         Button("Logout") {
+                            TransientStatusSignal.shared.pending = StatusMessage(
+                                title: "Logged Out",
+                                subtitle: "You've been signed out.",
+                                icon: "rectangle.portrait.and.arrow.right",
+                                tint: .blue
+                            )
                             isSheetPresent = false
                             viewModel.kotlinVM.logOut()
                         }
                         .foregroundColor(.orange)
-                        
+
                         Button("Delete Account") {
                             viewModel.kotlinVM.deleteAccount(userModel: authModel.userModel!)
                         }
@@ -173,21 +181,23 @@ struct ProfileView: View {
                                     message: Text("This will permanently delete your account."),
                                     primaryButton: .destructive(Text("Delete")) {
                                         // call Google deletion flow
+                                        withAnimation(statusOverlaySpring) { isDeletingAccount = true }
                                         viewModel.googleReauthAndDelete(authModel: authModel, isSheetPresented: $isSheetPresent)
                                     },
                                     secondaryButton: .cancel()
                                 )
-                                
+
                             case .apple:
                                 return Alert(
                                     title: Text("Confirm Deletion"),
                                     message: Text("This will permanently delete your account."),
                                     primaryButton: .destructive(Text("Delete")) {
+                                        withAnimation(statusOverlaySpring) { isDeletingAccount = true }
                                         viewModel.startAppleReauthAndDelete(isSheetPresented: $isSheetPresent)
                                     },
                                     secondaryButton: .cancel()
                                 )
-                                
+
                             case .email:
                                 return Alert(
                                     title: Text("Confirm Deletion"),
@@ -221,6 +231,7 @@ struct ProfileView: View {
                 SecureField("Confirm Password", text: $confirmPassword)
                 
                 Button("Delete", role: .destructive) {
+                    withAnimation(statusOverlaySpring) { isDeletingAccount = true }
                     viewModel.emailReauthAndDelete(
                         emailInput: authModel.userModel!.email!,
                         passwordInput: password, isSheetPresented: $isSheetPresent
@@ -240,7 +251,17 @@ struct ProfileView: View {
                 ProView(showSheet: $showPro)
             }
             #endif
+            .onChange(of: viewModel.botMessage) { _, newValue in
+                if !newValue.isEmpty {
+                    withAnimation(statusOverlaySpring) { isDeletingAccount = false }
+                }
+            }
+
+            if isDeletingAccount {
+                LoadingOverlay(message: "Deleting your account...")
+            }
         }
+        .animation(statusOverlaySpring, value: isDeletingAccount)
     }
 }
 

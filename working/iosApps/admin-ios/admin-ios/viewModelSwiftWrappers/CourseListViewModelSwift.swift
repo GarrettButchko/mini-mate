@@ -23,6 +23,8 @@ class CourseListViewModelSwift: ObservableObject {
     @Published private var _showColor: Bool = false
     @Published private var _adminUsers: [UserModel] = []
     @Published private var _loadingAdmins: Bool = false
+    @Published private var _removingAdmin: Bool = false
+    @Published private var _didLeaveCourse: Bool = false
     
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
@@ -79,6 +81,14 @@ class CourseListViewModelSwift: ObservableObject {
 
     var loadingAdmins: Bool {
         get { _loadingAdmins }
+    }
+
+    var removingAdmin: Bool {
+        get { _removingAdmin }
+    }
+
+    var didLeaveCourse: Bool {
+        get { _didLeaveCourse }
     }
 
     var hasCourse: Bool {
@@ -170,6 +180,20 @@ class CourseListViewModelSwift: ObservableObject {
         Task {
             for await val in kotlin.loadingAdmins {
                 self._loadingAdmins = val.boolValue
+            }
+        }
+
+        Task {
+            for await val in kotlin.removingAdmin {
+                withAnimation(statusOverlaySpring) {
+                    self._removingAdmin = val.boolValue
+                }
+            }
+        }
+
+        Task {
+            for await val in kotlin.didLeaveCourse {
+                self._didLeaveCourse = val.boolValue
             }
         }
     }

@@ -36,7 +36,7 @@ struct SignInView: View {
     var gradientColors: [Color] = Color.brandGradient
 
     private let characterLimit = 15
-    
+
     var body: some View {
             ZStack {
                 
@@ -56,6 +56,13 @@ struct SignInView: View {
                 }
                 .ignoresSafeArea(.keyboard, edges: .bottom)
             }
+            .overlay {
+                if authModel.isLoading {
+                    LoadingOverlay(message: "Signing you in...")
+                }
+            }
+            .animation(statusOverlaySpring, value: authModel.isLoading)
+            .consumesTransientStatus()
             .onAppear {
                 authModel.firebaseUser = nil
             }

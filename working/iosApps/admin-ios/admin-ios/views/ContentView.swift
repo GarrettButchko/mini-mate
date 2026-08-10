@@ -83,21 +83,22 @@ struct CourseTabView: View {
     @EnvironmentObject var viewManager: ViewManagerSwift
 
     @State var selectedTab: Int
-    
+    @State private var didLoadHealthData = false
+
     init(selectedTab: Int){
         self.selectedTab = selectedTab
     }
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
             AnalyticsView()
                 .tabItem { Label("Stats", systemImage: "chart.bar.xaxis") }
                 .tag(0)
-            
+
             MainView()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(1)
-            
+
             CourseSettingsView()
                 .tabItem { Label("Settings", systemImage: "gear") }
                 .tag(2)
@@ -105,7 +106,10 @@ struct CourseTabView: View {
         .onAppear {
             VM.kotlin.loadAdmins()
             VM.kotlin.start()
-            analyticsVM.kotlin.loadHealthData(course: VM.selectedCourse)
+            if let course = VM.selectedCourse {
+                analyticsVM.kotlin.loadHealthData(course: course)
+                didLoadHealthData = true
+            }
         }
         .onChange(of: VM.loadingAdmins) { _, isLoading in
             if !isLoading && VM.adminUsers.isEmpty {
@@ -118,6 +122,12 @@ struct CourseTabView: View {
         .onChange(of: VM.selectedCourse) { _, newCourse in
             if newCourse == nil {
                 viewManager.kotlinVM.navigateToCourseList()
+            } else if !didLoadHealthData {
+                // VM.selectedCourse streams in asynchronously from Kotlin, so it can still
+                // be nil when .onAppear fires. Catch it here once it actually arrives so
+                // experienceVM.currentCourse (and the par-dependent stats) don't get stuck.
+                analyticsVM.kotlin.loadHealthData(course: newCourse)
+                didLoadHealthData = true
             }
         }
         .environmentObject(analyticsVM)

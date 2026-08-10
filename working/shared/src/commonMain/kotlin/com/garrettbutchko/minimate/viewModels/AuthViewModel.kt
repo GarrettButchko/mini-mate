@@ -218,6 +218,7 @@ open class AuthViewModel(
     ) {
         onErrorMessage(null, false)
         coroutineScope.launch {
+            _isLoadingUser.value = true
             try {
                 // Wait for UserRepository to resolve the user
                 val loadedUser = userRepository.loadOrCreateUser(
@@ -248,6 +249,7 @@ open class AuthViewModel(
                 log.e(e) { "Failed to load or create user" }
                 onErrorMessage(e.message, false)
             } finally {
+                _isLoadingUser.value = false
                 completion()
             }
         }
@@ -264,9 +266,11 @@ open class AuthViewModel(
         onClearGuestGame: (Game?) -> Unit
     ) {
         coroutineScope.launch {
+            _isLoadingUser.value = true
             val result = createUser(emailInput, passwordInput)
 
             if (result.isFailure) {
+                _isLoadingUser.value = false
                 onErrorMessage(result.exceptionOrNull()?.message ?: "Sign up failed", false)
                 return@launch
             }
@@ -289,6 +293,9 @@ open class AuthViewModel(
                     onClearGuestGame = onClearGuestGame
                 ) {
                     coroutineScope.launch {
+                        // Keep the loading state alive through the verification
+                        // email step (createOrSignIn's finally just cleared it).
+                        _isLoadingUser.value = true
                         val verificationResult = authRepository.sendEmailVerification()
 
                         if (verificationResult.isFailure) {
@@ -300,8 +307,11 @@ open class AuthViewModel(
                             onErrorMessage("Please Verify Your Email To Continue", true)
                             logout()
                         }
+                        _isLoadingUser.value = false
                     }
                 }
+            } else {
+                _isLoadingUser.value = false
             }
         }
     }
@@ -335,10 +345,12 @@ open class AuthViewModel(
                         onClearGuestGame = onClearGuestGame
                     )
                 } else {
+                    _isLoadingUser.value = false
                     onErrorMessage("User data is missing.", true)
                 }
             },
             onFailure = { error ->
+                _isLoadingUser.value = false
                 onErrorMessage(error.message ?: "An unknown error occurred", true)
             }
         )
@@ -375,10 +387,12 @@ open class AuthViewModel(
                         onClearGuestGame = onClearGuestGame
                     )
                 } else {
+                    _isLoadingUser.value = false
                     onErrorMessage("User data is missing.", true)
                 }
             },
             onFailure = { error ->
+                _isLoadingUser.value = false
                 onErrorMessage(error.message ?: "An unknown error occurred", true)
             }
         )
@@ -395,9 +409,11 @@ open class AuthViewModel(
         onClearGuestGame: (Game?) -> Unit
     ) {
         coroutineScope.launch {
+            _isLoadingUser.value = true
             val result = signIn(emailInput, passwordInput)
 
             if (result.isFailure) {
+                _isLoadingUser.value = false
                 onShowSignUp()
                 onErrorMessage("No User Found Please Sign Up", false)
                 return@launch
@@ -437,7 +453,10 @@ open class AuthViewModel(
                         onErrorMessage("Please Verify Your Email To Continue", true)
                         logout() // Logout AFTER email is sent
                     }
+                    _isLoadingUser.value = false
                 }
+            } else {
+                _isLoadingUser.value = false
             }
         }
     }

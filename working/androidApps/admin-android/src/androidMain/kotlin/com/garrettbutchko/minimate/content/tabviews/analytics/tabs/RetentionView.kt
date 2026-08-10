@@ -85,13 +85,13 @@ internal fun RetentionView(vm: AnalyticsViewModel) {
                         DataCard(
                             data = retVM.getAvgTimeToReturn(),
                             cornerRadius = 16.dp,
-                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier.weight(1f).subtleShadow()
                         )
                         DataCard(
                             data = retVM.get30DayRetention(),
                             cornerRadius = 16.dp,
-                            backgroundColor = MaterialTheme.colorScheme.surface,
+                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier.weight(1f).subtleShadow()
                         )
                     }
