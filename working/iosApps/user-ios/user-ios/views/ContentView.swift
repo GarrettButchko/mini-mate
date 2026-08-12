@@ -13,6 +13,9 @@ struct ContentView: View {
     @StateObject var hostVM = HostViewModelSwift()
     
     @State private var previousView: ViewType?
+    @State private var showLocationExplainer = false
+
+    private static let locationExplainerKey = "hasSeenLocationExplainer"
     
     // need this for guest host view
     @State private var showHost: Bool = true
@@ -29,16 +32,28 @@ struct ContentView: View {
         .environmentObject(locationHandler)
         .animation(.easeInOut(duration: 0.4), value: viewManager.currentView)
         .onAppear {
-            locationHandler.requestLocationAccess()
+            let status = CLLocationManager().authorizationStatus
+            if status != .notDetermined || UserDefaults.standard.bool(forKey: Self.locationExplainerKey) {
+                locationHandler.requestLocationAccess()
+            }
         }
         .onChange(of: viewManager.currentView) { oldValue, newValue in
             previousView = oldValue
+            if case .signIn = onEnum(of: newValue),
+               !UserDefaults.standard.bool(forKey: Self.locationExplainerKey),
+               CLLocationManager().authorizationStatus == .notDetermined {
+                showLocationExplainer = true
+            }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {
             case .active:
                 print("App is active")
-                locationHandler.requestLocationAccess()
+                // Only re-request if a decision has already been made — if still
+                // .notDetermined, the next cold start (onAppear) will handle it.
+                if CLLocationManager().authorizationStatus != .notDetermined {
+                    locationHandler.requestLocationAccess()
+                }
             case .inactive:
                 print("App is inactive")
             case .background:
@@ -46,6 +61,17 @@ struct ContentView: View {
             @unknown default:
                 break
             }
+        }
+        .sheet(isPresented: $showLocationExplainer) {
+            LocationPermissionView {
+                UserDefaults.standard.set(true, forKey: Self.locationExplainerKey)
+                showLocationExplainer = false
+                locationHandler.requestLocationAccess()
+            } onSkip: {
+                UserDefaults.standard.set(true, forKey: Self.locationExplainerKey)
+                showLocationExplainer = false
+            }
+            .presentationDragIndicator(.visible)
         }
         .ignoresSafeArea(.all, edges: .bottom)
     }
@@ -195,22 +221,30 @@ struct MainTabView: View {
             let sessionValid = try await authModel.kotlinVM.verifyAndCleanupIfDeleted()
             guard Bool(truncating: sessionValid) else { return }
 
-            // Load user data. If the remote fetch fails transiently and no local user exists,
+            // Load user data only when nothing has fully reconciled it this session
+            // (cold start with a cached session — the model may already be hydrated
+            // from SQLite, but that's cache, not a sync). Right after a fresh login,
+            // createOrSignInUserAndNavigateToHome just did this exact load — skip the duplicate.
+            //
+            // If the remote fetch fails transiently and no local user exists,
             // the KMP layer throws rather than silently creating a blank user. Retry once after a delay.
-            do {
-                authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
-                    DispatchQueue.main.async {
-                        self.authModel.userModel = refreshedModel
+            if !authModel.kotlinVM.hasSyncedUserThisSession {
+                do {
+                    authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
+                        DispatchQueue.main.async {
+                            self.authModel.userModel = refreshedModel
+                        }
+                    }
+                } catch {
+                    print("⚠️ User load failed (\(error.localizedDescription)), retrying in 3s...")
+                    try await Task.sleep(nanoseconds: 3_000_000_000)
+                    authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
+                        DispatchQueue.main.async {
+                            self.authModel.userModel = refreshedModel
+                        }
                     }
                 }
-            } catch {
-                print("⚠️ User load failed (\(error.localizedDescription)), retrying in 3s...")
-                try await Task.sleep(nanoseconds: 3_000_000_000)
-                authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
-                    DispatchQueue.main.async {
-                        self.authModel.userModel = refreshedModel
-                    }
-                }
+                authModel.kotlinVM.markUserSynced()
             }
             
             print("Running after user data loaded - userModel is now: \(String(describing: authModel.userModel?.name)) with \(authModel.userModel?.gameIDs.count ?? 0) games")

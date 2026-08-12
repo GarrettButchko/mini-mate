@@ -55,7 +55,13 @@ struct ContentView: View {
                         .opacity(viewModel.showColor ? 1 : 0)
                         .animation(.spring(duration: 0.25, bounce: 0.4), value: viewModel.showColor)
                         .allowsHitTesting(viewModel.showColor)
+
+                        if viewModel.selectedCourse == nil {
+                            LoadingOverlay(message: "Loading course...")
+                                .allowsHitTesting(false)
+                        }
                     }
+                    .animation(statusOverlaySpring, value: viewModel.selectedCourse == nil)
                 case .courseList:
                     CourseListView()
                 case .welcome:

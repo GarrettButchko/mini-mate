@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwipeableRow
 import shared_admin
 
 struct LeaderBoardView: View {
@@ -291,19 +292,18 @@ struct PlayerRow: View {
     let rank: Int
     
     var body: some View {
-        GeometryReader { proxy in
-            HStack(alignment: .center){
-                PlayerGridRow(player: player, rank: rank)
-                    .frame(width: proxy.size.width)
-                    .swipeMod(editingID: $editingPlayerID, id: String(rank), buttonPressFunction: {}) {
-                        guard let selectedCourse = courseVM.selectedCourse else { return }
-                        VM.kotlin.deletePlayerEntry(courseID: selectedCourse.id, playerID: player.id)
-                        editingPlayerID = nil
-                    }
-            }
-        }
-        .frame(height: 40)
-        .transition(.opacity.combined(with: .blurReplace))
+        PlayerGridRow(player: player, rank: rank)
+            .swipeMod(
+                editingID: $editingPlayerID,
+                id: String(rank),
+                deleteFunction: {
+                    guard let selectedCourse = courseVM.selectedCourse else { return }
+                    VM.kotlin.deletePlayerEntry(courseID: selectedCourse.id, playerID: player.id)
+                    editingPlayerID = nil
+                },
+                buttonPressFunction: {}
+            )
+            .transition(.opacity.combined(with: .blurReplace))
     }
 }
 

@@ -42,7 +42,6 @@ struct MainView: View {
     @State private var showLastGameStats = false
     @State private var buttonsViewHeight: CGFloat = 0
     @State private var isLoading = false
-    
     private var userGameIDs: [String] {
         authModel.userModel?.gameIDs ?? []
     }

@@ -70,12 +70,20 @@ struct CourseListView: View {
                 Task {
                     // 1. Ensure you have the user ID (likely from your auth state)
                     guard let id = authModel.kotlinVM.currentUserIdentifier else { return }
-                    
-                    // Load user data and keep BOTH Swift and Kotlin models updated
-                    authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
-                        DispatchQueue.main.async {
-                            self.authModel.userModel = refreshedModel
+
+                    // Load user data only when nothing has fully reconciled it this
+                    // session (cold start with a cached session — the model may already
+                    // be hydrated from SQLite, but that's cache, not a sync). Right
+                    // after a fresh login, createOrSignInUserAndNavigateToHome just did
+                    // this exact load — skip the duplicate round-trip.
+                    if !authModel.kotlinVM.hasSyncedUserThisSession {
+                        // Load user data and keep BOTH Swift and Kotlin models updated
+                        authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
+                            DispatchQueue.main.async {
+                                self.authModel.userModel = refreshedModel
+                            }
                         }
+                        authModel.kotlinVM.markUserSynced()
                     }
                     
                     if viewModel.userCourses.isEmpty {
@@ -116,10 +124,13 @@ struct CourseListView: View {
                     icon: "person.fill.xmark",
                     tint: .secondary
                 )
+            } else if viewModel.loadingCourse {
+                LoadingOverlay(message: "Loading courses...")
             }
         }
         .animation(statusOverlaySpring, value: showSuccessOverlay)
         .animation(statusOverlaySpring, value: showLeftCourseOverlay)
+        .animation(statusOverlaySpring, value: viewModel.loadingCourse)
     }
 
     var multiCourse: some View{
@@ -173,14 +184,7 @@ struct CourseListView: View {
             }
             .padding([.horizontal, .top], 16)
             
-            if viewModel.loadingCourse {
-                VStack{
-                    Spacer()
-                    LogoLoadingView()
-                    Spacer()
-                }
-            } else {
-                ScrollView{
+            ScrollView{
                     VStack(spacing: 16){
                         if let message = viewModel.message {
                             MessageBanner(message: message, timeRemaining: viewModel.timeRemaining)
@@ -191,7 +195,7 @@ struct CourseListView: View {
                             CourseButtonView(viewModel: viewModel, course: course)
                                 .transition(.opacity)
                         }
-                        
+
                         Button {
                             viewModel.showAddCourseAlert = true
                         } label: {
@@ -216,7 +220,6 @@ struct CourseListView: View {
                     .animation(.easeInOut, value: viewModel.message)
                 }
                 .contentMargins(.top, 16)
-            }
             
             Button {
                 UIApplication.shared.open(URL(string: AppLinks.shared.coursePasswordUrl)!)

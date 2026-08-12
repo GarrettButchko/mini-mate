@@ -18,7 +18,10 @@ struct HostView: View {
     let localRepo: LocalGameRepository = KoinHelperParent.shared.getLocalGameRepo()
     
     @Binding var showHost: Bool
-    
+
+    @State private var showGameCode: Bool = false
+    @State private var lobbyNotice: StatusMessage? = nil
+
     var isGuest: Bool
     
     // Platform-agnostic business logic isolated for KMP
@@ -147,6 +150,58 @@ struct HostView: View {
         .onReceive(VM.timer) { _ in
             VM.tick(showHost: $showHost)
         }
+        .onChange(of: gameModel.game.players) { oldPlayers, newPlayers in
+            guard gameModel.onlineGame else { return }
+            let oldIds = Set(oldPlayers.map(\.userId))
+            let newIds = Set(newPlayers.map(\.userId))
+
+            // Remote players only — local "Add Player" guests (6-char ids) are
+            // managed by the host directly, and the host is always present.
+            let joined = newPlayers.filter {
+                !oldIds.contains($0.userId) && $0.userId.count != 6 && $0.userId != gameModel.game.hostUserId
+            }
+            let left = oldPlayers.filter {
+                !newIds.contains($0.userId) && $0.userId.count != 6 && $0.userId != gameModel.game.hostUserId
+            }
+
+            if !joined.isEmpty {
+                let (title, subtitle): (String, String) = switch joined.count {
+                case 1: ("\(joined[0].name) Joined", "\(joined[0].name) joined your game.")
+                case 2: ("2 Joined", "\(joined[0].name) & \(joined[1].name) joined your game.")
+                default: ("\(joined.count) Joined", "\(joined.count) people joined your game.")
+                }
+                presentTransientOverlay($lobbyNotice, StatusMessage(title: title, subtitle: subtitle, icon: "person.fill.checkmark", tint: .green))
+            } else if !left.isEmpty {
+                let (title, subtitle): (String, String) = switch left.count {
+                case 1: ("\(left[0].name) Left", "\(left[0].name) left your game.")
+                case 2: ("2 Left", "\(left[0].name) & \(left[1].name) left your game.")
+                default: ("\(left.count) Left", "\(left.count) people left your game.")
+                }
+                presentTransientOverlay($lobbyNotice, StatusMessage(title: title, subtitle: subtitle, icon: "person.fill.xmark", tint: .secondary))
+            }
+        }
+        .overlay {
+            if showGameCode {
+                GameCodeOverlay(code: gameModel.game.id, notice: lobbyNotice) {
+                    VM.kotlin.resetTimer()
+                    showGameCode = false
+                }
+            }
+        }
+        .animation(statusOverlaySpring, value: showGameCode)
+        .overlay {
+            // While the code popup is up, notices render inside it as a
+            // bottom banner instead of a second full-screen overlay.
+            if let lobbyNotice, !showGameCode {
+                SuccessOverlay(
+                    title: lobbyNotice.title,
+                    subtitle: lobbyNotice.subtitle,
+                    icon: lobbyNotice.icon,
+                    tint: lobbyNotice.tint
+                )
+            }
+        }
+        .animation(statusOverlaySpring, value: lobbyNotice)
         .environmentObject(VM)
     }
     
@@ -160,11 +215,8 @@ struct HostView: View {
                         HStack {
                             Text("Game Code:")
                             Spacer()
-                            Text(gameModel.game.id)
-                            Image(systemName: "qrcode")
-                                .font(.system(size: 20, weight: .medium))
                         }
-                        
+
                         Image(uiImage: VM.qrCodeImage ?? UIImage(systemName: "xmark.circle") ?? UIImage())
                             .interpolation(.none)
                             .resizable()
@@ -180,6 +232,20 @@ struct HostView: View {
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(Color.primary.opacity(0.1))
                             )
+
+                        Button {
+                            VM.kotlin.resetTimer()
+                            showGameCode = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "qrcode")
+                                Text("Show Game Code")
+                            }
+                            .font(.subheadline.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderless)
+                        .padding(.top, 8)
                     }
                     
                     
@@ -454,5 +520,78 @@ private extension View {
     @ViewBuilder
     func colorInvertIf(_ condition: Bool) -> some View {
         if condition { self.colorInvert() } else { self }
+    }
+}
+
+/// Full-screen popup showing the game code big enough to read across a table,
+/// styled to match the app's other transient popups (StatusOverlay et al.).
+/// While it's up, lobby notices ("X joined your game") render as a compact
+/// banner at the bottom instead of a second full-screen overlay.
+struct GameCodeOverlay: View {
+    let code: String
+    var notice: StatusMessage? = nil
+    let onDismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+                .onTapGesture { onDismiss() }
+            VStack{
+                VStack(spacing: 16) {
+                    Text("Game Code")
+                        .font(.system(.title3, weight: .semibold))
+                    
+                    // One rounded-square tile per character, passcode style
+                    HStack(spacing: 6) {
+                        ForEach(Array(code.enumerated()), id: \.offset) { _, char in
+                            Text(String(char))
+                                .font(.system(size: 30, weight: .bold, design: .monospaced))
+                                .frame(width: 38, height: 52)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(.ultraThinMaterial)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.primary.opacity(0.15))
+                                )
+                        }
+                    }
+                    
+                    
+                    
+                    Text("Tap anywhere to close")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(28)
+                .background {
+                    RoundedRectangle(cornerRadius: 38, style: .continuous)
+                        .ifAGENoDefaultColor()
+                        .cardShadow()
+                }
+                
+                if let notice {
+                    HStack(spacing: 8) {
+                        Image(systemName: notice.icon)
+                            .foregroundStyle(notice.tint)
+                        Text(notice.subtitle)
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 16)
+                    .background {
+                        Capsule()
+                            .ifAGENoDefaultColor()
+                            .cardShadow()
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .padding(.horizontal, 30)
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
+        }
+        .animation(statusOverlaySpring, value: notice)
     }
 }

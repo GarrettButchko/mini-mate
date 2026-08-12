@@ -52,7 +52,41 @@ open class AuthViewModel(
     private val _isLoadingUser = MutableStateFlow(false)
     val isLoadingUser: StateFlow<Boolean> = _isLoadingUser.asStateFlow()
 
+    /**
+     * True once loadOrCreateUser has fully reconciled local + remote this session
+     * (either via the sign-in pipeline or a landing screen's cold-start load).
+     * Landing screens use this — not `userModel == null` — to decide whether to
+     * load, because [hydrateUserFromLocal] populates userModel from the SQLite
+     * cache before any reconcile has happened.
+     */
+    var hasSyncedUserThisSession: Boolean = false
+        private set
+
+    fun markUserSynced() {
+        hasSyncedUserThisSession = true
+    }
+
     var currentNonce: String? = null
+
+    init {
+        // Hydrate the in-memory user model from the local DB immediately so a
+        // returning user's cached profile shows on the first frame instead of a
+        // blank placeholder while startup network work (IAP init, session
+        // verification) runs. The later loadOrCreateUser reconcile overwrites
+        // this with fresh data.
+        hydrateUserFromLocal()
+    }
+
+    private fun hydrateUserFromLocal() {
+        val uid = authRepository.currentUser?.uid ?: return
+        coroutineScope.launch {
+            val local = userRepository.localRepo.fetch(uid)
+            // Don't clobber a model the sign-in pipeline set in the meantime
+            if (local != null && _userModel.value == null) {
+                _userModel.value = local
+            }
+        }
+    }
 
     val currentUserIdentifier: String?
         get() = _currentUserIdentifier.value
@@ -234,6 +268,7 @@ open class AuthViewModel(
                 
                 // Final fully-resolved remote/local reconciled user
                 setUserModel(loadedUser)
+                hasSyncedUserThisSession = true
                 
                 // If the guest game was used as part of creation, we clear it out.
                 // UserRepository doesn't expose a "creation" boolean directly in loadOrCreateUser anymore, 

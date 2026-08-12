@@ -10,9 +10,17 @@ struct JoinView: View {
     @StateObject private var viewModel = JoinViewModelSwift()
     @EnvironmentObject var viewManager: ViewManagerSwift
     @EnvironmentObject var gameModel: GameViewModelSwift
+    @EnvironmentObject var authModel: AuthViewModelSwift
     
     @Binding var showJoin: Bool
     @State private var showScanner = false
+    @FocusState private var codeFieldFocused: Bool
+    // Which tile the next keystroke overwrites; nil = append at the end
+    @State private var selectedIndex: Int? = nil
+    // Raw keystroke buffer behind the tiles (see handleCodeInput)
+    @State private var hiddenCodeInput: String = ""
+    @State private var lastCommittedCode: String = ""
+    @State private var lobbyNotice: StatusMessage? = nil
     @State private var viewContentHeight: CGFloat = 0
     @State private var contentMargins: CGFloat = 70
     
@@ -44,6 +52,56 @@ struct JoinView: View {
                 viewModel.kotlin.gameDidDismiss(dismissed: newGame.dismissed)
             }
         }
+        .onChange(of: viewModel.inGame) { wasInGame, isInGame in
+            if !wasInGame && isInGame {
+                let host = gameModel.game.players.first { $0.userId == gameModel.game.hostUserId }
+                presentTransientOverlay($lobbyNotice, StatusMessage(
+                    title: "Joined!",
+                    subtitle: host.map { "You joined \($0.name)'s game." } ?? "You joined the game.",
+                    icon: "person.fill.checkmark",
+                    tint: .green
+                ))
+            }
+        }
+        .onChange(of: gameModel.game.players) { oldPlayers, newPlayers in
+            guard viewModel.inGame else { return }
+            let oldIds = Set(oldPlayers.map(\.userId))
+            let newIds = Set(newPlayers.map(\.userId))
+
+            // Only report churn once we're an established member of the lobby —
+            // the initial load right after joining floods the list with everyone.
+            guard let selfId = authModel.userModel?.googleId, oldIds.contains(selfId) else { return }
+
+            let joined = newPlayers.filter { !oldIds.contains($0.userId) && $0.userId != selfId }
+            let left = oldPlayers.filter { !newIds.contains($0.userId) && $0.userId != selfId }
+
+            if !joined.isEmpty {
+                let (title, subtitle): (String, String) = switch joined.count {
+                case 1: ("\(joined[0].name) Joined", "\(joined[0].name) joined the game.")
+                case 2: ("2 Joined", "\(joined[0].name) & \(joined[1].name) joined the game.")
+                default: ("\(joined.count) Joined", "\(joined.count) people joined the game.")
+                }
+                presentTransientOverlay($lobbyNotice, StatusMessage(title: title, subtitle: subtitle, icon: "person.fill.checkmark", tint: .green))
+            } else if !left.isEmpty {
+                let (title, subtitle): (String, String) = switch left.count {
+                case 1: ("\(left[0].name) Left", "\(left[0].name) left the game.")
+                case 2: ("2 Left", "\(left[0].name) & \(left[1].name) left the game.")
+                default: ("\(left.count) Left", "\(left.count) people left the game.")
+                }
+                presentTransientOverlay($lobbyNotice, StatusMessage(title: title, subtitle: subtitle, icon: "person.fill.xmark", tint: .secondary))
+            }
+        }
+        .overlay {
+            if let lobbyNotice {
+                SuccessOverlay(
+                    title: lobbyNotice.title,
+                    subtitle: lobbyNotice.subtitle,
+                    icon: lobbyNotice.icon,
+                    tint: lobbyNotice.tint
+                )
+            }
+        }
+        .animation(statusOverlaySpring, value: lobbyNotice)
         .background { backgroundLayer }
     }
     
@@ -223,22 +281,113 @@ struct JoinView: View {
     }
     
     // MARK: - Sub-Components
+    /// Passcode-style entry matching GameCodeOverlay in HostView: one rounded
+    /// square per character. A hidden TextField drives the keyboard; the tiles
+    /// are purely visual. Tap a filled tile to overwrite that position, tap an
+    /// empty one to append, long-press for Paste.
     private var gameCodeTextField: some View {
-        TextField("000000", text: $viewModel.gameCode)
-            .font(.system(size: 34, weight: .bold, design: .monospaced))
-            .multilineTextAlignment(.center)
-            .keyboardType(.asciiCapable)
-            .textInputAutocapitalization(.characters)
-            .disableAutocorrection(true)
-            .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.subTwo)
-            )
-            .frame(width: 240)
-            .onChange(of: viewModel.gameCode) { _, newValue in
-                viewModel.gameCode = logic.formatEnteredCode(code: newValue)
+        HStack(spacing: 6) {
+            let chars = Array(viewModel.gameCode)
+            ForEach(0..<6, id: \.self) { index in
+                let cursorIndex = selectedIndex ?? chars.count
+                let isActive = codeFieldFocused && index == cursorIndex
+                Text(index < chars.count ? String(chars[index]) : "0")
+                    .font(.system(size: 30, weight: .bold, design: .monospaced))
+                    .foregroundStyle(index < chars.count ? Color.primary : Color.secondary.opacity(0.4))
+                    .frame(width: 38, height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                isActive ? Color.blue : Color.primary.opacity(0.15),
+                                lineWidth: isActive ? 2 : 1
+                            )
+                    )
+                    .onTapGesture {
+                        selectedIndex = index < chars.count ? index : nil
+                        codeFieldFocused = true
+                    }
             }
+        }
+        .background(
+            TextField("", text: $hiddenCodeInput)
+                .keyboardType(.asciiCapable)
+                .textInputAutocapitalization(.characters)
+                .disableAutocorrection(true)
+                .focused($codeFieldFocused)
+                .opacity(0)
+                .allowsHitTesting(false)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedIndex = nil
+            codeFieldFocused = true
+        }
+        .animation(.easeOut(duration: 0.15), value: viewModel.gameCode)
+        .onAppear {
+            hiddenCodeInput = viewModel.gameCode
+            lastCommittedCode = viewModel.gameCode
+        }
+        .onChange(of: hiddenCodeInput) { oldValue, newValue in
+            handleCodeInput(oldValue: oldValue, newValue: newValue)
+        }
+        .onChange(of: viewModel.gameCode) { _, newValue in
+            // External updates (QR scan, Kotlin-side formatting) → resync tiles/buffer
+            if newValue != hiddenCodeInput {
+                applyExternalCode(newValue)
+            }
+        }
+    }
+
+    /// Interprets raw keystrokes from the hidden field. The field's caret is
+    /// always at the end, so a keystroke shows up as an append/removal there —
+    /// this remaps it onto the selected tile when one is targeted, and treats
+    /// multi-character jumps as a paste.
+    private func handleCodeInput(oldValue: String, newValue: String) {
+        // Ignore the onChange fired by our own programmatic resync below
+        if newValue == lastCommittedCode { return }
+
+        var result = newValue
+        var newSelection = selectedIndex
+
+        if let sel = selectedIndex, sel < oldValue.count,
+           newValue.count == oldValue.count + 1, let typed = newValue.last {
+            // Typed one character with a tile selected → overwrite that position
+            var chars = Array(oldValue)
+            chars[sel] = typed
+            result = String(chars)
+            newSelection = sel + 1 < chars.count ? sel + 1 : nil
+        } else if let sel = selectedIndex, sel < oldValue.count,
+                  newValue.count == oldValue.count - 1 {
+            // Backspace with a tile selected → delete that position
+            var chars = Array(oldValue)
+            chars.remove(at: sel)
+            result = String(chars)
+            newSelection = sel < chars.count ? sel : nil
+        } else if newValue.count > oldValue.count + 1 {
+            // Multi-character jump = paste → the pasted text becomes the code
+            result = newValue.hasPrefix(oldValue) ? String(newValue.dropFirst(oldValue.count)) : newValue
+            newSelection = nil
+        }
+
+        let formatted = logic.formatEnteredCode(code: result)
+        selectedIndex = newSelection
+        lastCommittedCode = formatted
+        viewModel.gameCode = formatted
+        hiddenCodeInput = formatted
+    }
+
+    /// Applies a code that didn't come from keystrokes (QR scan, Paste, Kotlin).
+    private func applyExternalCode(_ code: String) {
+        selectedIndex = nil
+        lastCommittedCode = code
+        hiddenCodeInput = code
+        if viewModel.gameCode != code {
+            viewModel.gameCode = code
+        }
     }
 
     private var actionDivider: some View {

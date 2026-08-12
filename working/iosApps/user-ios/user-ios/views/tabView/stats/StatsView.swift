@@ -8,6 +8,7 @@
 import SwiftUI
 import Charts
 import MarqueeText
+import SwipeableRow
 import _SwiftData_SwiftUI
 import shared_user
 
@@ -428,23 +429,16 @@ struct GameRow: View {
     var remoteUserRepo: RemoteUserRepository = KoinHelperParent.shared.getRemoteUserRepo()
 
     var body: some View {
-        GeometryReader { proxy in
-            HStack{
-                GameGridView(editOn: $editOn, game: game)
-                    .frame(width: proxy.size.width)
-                    .swipeMod(editingID: $editingGameID, id: game.id,
-                              buttonPressFunction: {
-                        gameReview = game
-                    },
-                              buttonOne: NetworkChecker.companion.shared.isConnected ? ButtonSkim(color: Color.blue, systemImage: "square.and.arrow.up", string: makeShareableSummary(for: game)) : nil
-                    ) {
-                        statModel.kotlin.deleteGame(gameID: game.id)
-                    }
-
-            }
-        }
-        .frame(height: 250)
-        .transition(.opacity.combined(with: .blurReplace))
+        GameGridView(editOn: $editOn, game: game)
+            .frame(height: 250)
+            .swipeMod(
+                editingID: $editingGameID,
+                id: game.id,
+                buttonOne: NetworkChecker.companion.shared.isConnected ? ButtonSkim(color: Color.blue, systemImage: "square.and.arrow.up", string: makeShareableSummary(for: game)) : nil,
+                deleteFunction: { statModel.kotlin.deleteGame(gameID: game.id) },
+                buttonPressFunction: { gameReview = game }
+            )
+            .transition(.opacity.combined(with: .blurReplace))
     }
 
     /// Build a plain-text summary (you could also return a URL to a generated PDF/image)

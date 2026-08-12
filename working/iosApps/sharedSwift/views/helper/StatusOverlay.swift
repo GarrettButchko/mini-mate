@@ -29,6 +29,25 @@ func presentTransientOverlay(_ flag: Binding<Bool>, duration: Double = 1.5) {
     }
 }
 
+/// Message-carrying variant of the above: shows `message`, holds for
+/// `duration`, then clears it — unless a newer message replaced it meanwhile.
+func presentTransientOverlay(
+    _ current: Binding<StatusMessage?>,
+    _ message: StatusMessage,
+    duration: Double = 1.5
+) {
+    withAnimation(statusOverlaySpring) {
+        current.wrappedValue = message
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+        withAnimation(statusOverlaySpring) {
+            if current.wrappedValue == message {
+                current.wrappedValue = nil
+            }
+        }
+    }
+}
+
 struct SuccessOverlay: View {
     let title: String
     let subtitle: String

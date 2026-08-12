@@ -15,6 +15,8 @@
 		2102E22D2F6C680C00F971E4 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E22C2F6C680C00F971E4 /* FirebaseDatabase */; };
 		2102E22F2F6C680C00F971E4 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E22E2F6C680C00F971E4 /* FirebaseFirestore */; };
 		2102E2312F6C680C00F971E4 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E2302F6C680C00F971E4 /* FirebaseStorage */; };
+		212C726D302BC05C002ED1CB /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 212C726C302BC05C002ED1CB /* ConfettiSwiftUI */; };
+		21BBF546302D0B5A0031955A /* SwipeableRow in Frameworks */ = {isa = PBXBuildFile; productRef = 21BBF545302D0B5A0031955A /* SwipeableRow */; };
 		21D595672FD7BC3800A7BABF /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 21D595662FD7BC3800A7BABF /* FirebaseFunctions */; };
 		21FA50A32F70E97B00701BBB /* MarqueeText in Frameworks */ = {isa = PBXBuildFile; productRef = 21FA50A22F70E97B00701BBB /* MarqueeText */; };
 /* End PBXBuildFile section */
@@ -63,8 +65,10 @@
 				2102E22F2F6C680C00F971E4 /* FirebaseFirestore in Frameworks */,
 				2102E2292F6C680C00F971E4 /* FirebaseAuth in Frameworks */,
 				21D595672FD7BC3800A7BABF /* FirebaseFunctions in Frameworks */,
+				21BBF546302D0B5A0031955A /* SwipeableRow in Frameworks */,
 				2102E2312F6C680C00F971E4 /* FirebaseStorage in Frameworks */,
 				2102937C2F6E26BC00375E34 /* GoogleSignIn in Frameworks */,
+				212C726D302BC05C002ED1CB /* ConfettiSwiftUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,6 +132,8 @@
 				2102937D2F6E26BC00375E34 /* GoogleSignInSwift */,
 				21FA50A22F70E97B00701BBB /* MarqueeText */,
 				21D595662FD7BC3800A7BABF /* FirebaseFunctions */,
+				212C726C302BC05C002ED1CB /* ConfettiSwiftUI */,
+				21BBF545302D0B5A0031955A /* SwipeableRow */,
 			);
 			productName = "admin-ios";
 			productReference = 2102E2172F6C67A500F971E4 /* admin-ios.app */;
@@ -161,6 +167,8 @@
 				2102E2252F6C680C00F971E4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				2102937A2F6E26BC00375E34 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				21FA50A12F70E97B00701BBB /* XCRemoteSwiftPackageReference "MarqueeText" */,
+				212C726B302BC05C002ED1CB /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+				21BBF544302D0B5A0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2102E2182F6C67A500F971E4 /* Products */;
@@ -453,6 +461,22 @@
 				minimumVersion = 12.11.0;
 			};
 		};
+		212C726B302BC05C002ED1CB /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/simibac/ConfettiSwiftUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
+		21BBF544302D0B5A0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/GarrettButchko/swipeable-row-ios";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		21FA50A12F70E97B00701BBB /* XCRemoteSwiftPackageReference "MarqueeText" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/joekndy/MarqueeText.git";
@@ -503,6 +527,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2102E2252F6C680C00F971E4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		212C726C302BC05C002ED1CB /* ConfettiSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 212C726B302BC05C002ED1CB /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
+			productName = ConfettiSwiftUI;
+		};
+		21BBF545302D0B5A0031955A /* SwipeableRow */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 21BBF544302D0B5A0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */;
+			productName = SwipeableRow;
 		};
 		21D595662FD7BC3800A7BABF /* FirebaseFunctions */ = {
 			isa = XCSwiftPackageProductDependency;

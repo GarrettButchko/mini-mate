@@ -1,5 +1,5 @@
 {
-  "originHash" : "5bb30c0adf351fd181eb7f2ee6331497eb3e959fd8d62efd136a24be2ea441f9",
+  "originHash" : "3bf2a9bd45668685dd266453added641d72f3962744122d17d0276b3ef4ce1a3",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -179,6 +179,15 @@
       "state" : {
         "revision" : "13b248eaa73b7826f0efb1bcf455e251d65ecb1b",
         "version" : "3.1.0"
+      }
+    },
+    {
+      "identity" : "swipeable-row-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/GarrettButchko/swipeable-row-ios",
+      "state" : {
+        "branch" : "main",
+        "revision" : "b1048456ebdb08ef88feda37c3e8cd22da5ddbda"
       }
     }
   ],

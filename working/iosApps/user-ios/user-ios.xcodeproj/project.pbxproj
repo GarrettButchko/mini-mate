@@ -15,6 +15,7 @@
 		2102E1F52F6C653700F971E4 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E1F42F6C653700F971E4 /* FirebaseDatabase */; };
 		2102E1F72F6C653B00F971E4 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E1F62F6C653B00F971E4 /* FirebaseFirestore */; };
 		2102E1F92F6C653F00F971E4 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E1F82F6C653F00F971E4 /* FirebaseStorage */; };
+		21BBF549302D0B7E0031955A /* SwipeableRow in Frameworks */ = {isa = PBXBuildFile; productRef = 21BBF548302D0B7E0031955A /* SwipeableRow */; };
 		21D748632F71F6FB0014F6E7 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 21D748622F71F6FB0014F6E7 /* GoogleMobileAds */; };
 		21D748662F71F7730014F6E7 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 21D748652F71F7730014F6E7 /* ConfettiSwiftUI */; };
 		21FA50A02F70E96B00701BBB /* MarqueeText in Frameworks */ = {isa = PBXBuildFile; productRef = 21FA509F2F70E96B00701BBB /* MarqueeText */; };
@@ -64,6 +65,7 @@
 				210293832F6E26D200375E34 /* GoogleSignInSwift in Frameworks */,
 				2102E1F72F6C653B00F971E4 /* FirebaseFirestore in Frameworks */,
 				2102E1F12F6C653100F971E4 /* FirebaseAuth in Frameworks */,
+				21BBF549302D0B7E0031955A /* SwipeableRow in Frameworks */,
 				2102E1F92F6C653F00F971E4 /* FirebaseStorage in Frameworks */,
 				210293812F6E26D200375E34 /* GoogleSignIn in Frameworks */,
 				21D748662F71F7730014F6E7 /* ConfettiSwiftUI in Frameworks */,
@@ -131,6 +133,7 @@
 				21FA509F2F70E96B00701BBB /* MarqueeText */,
 				21D748622F71F6FB0014F6E7 /* GoogleMobileAds */,
 				21D748652F71F7730014F6E7 /* ConfettiSwiftUI */,
+				21BBF548302D0B7E0031955A /* SwipeableRow */,
 			);
 			productName = "user-ios";
 			productReference = 21B56BBF2F64A65000DF589D /* user-ios.app */;
@@ -166,6 +169,7 @@
 				21FA509E2F70E96B00701BBB /* XCRemoteSwiftPackageReference "MarqueeText" */,
 				21D748612F71F6FB0014F6E7 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 				21D748642F71F7730014F6E7 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+				21BBF547302D0B7E0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 21B56BC02F64A65000DF589D /* Products */;
@@ -462,6 +466,14 @@
 				minimumVersion = 12.10.0;
 			};
 		};
+		21BBF547302D0B7E0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/GarrettButchko/swipeable-row-ios";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		21D748612F71F6FB0014F6E7 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
@@ -528,6 +540,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2155C0962F6667C4001BBDC5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		21BBF548302D0B7E0031955A /* SwipeableRow */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 21BBF547302D0B7E0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */;
+			productName = SwipeableRow;
 		};
 		21D748622F71F6FB0014F6E7 /* GoogleMobileAds */ = {
 			isa = XCSwiftPackageProductDependency;
