@@ -135,6 +135,7 @@ struct AdminsSectionView: View {
                         .disabled(courseViewModel.removingAdmin)
                     }
                     .padding(.vertical, 4)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }
@@ -247,22 +248,30 @@ struct PasswordSectionView: View {
     @EnvironmentObject var authModel: AuthViewModelSwift
     @EnvironmentObject var courseViewModel: CourseListViewModelSwift
     let course: Course
-    
+
     var body: some View {
         Section("Password") {
             HStack {
                 Text("Password:")
-                
+
                 if viewModel.showPassword {
                     Text(course.password)
                 } else {
                     Text("••••••••••")
                 }
+
                 Spacer()
                 Button {
                     viewModel.showPassword.toggle()
                 } label: {
                     !viewModel.showPassword ? Image(systemName: "eye").foregroundColor(.blue) : Image(systemName: "eye.slash").foregroundColor(.blue)
+                }
+            }
+            .contextMenu {
+                Button {
+                    UIPasteboard.general.string = course.password
+                } label: {
+                    Label("Copy Password", systemImage: "doc.on.doc")
                 }
             }
             

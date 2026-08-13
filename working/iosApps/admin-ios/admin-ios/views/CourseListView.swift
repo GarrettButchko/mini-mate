@@ -22,6 +22,7 @@ struct CourseListView: View {
     @State private var isRotating: Bool = false
     @State private var showSuccessOverlay: Bool = false
     @State private var showLeftCourseOverlay: Bool = false
+    @State private var showFirstCourseSheet: Bool = false
 
     @State private var viewHeight: CGFloat = 0 // State to track the height of the view
     
@@ -46,13 +47,18 @@ struct CourseListView: View {
                 TextField("Password", text: $viewModel.password)
                 
                 Button("Add", role: .none) {
+                    let wasFirstCourse = !viewModel.hasCourse
                     viewModel.kotlin.tryPassword { success in
                         Task { @MainActor in
                             viewModel.password = ""
                             viewModel.showAddCourseAlert = false
 
                             if Bool(truncating: success) {
-                                presentTransientOverlay($showSuccessOverlay)
+                                if wasFirstCourse {
+                                    showFirstCourseSheet = true
+                                } else {
+                                    presentTransientOverlay($showSuccessOverlay)
+                                }
                             }
                         }
                     }
@@ -131,6 +137,11 @@ struct CourseListView: View {
         .animation(statusOverlaySpring, value: showSuccessOverlay)
         .animation(statusOverlaySpring, value: showLeftCourseOverlay)
         .animation(statusOverlaySpring, value: viewModel.loadingCourse)
+        .sheet(isPresented: $showFirstCourseSheet) {
+            FirstCoursePreviewSheet(isPresented: $showFirstCourseSheet)
+                .environmentObject(viewModel)
+                .environmentObject(viewManager)
+        }
     }
 
     var multiCourse: some View{

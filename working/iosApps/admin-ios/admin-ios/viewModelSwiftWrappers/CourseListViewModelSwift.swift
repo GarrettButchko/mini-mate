@@ -173,7 +173,9 @@ class CourseListViewModelSwift: ObservableObject {
 
         Task {
             for await val in kotlin.adminUsers {
-                self._adminUsers = val
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    self._adminUsers = val
+                }
             }
         }
 

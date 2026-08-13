@@ -26,7 +26,6 @@ struct ExpierenceTab: View {
                         InfoButton(infoText: "Greener = Harder, Less opacity = Easier. Based on average strokes per hole. P.S. if holes are missing they are likely unplayed or have no data yet.")
                     }
                     
-                    
                     HoleDifficultyCharts()
                         .id(VM.rangeDailyDocs.count)
                     
@@ -65,14 +64,8 @@ struct ExpierenceTab: View {
                         DataCard(data: VM.getAvgRelativeToPar(), color: .subTwo, cornerRadius: 17)
                         DataCard(data: VM.getMostBeatenPar(), color: .subTwo, cornerRadius: 17)
                     }
-                    
-                    
-                        HoleDifficultyParCharts(course: course)
-                            .id(VM.rangeDailyDocs.count)
-                    
-                    
-                    
-                    
+                    HoleDifficultyParCharts(course: course)
+                        .id(VM.rangeDailyDocs.count)
                 }
                 .padding()
                 .background {
@@ -94,7 +87,7 @@ struct ExpierenceTab: View {
                         DataCard(data: VM.getUnderParPercentage(), color: .subTwo, cornerRadius: 17)
                         DataCard(data: VM.getOverParPercentage(), color: .subTwo, cornerRadius: 17)
                     }
-
+                    
                     DataCard(data: VM.getHoleInOneCount(), color: .subTwo, cornerRadius: 17)
                 }
                 .padding()
