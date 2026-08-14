@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileSignInOptions } from "@/components/profile/ProfileSignInOptions";
@@ -10,20 +10,27 @@ import MiniMateLogo from "@/components/MiniMateLogo";
 function SignInContent() {
   const { user, firestoreUser, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"options" | "email">("options");
 
   useEffect(() => {
     if (loading) return;
     if (!user) return;
-    const next = searchParams.get("next");
-    if (next && next.startsWith("/")) { router.replace(next); return; }
+
+    // Return to the screen the user was on before signing in (recorded on the
+    // way to /signin), so signing in never dumps them on /find-course.
+    const returnTo = sessionStorage.getItem("signinReturnTo");
+    if (returnTo && returnTo.startsWith("/") && returnTo !== "/signin") {
+      sessionStorage.removeItem("signinReturnTo");
+      router.replace(returnTo);
+      return;
+    }
+
     if ((firestoreUser?.adminCourses?.length ?? 0) > 0) {
       router.replace("/manage-courses");
     } else {
       router.replace("/find-course");
     }
-  }, [user, firestoreUser, loading, router, searchParams]);
+  }, [user, firestoreUser, loading, router]);
 
   if (loading) return <div style={{ flex: 1 }} />;
 
@@ -101,9 +108,7 @@ export default function SignInPage() {
         animation: "gradient-pan 20s ease infinite",
       }}
     >
-      <Suspense fallback={<div style={{ flex: 1 }} />}>
-        <SignInContent />
-      </Suspense>
+      <SignInContent />
     </div>
   );
 }

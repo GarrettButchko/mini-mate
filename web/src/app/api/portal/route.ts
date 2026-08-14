@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json();
+  const { email, customerId } = await req.json();
+
+  // If we already have the Stripe customer (e.g. stored on a course doc), open
+  // their billing portal directly instead of looking them up by email.
+  if (customerId) {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/manage-courses`,
+    });
+    return NextResponse.json({ url: session.url });
+  }
 
   if (!email) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });

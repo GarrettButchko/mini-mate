@@ -16,7 +16,15 @@ export default function GetStartedButton({
 
   function handleClick() {
     if (loading) return;
-    if (!user) { router.push("/signin"); return; }
+    if (!user) {
+      // Get Started always leads into the course flow after sign-in
+      // (find-course for a first course, manage-courses if they already have
+      // courses) — NOT back to the page they were on. Clear any stale return
+      // path so the sign-in page uses its default redirect.
+      sessionStorage.removeItem("signinReturnTo");
+      router.push("/signin");
+      return;
+    }
     if ((firestoreUser?.adminCourses?.length ?? 0) > 0) {
       router.push("/manage-courses");
     } else {

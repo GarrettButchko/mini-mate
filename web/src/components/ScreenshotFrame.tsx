@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { OverlayCard } from "./OverlayCard";
 
 interface Props {
   imageSrc: string | null;
@@ -11,26 +12,21 @@ interface Props {
 }
 
 export default function ScreenshotFrame({ imageSrc, imageAlt, frameWidth = 100, frameHeight = 200, children }: Props) {
-  const [mounted, setMounted] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const openLightbox = () => {
     if (!imageSrc) return;
-    setMounted(true);
-    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+    setOpen(true);
   };
 
-  const closeLightbox = () => {
-    setVisible(false);
-    setTimeout(() => setMounted(false), 300);
-  };
+  const closeLightbox = () => setOpen(false);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeLightbox(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mounted]);
+  }, [open]);
 
   return (
     <>
@@ -51,34 +47,23 @@ export default function ScreenshotFrame({ imageSrc, imageAlt, frameWidth = 100, 
         </div>
       </div>
 
-      {mounted && imageSrc && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
-          style={{
-            background: visible ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            transition: "background 0.25s ease",
-          }}
-          onClick={closeLightbox}
-        >
-          <Image
-            src={imageSrc}
-            alt={imageAlt}
-            width={400}
-            height={800}
-            className="rounded-[44px] shadow-2xl"
-            style={{
-              height: "min(82vh, 720px)",
-              width: "auto",
-              transform: visible ? "scale(1)" : "scale(0.8)",
-              opacity: visible ? 1 : 0,
-              transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      {/* Lightbox — floating image over the shared overlay's backdrop/animation,
+          with the original image styling preserved. */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 50, pointerEvents: "none" }}>
+        <OverlayCard open={open} floating onBackdropClick={closeLightbox} backdropRadius={0}>
+          {imageSrc && (
+            <Image
+              src={imageSrc}
+              alt={imageAlt}
+              width={400}
+              height={800}
+              className="rounded-[44px] shadow-2xl"
+              style={{ width: "auto", height: "min(82vh, 720px)", pointerEvents: "auto" }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </OverlayCard>
+      </div>
     </>
   );
 }

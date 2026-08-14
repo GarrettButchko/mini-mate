@@ -51,7 +51,11 @@ export default function ProfileButton() {
         </button>
       ) : (
         <button
-          onClick={() => router.push("/signin")}
+          onClick={() => {
+            // Remember where they were so sign-in returns to this screen.
+            sessionStorage.setItem("signinReturnTo", window.location.pathname);
+            router.push("/signin");
+          }}
           className="glass-pill flex items-center px-4 py-3.5"
           style={{ fontSize: 14, fontWeight: 500, color: "#AF52DE", cursor: "pointer", border: "none", whiteSpace: "nowrap" }}
         >

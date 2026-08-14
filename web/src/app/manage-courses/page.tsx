@@ -2,18 +2,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { MapPin, Plus, Lock, ArrowRight, CheckCircle } from "lucide-react";
+import { MapPin, Plus, Lock, ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCourses } from "@/lib/useAdminCourses";
-import { TIER_LABEL, TIER_COLOR } from "@/lib/course";
+import { TIER_LABEL } from "@/lib/course";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { OverlayCard } from "@/components/OverlayCard";
+import MiniMateLogo from "@/components/MiniMateLogo";
+import { LogoLoadingView } from "@/components/profile/LogoLoadingView";
 
 const PURPLE = "#AF52DE";
-const BLUE   = "#0088FF";
-const RED    = "#FF383C";
-const GREEN  = "#34C759";
+const BLUE = "#0088FF";
+const RED = "#FF383C";
+const GREEN = "#34C759";
 
 const FAILED_LIMIT = 5;
 const COOLDOWN_SECS = 30;
@@ -24,6 +27,7 @@ export default function ManageCoursesPage() {
     user ? (firestoreUser?.adminCourses ?? []) : []
   );
 
+  const [showSuccess, setShowSuccess] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,8 +67,7 @@ export default function ManageCoursesPage() {
         setShowForm(false);
         setCode("");
         setFailedAttempts(0);
-        setBanner({ text: "Course added successfully!", kind: "success" });
-        setTimeout(() => setBanner(null), 4000);
+        setShowSuccess(true);
         return;
       }
 
@@ -99,6 +102,17 @@ export default function ManageCoursesPage() {
     }
   }
 
+  async function openSubscriptionPortal(customerId?: string | null) {
+    if (!customerId) return;
+    const res = await fetch("/api/portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerId }),
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+  }
+
   return (
     <PageShell>
       <SiteNav logoColor={PURPLE}>
@@ -123,7 +137,8 @@ export default function ManageCoursesPage() {
             <p className="font-semibold mb-1" style={{ color: "var(--text)" }}>Sign in to manage your courses</p>
             <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>Create an account or sign in to view and manage your course listings.</p>
             <Link
-              href="/signin?next=/manage-courses"
+              href="/signin"
+              onClick={() => sessionStorage.setItem("signinReturnTo", "/manage-courses")}
               className="inline-block rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200"
               style={{ background: PURPLE }}
             >
@@ -132,63 +147,6 @@ export default function ManageCoursesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-
-            {/* Course list */}
-            {coursesLoading && courses.length === 0 ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="glass-card p-5 flex items-center gap-4">
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--surface-two)", flexShrink: 0 }} />
-                    <div className="flex-1 space-y-2">
-                      <div style={{ height: 13, width: "50%", borderRadius: 6, background: "var(--surface-two)" }} />
-                      <div style={{ height: 11, width: "30%", borderRadius: 6, background: "var(--surface-two)" }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : courses.length > 0 ? (
-              <div className="space-y-3">
-                {courses.map((course) => {
-                  const tierColor = TIER_COLOR[course.tier] ?? PURPLE;
-                  const tierLabel = TIER_LABEL[course.tier] ?? "Listed";
-                  return (
-                    <div key={course.id} className="glass-card p-5 flex items-center gap-4">
-                      {/* Icon */}
-                      <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: `${tierColor}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <MapPin size={20} color={tierColor} />
-                      </div>
-
-                      {/* Details */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate" style={{ color: "var(--text)" }}>{course.name}</p>
-                        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                          {course.numHoles ?? 18} holes
-                          {course.isClaimed ? " · Claimed" : " · Unclaimed"}
-                        </p>
-                      </div>
-
-                      {/* Tier badge + upgrade */}
-                      <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", padding: "4px 10px", borderRadius: 999, background: `${tierColor}18`, color: tierColor }}>
-                        {tierLabel}
-                      </span>
-                      {course.tier === 1 && (
-                        <Link
-                          href="/pricing"
-                          style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 999, background: PURPLE, color: "#fff", textDecoration: "none" }}
-                        >
-                          Upgrade
-                        </Link>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="glass-card p-8 text-center">
-                <p className="font-semibold mb-1" style={{ color: "var(--text)" }}>No courses yet</p>
-                <p className="text-sm" style={{ color: "var(--text-muted)" }}>Add your first course below.</p>
-              </div>
-            )}
 
             {/* Banner */}
             <AnimatePresence>
@@ -218,6 +176,90 @@ export default function ManageCoursesPage() {
               )}
             </AnimatePresence>
 
+            {/* Course list */}
+            {coursesLoading && courses.length === 0 ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="glass-card p-5 flex items-center gap-4">
+                    {/* Icon */}
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: "var(--surface-two)", flexShrink: 0 }} />
+                    {/* Details */}
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div style={{ height: 14, width: "50%", borderRadius: 6, background: "var(--surface-two)" }} />
+                      <div style={{ height: 12, width: "30%", borderRadius: 6, background: "var(--surface-two)" }} />
+                    </div>
+                    {/* Tier badge pill */}
+                    <div style={{ width: 60, height: 22, borderRadius: 999, background: "var(--surface-two)", flexShrink: 0 }} />
+                  </div>
+                ))}
+              </div>
+            ) : courses.length > 0 ? (
+              <div className="space-y-3">
+                {courses.map((course) => {
+                  const tierLabel = TIER_LABEL[course.tier] ?? "Listed";
+                  return (
+                    <div key={course.id} className="glass-card p-5 items-center gap-4">
+                      <div className="flex flex-row gap-4 items-center w-full">
+                        {/* Icon */}
+                        <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: `${PURPLE}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <MapPin size={20} color={PURPLE} />
+                        </div>
+
+                        {/* Details */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate" style={{ color: "var(--text)" }}>{course.name}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                            {course.numHoles ?? 18} holes
+                            {course.isClaimed ? " · Claimed" : " · Unclaimed"}
+                          </p>
+                        </div>
+
+                        {/* Tier badge + subscription management */}
+                        <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", padding: "4px 10px", borderRadius: 999, background: `${PURPLE}18`, color: PURPLE }}>
+                          {tierLabel}
+                        </span>
+
+
+
+
+                      </div>
+
+                      <div className="flex flex-row gap-3 mt-4">
+                        {course.stripeCustomerId && (
+                          <button
+                            onClick={() => openSubscriptionPortal(course.stripeCustomerId)}
+                            className="flex-1 rounded-2xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-opacity hover:opacity-70"
+                            style={{ background: "var(--surface-two)", color: PURPLE, cursor: "pointer", border: "none" }}
+                          >
+                            Manage subscription
+                          </button>
+                        )}
+                        {course.tier < 3 && (
+                          <Link
+                            href="/pricing"
+                            className="hero-gradient-courses flex-1 rounded-2xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                            style={{ color: "#fff", textDecoration: "none" }}
+                          >
+                            <Sparkles size={14} fill="currentColor" />
+                            Upgrade
+                          </Link>
+                        )}
+                      </div>
+
+
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="glass-card p-8 text-center">
+                <p className="font-semibold mb-1" style={{ color: "var(--text)" }}>No courses yet</p>
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>Add your first course below.</p>
+              </div>
+            )}
+
+
+
             {/* Add button + get password link */}
             <div className="flex flex-row gap-3">
               <button
@@ -240,75 +282,65 @@ export default function ManageCoursesPage() {
               </Link>
             </div>
 
-            {/* Add course overlay */}
-            <AnimatePresence>
-              {showForm && (
-                <motion.div
-                  key="overlay"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  style={{
-                    position: "fixed", inset: 0,
-                    background: "rgba(0,0,0,0.5)",
-                    zIndex: 50,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 24,
-                  }}
-                  onClick={(e) => { if (e.target === e.currentTarget) { setShowForm(false); setCode(""); } }}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 16 }}
-                    transition={{ duration: 0.22, ease: "easeOut" }}
-                    style={{
-                      width: "100%",
-                      maxWidth: 360,
-                      borderRadius: 28,
-                      background: "var(--surface)",
-                      padding: "16px 14px",
-                      boxShadow: "var(--shadow)",
-                    }}
+            {/* Course password / loading / success overlays */}
+            {/* Kept mounted so the shared OverlayCard enter/exit animations play;
+                pointer-events is off so the empty wrapper never blocks the page. */}
+            <div style={{ position: "fixed", inset: 0, zIndex: 50, pointerEvents: "none" }}>
+              {/* Add course form */}
+              <OverlayCard open={showForm && !busy} maxWidth={360} backdropRadius={0}>
+                <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Enter your course code</p>
+                <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-muted)" }}>We sent this code to the contact on file for your course.</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 12px", height: 46, borderRadius: 14, background: "var(--surface-two)", marginBottom: 12 }}>
+                  <Lock size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                  <input
+                    autoFocus
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && code.trim() && !busy) tryAdd(); }}
+                    placeholder="Enter password"
+                    style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => { setShowForm(false); setCode(""); }}
+                    style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}
                   >
-                    <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Enter your course code</p>
-                    <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-muted)" }}>We sent this code to the contact on file for your course.</p>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 12px", height: 46, borderRadius: 14, background: "var(--surface-two)", marginBottom: 12 }}
-                    >
-                      <Lock size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                      <input
-                        autoFocus
-                        type="text"
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter" && code.trim() && !busy) tryAdd(); }}
-                        placeholder="Enter password"
-                        style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em" }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        onClick={() => { setShowForm(false); setCode(""); }}
-                        style={{ flex: 1, height: 38, borderRadius: 14, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={tryAdd}
-                        disabled={busy || !code.trim()}
-                        style={{ flex: 1, height: 38, borderRadius: 14, border: "none", background: BLUE, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: busy || !code.trim() ? 0.5 : 1 }}
-                      >
-                        {busy ? "…" : "Add Course"}
-                      </button>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={tryAdd}
+                    disabled={busy || !code.trim()}
+                    style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: PURPLE, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: busy || !code.trim() ? 0.5 : 1 }}
+                  >
+                    {busy ? "…" : "Add Course"}
+                  </button>
+                </div>
+              </OverlayCard>
+
+              {/* Loading popup while the course is being added */}
+              <OverlayCard open={busy && showForm} maxWidth={360} backdropRadius={0}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "10px 0 6px" }}>
+                  <LogoLoadingView size={25} color={PURPLE} />
+                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Adding…</p>
+                </div>
+              </OverlayCard>
+
+              {/* Success popup after the course has been added */}
+              <OverlayCard open={showSuccess} maxWidth={360} backdropRadius={0}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                  <MiniMateLogo size={50} color={GREEN} />
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Course added!</p>
+                  <button
+                    onClick={() => setShowSuccess(false)}
+                    style={{ width: "100%", height: 38, borderRadius: 9, border: "none", background: GREEN, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff" }}
+                  >
+                    Done
+                  </button>
+                </div>
+              </OverlayCard>
+            </div>
 
           </div>
         )}

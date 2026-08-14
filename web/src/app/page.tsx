@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Target, Globe, BarChart2, Map, Smartphone, Building2, Download } from "lucide-react";
+import { Target, Globe, BarChart2, Map, Smartphone, Building2, Download, ArrowRight } from "lucide-react";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
@@ -61,7 +61,7 @@ export default function Home() {
               <StoreButton href="#google-play" icon={<GooglePlayIcon />} label="Google Play" />
             </div>
             <Link href="/for-courses" className="inline-flex items-center gap-1 text-sm hover:opacity-80 transition-opacity" style={{ color: "rgba(255,255,255,0.65)" }}>
-              Are you a course owner? →
+              Are you a course owner? <ArrowRight size={14} />
             </Link>
           </div>
           <div className="shrink-0 flex justify-center">

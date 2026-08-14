@@ -138,7 +138,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Name updated!</p>
             <button
               onClick={() => setShowNameSuccess(false)}
-              style={{ width: "100%", height: 38, borderRadius: 8, border: "none", background: GREEN, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff" }}
+              style={{ width: "100%", height: 38, borderRadius: 9, border: "none", background: GREEN, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff" }}
             >
               Done
             </button>
@@ -264,10 +264,10 @@ function InlineActionRow({ onCancel, onConfirm, confirmLabel, confirmBg, disable
 }) {
   return (
     <div style={{ display: "flex", gap: 8 }}>
-      <button onClick={onCancel} style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}>
+      <button onClick={onCancel} style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}>
         Cancel
       </button>
-      <button disabled={disabled} onClick={onConfirm} style={{ flex: 1, height: 38, borderRadius: 8, border: "none", background: confirmBg, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: disabled ? 0.6 : 1 }}>
+      <button disabled={disabled} onClick={onConfirm} style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: confirmBg, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: disabled ? 0.6 : 1 }}>
         {disabled ? "…" : confirmLabel}
       </button>
     </div>

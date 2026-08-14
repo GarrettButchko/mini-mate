@@ -1,9 +1,13 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
 
-export function OverlayCard({ open, children }: {
+export function OverlayCard({ open, children, maxWidth = 400, backdropRadius = 28, floating = false, onBackdropClick }: {
   open: boolean;
   children: React.ReactNode;
+  maxWidth?: number;
+  backdropRadius?: number;
+  floating?: boolean;
+  onBackdropClick?: () => void;
 }) {
   return (
     <AnimatePresence>
@@ -21,24 +25,38 @@ export function OverlayCard({ open, children }: {
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
-            borderRadius: 28,
+            borderRadius: backdropRadius,
+            pointerEvents: "auto",
           }}
+          onClick={onBackdropClick}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            style={{
-              width: "100%",
-              borderRadius: 12,
-              background: "var(--surface)",
-              padding: 16,
-              boxShadow: "var(--shadow)",
-            }}
-          >
-            {children}
-          </motion.div>
+          {floating ? (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              style={{ pointerEvents: "auto" }}
+            >
+              {children}
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              style={{
+                width: "100%",              maxWidth,              borderRadius: 25,
+                background: "var(--surface)",
+                padding: 16,
+                pointerEvents: "auto",
+                boxShadow: "var(--shadow)",
+              }}
+            >
+              {children}
+            </motion.div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

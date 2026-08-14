@@ -20,9 +20,3 @@ export const TIER_LABEL: Record<number, string> = {
   2: "Partner",
   3: "Analytics",
 };
-
-export const TIER_COLOR: Record<number, string> = {
-  1: "#8E8E93",
-  2: "#AF52DE",
-  3: "#0088FF",
-};
