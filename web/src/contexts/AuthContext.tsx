@@ -155,11 +155,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function updateName(name: string) {
     if (!auth.currentUser) return;
     await updateProfile(auth.currentUser, { displayName: name });
-    // updateCurrentUser fires onAuthStateChanged with a fresh User object —
-    // spreading auth.currentUser would lose prototype getters like email/displayName
+    // updateCurrentUser replaces auth.currentUser with a fresh clone. Note it does
+    // NOT fire onAuthStateChanged for the same uid (only onIdTokenChanged), so the
+    // listener above never refreshes React state — the name only seemed to update
+    // the first time because the in-place mutation was visible via the stale ref.
+    // Push the fresh clone into state explicitly so the UI always reflects it.
     await updateCurrentUser(auth, auth.currentUser);
-    // Also keep Firestore doc in sync
     await updateDoc(doc(db, "users", auth.currentUser.uid), { name });
+    setUser(auth.currentUser);
   }
 
   async function sendPasswordReset() {

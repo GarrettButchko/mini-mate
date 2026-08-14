@@ -33,7 +33,7 @@ export function OverlayCard({ open, children }: {
               width: "100%",
               borderRadius: 12,
               background: "var(--surface)",
-              padding: "16px 14px",
+              padding: 16,
               boxShadow: "var(--shadow)",
             }}
           >

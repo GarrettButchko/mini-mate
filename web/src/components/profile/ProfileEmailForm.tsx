@@ -84,7 +84,17 @@ export function ProfileEmailForm({ onBack, onClose, buttonRadius = 12 }: {
           }}
           style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--text-muted)", padding: "0 0 4px" }}
         >
-          {showSignUp ? "Already have an account? Login" : "Don't have an account? Sign Up"}
+          {showSignUp ? (
+            <>
+              <span>Already have an account? </span>
+              <span style={{ color: "#AF52DE", fontWeight: 600 }}>Login</span>
+            </>
+          ) : (
+            <>
+              <span>Don't have an account? </span>
+              <span style={{ color: "#AF52DE", fontWeight: 600 }}>Sign Up</span>
+            </>
+          )}
         </button>
       </form>
     </div>

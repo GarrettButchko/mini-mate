@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { OverlayCard } from "@/components/OverlayCard";
+import MiniMateLogo from "@/components/MiniMateLogo";
+import { LogoLoadingView } from "./LogoLoadingView";
 
 const PURPLE = "#AF52DE";
 const BLUE   = "#0088FF";
@@ -12,11 +14,13 @@ const RED    = "#FF383C";
 const GREEN  = "#34C759";
 
 export function ProfileView({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const { user, signOut, updateName, sendPasswordReset, deleteAccount, firestoreUser } = useAuth();
 
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
   const [profileBusy, setProfileBusy] = useState(false);
+  const [showNameSuccess, setShowNameSuccess] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -75,16 +79,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", gap: 10 }}>
             <SmallButton label="Edit Name" background={BLUE} onClick={() => { setNewName(user.displayName ?? ""); setEditingName(true); setProfileMsg(null); }} />
-            {user.providerData[0]?.providerId === "password" && (
-              <SmallButton label="Reset Password" background={BLUE} disabled={profileBusy}
-                onClick={async () => {
-                  setProfileBusy(true);
-                  try { await sendPasswordReset(); setProfileMsg({ text: "Reset email sent!", ok: true }); setTimeout(() => setProfileMsg(null), 3000); }
-                  catch { setProfileMsg({ text: "Could not send reset email.", ok: false }); }
-                  finally { setProfileBusy(false); }
-                }}
-              />
-            )}
+            
           </div>
           {profileMsg && (
             <p style={{ margin: 0, fontSize: 11, color: profileMsg.ok ? GREEN : RED, textAlign: "center" }}>{profileMsg.text}</p>
@@ -93,10 +88,17 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
             <SmallButton label="Sign Out" background={ORANGE} onClick={() => { onClose(); setTimeout(signOut, 180); }} />
             <SmallButton label="Delete Account" background={RED} onClick={() => setShowDeleteConfirm(true)} />
           </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <SmallButton label="Manage Courses" background={PURPLE} onClick={() => { onClose(); router.push("/manage-courses"); }} />
+          </div>
         </div>
 
-        {/* Edit Name overlay */}
-        <OverlayCard open={editingName}>
+        
+
+       
+
+        {/* Edit Name overlay (hidden while saving so the loading popup takes over) */}
+        <OverlayCard open={editingName && !profileBusy}>
           <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--text-muted)" }}>New display name</p>
           <div style={{ borderRadius: 8, background: "var(--surface-two)", padding: "10px 12px", marginBottom: 10 }}>
             <input
@@ -111,7 +113,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
             onCancel={() => { setEditingName(false); setNewName(""); setProfileMsg(null); }}
             onConfirm={async () => {
               setProfileBusy(true);
-              try { await updateName(newName.trim()); setEditingName(false); setNewName(""); setProfileMsg({ text: "Name updated!", ok: true }); setTimeout(() => setProfileMsg(null), 2500); }
+              try { await updateName(newName.trim()); setEditingName(false); setNewName(""); setShowNameSuccess(true); }
               catch { setProfileMsg({ text: "Failed to update name.", ok: false }); }
               finally { setProfileBusy(false); }
             }}
@@ -119,6 +121,28 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
             confirmBg={BLUE}
             disabled={profileBusy || !newName.trim()}
           />
+        </OverlayCard>
+
+        {/* Loading popup while the name is being updated */}
+        <OverlayCard open={profileBusy && editingName}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "10px 0 6px" }}>
+            <LogoLoadingView size={25} color={PURPLE} />
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Updating…</p>
+          </div>
+        </OverlayCard>
+
+        {/* Success popup after the name has been changed */}
+        <OverlayCard open={showNameSuccess}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            <MiniMateLogo size={50} color={GREEN} />
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Name updated!</p>
+            <button
+              onClick={() => setShowNameSuccess(false)}
+              style={{ width: "100%", height: 38, borderRadius: 8, border: "none", background: GREEN, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff" }}
+            >
+              Done
+            </button>
+          </div>
         </OverlayCard>
 
         {/* Delete Account overlay */}
@@ -139,21 +163,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
         </OverlayCard>
       </div>
 
-      {/* ── Island 2: Courses ── */}
-      <div style={{ borderRadius: 28, background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "var(--shadow)", overflow: "hidden" }}>
-        <Link
-          href="/manage-courses"
-          onClick={onClose}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "14px 16px",
-            fontSize: 13, fontWeight: 600, color: "#fff", background: PURPLE,
-            textDecoration: "none",
-          }}
-        >
-          Manage Courses
-        </Link>
-      </div>
+      
 
     </div>
   );
