@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.colorResource
 import com.garrettbutchko.minimate.shared.R
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
+import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
+import com.garrettbutchko.minimate.content.helper.appTextFieldColors
 import com.garrettbutchko.minimate.content.helper.InfoRow
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.PhotoPicker
@@ -243,69 +246,48 @@ fun ProfileView(
 
     // Edit Name Dialog
     if (showEditName) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showEditName = false },
-            title = { Text("Edit Name") },
-            text = {
+            title = "Edit Name",
+            confirmText = "Change",
+            onConfirm = {
+                onEditName(editNameInput)
+                showEditName = false
+            },
+            confirmEnabled = editNameInput.isNotBlank(),
+            dismissText = "Cancel",
+            onDismiss = { showEditName = false },
+            content = {
                 OutlinedTextField(
                     value = editNameInput,
                     onValueChange = { if (it.length <= 18) editNameInput = it },
-                    label = { Text("New Name") }
+                    label = { Text("New Name") },
+                    shape = AppTextFieldShape,
+                    colors = appTextFieldColors()
                 )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onEditName(editNameInput)
-                        showEditName = false
-                    },
-                    enabled = editNameInput.isNotBlank(), // Add profanity filter logic externally
-                    colors = ButtonDefaults.buttonColors(containerColor = successColor, contentColor = Color.White)
-                ) {
-                    Text("Change")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showEditName = false },
-                    colors = ButtonDefaults.textButtonColors(contentColor = mainOppColor)
-                ) {
-                    Text("Cancel")
-                }
             }
         )
     }
 
     // Standard Delete Alerts (Google / Apple)
     if (activeDeleteAlert == DeleteAlertType.GOOGLE || activeDeleteAlert == DeleteAlertType.APPLE) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { activeDeleteAlert = null },
-            title = { Text("Confirm Deletion") },
-            text = { Text("This will permanently delete your account.", color = mainOppColor) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        isDeletingAccount = true
-                        if (activeDeleteAlert == DeleteAlertType.GOOGLE) {
-                            onDeleteAccountGoogle()
-                        } else {
-                            onDeleteAccountApple()
-                        }
-                        activeDeleteAlert = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = dangerColor, contentColor = Color.White)
-                ) {
-                    Text("Delete")
+            title = "Confirm Deletion",
+            message = "This will permanently delete your account.",
+            confirmText = "Delete",
+            onConfirm = {
+                isDeletingAccount = true
+                if (activeDeleteAlert == DeleteAlertType.GOOGLE) {
+                    onDeleteAccountGoogle()
+                } else {
+                    onDeleteAccountApple()
                 }
+                activeDeleteAlert = null
             },
-            dismissButton = {
-                TextButton(
-                    onClick = { activeDeleteAlert = null },
-                    colors = ButtonDefaults.textButtonColors(contentColor = mainOppColor)
-                ) {
-                    Text("Cancel")
-                }
-            }
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { activeDeleteAlert = null }
         )
     }
 
@@ -318,71 +300,39 @@ fun ProfileView(
 
     // Email Delete Alert
     if (showEmailDeleteOverlay) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showEmailDeleteOverlay = false },
-            title = { Text("Confirm Deletion") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("This will permanently delete your account.", color = mainOppColor)
-                    OutlinedTextField(
-                        value = deletePasswordInput,
-                        onValueChange = { deletePasswordInput = it },
-                        label = { Text("Password") },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = subColor,
-                            unfocusedContainerColor = subColor,
-                            focusedTextColor = mainOppColor,
-                            unfocusedTextColor = mainOppColor,
-                            focusedLabelColor = mainOppColor,
-                            unfocusedLabelColor = subThreeOppColor,
-                            cursorColor = dangerColor,
-                            focusedBorderColor = dangerColor,
-                            unfocusedBorderColor = subThreeOppColor
-                        )
-                    )
-                    OutlinedTextField(
-                        value = deleteConfirmPasswordInput,
-                        onValueChange = { deleteConfirmPasswordInput = it },
-                        label = { Text("Confirm Password") },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = subColor,
-                            unfocusedContainerColor = subColor,
-                            focusedTextColor = mainOppColor,
-                            unfocusedTextColor = mainOppColor,
-                            focusedLabelColor = mainOppColor,
-                            unfocusedLabelColor = subThreeOppColor,
-                            cursorColor = dangerColor,
-                            focusedBorderColor = dangerColor,
-                            unfocusedBorderColor = subThreeOppColor
-                        )
-                    )
-                }
+            title = "Confirm Deletion",
+            message = "This will permanently delete your account.",
+            confirmText = "Delete",
+            onConfirm = {
+                isDeletingAccount = true
+                onDeleteAccountEmail(deletePasswordInput)
+                showEmailDeleteOverlay = false
             },
-            confirmButton = {
-                val valid = deletePasswordInput.isNotBlank() && deletePasswordInput == deleteConfirmPasswordInput
-                Button(
-                    onClick = {
-                        isDeletingAccount = true
-                        onDeleteAccountEmail(deletePasswordInput)
-                        showEmailDeleteOverlay = false
-                    },
-                    enabled = valid,
-                    colors = ButtonDefaults.buttonColors(containerColor = dangerColor, contentColor = Color.White)
-                ) {
-                    Text("Delete")
-                }
+            confirmEnabled = deletePasswordInput.isNotBlank() && deletePasswordInput == deleteConfirmPasswordInput,
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = {
+                showEmailDeleteOverlay = false
+                deletePasswordInput = ""
+                deleteConfirmPasswordInput = ""
             },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showEmailDeleteOverlay = false
-                        deletePasswordInput = ""
-                        deleteConfirmPasswordInput = ""
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = mainOppColor)
-                ) {
-                    Text("Cancel")
-                }
+            content = {
+                OutlinedTextField(
+                    value = deletePasswordInput,
+                    onValueChange = { deletePasswordInput = it },
+                    label = { Text("Password") },
+                    shape = AppTextFieldShape,
+                    colors = appTextFieldColors()
+                )
+                OutlinedTextField(
+                    value = deleteConfirmPasswordInput,
+                    onValueChange = { deleteConfirmPasswordInput = it },
+                    label = { Text("Confirm Password") },
+                    shape = AppTextFieldShape,
+                    colors = appTextFieldColors()
+                )
             }
         )
     }

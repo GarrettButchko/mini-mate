@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.shared.R
@@ -61,15 +64,21 @@ fun AppAlertDialog(
         },
         confirmButton = {
             if (confirmText != null) {
-                TextButton(onClick = onConfirm, enabled = confirmEnabled) {
-                    Text(confirmText, color = if (destructive) swiftRed else swiftBlue)
+                Button(
+                    onClick = onConfirm,
+                    enabled = confirmEnabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (destructive) swiftRed else swiftBlue, // Custom background color
+                        contentColor = Color.White         // Text / icon color
+                    )) {
+                    Text(confirmText)
                 }
             }
         },
         dismissButton = {
             if (dismissText != null) {
                 TextButton(onClick = onDismiss) {
-                    Text(dismissText, color = mainOpp)
+                    Text(dismissText, color = swiftBlue)
                 }
             }
         }

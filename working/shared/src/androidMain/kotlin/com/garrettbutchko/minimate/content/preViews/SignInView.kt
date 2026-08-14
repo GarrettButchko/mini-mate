@@ -28,6 +28,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import com.garrettbutchko.minimate.shared.R
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
+import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
+import com.garrettbutchko.minimate.content.helper.appTextFieldColors
 import com.garrettbutchko.minimate.content.helper.ConsumeTransientStatusSignal
 import com.garrettbutchko.minimate.content.helper.LoadingOverlay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -188,52 +191,41 @@ fun StartButtons(
     var guestEmail by remember { mutableStateOf("") }
 
     if (showGuestAlert) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showGuestAlert = false },
-            title = { Text("Welcome To MiniMate!") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Name is required. Email is optional — used only for course analytics.",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    OutlinedTextField(
-                        value = guestName,
-                        onValueChange = { if (it.length <= 18) guestName = it },
-                        label = { Text("Name") },
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = guestEmail,
-                        onValueChange = { guestEmail = it },
-                        label = { Text("Email (Optional)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        singleLine = true
-                    )
-                }
+            title = "Welcome To MiniMate!",
+            message = "Name is required. Email is optional — used only for course analytics.",
+            confirmText = "Play",
+            onConfirm = {
+                onCreateGuestGame(guestName, guestEmail)
+                showGuestAlert = false
             },
-            confirmButton = {
-                val isFormValid = guestName.isNotBlank() && 
-                    (guestEmail.isBlank() || Patterns.EMAIL_ADDRESS.matcher(guestEmail).matches())
-                
-                Button(
-                    onClick = {
-                        onCreateGuestGame(guestName, guestEmail)
-                        showGuestAlert = false
-                    },
-                    enabled = isFormValid
-                ) {
-                    Text("Play")
-                }
+            confirmEnabled = guestName.isNotBlank() &&
+                (guestEmail.isBlank() || Patterns.EMAIL_ADDRESS.matcher(guestEmail).matches()),
+            dismissText = "Cancel",
+            onDismiss = {
+                showGuestAlert = false
+                guestName = ""
+                guestEmail = ""
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    showGuestAlert = false
-                    guestName = ""
-                    guestEmail = ""
-                }) {
-                    Text("Cancel")
-                }
+            content = {
+                OutlinedTextField(
+                    value = guestName,
+                    onValueChange = { if (it.length <= 18) guestName = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    shape = AppTextFieldShape,
+                    colors = appTextFieldColors()
+                )
+                OutlinedTextField(
+                    value = guestEmail,
+                    onValueChange = { guestEmail = it },
+                    label = { Text("Email (Optional)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
+                    shape = AppTextFieldShape,
+                    colors = appTextFieldColors()
+                )
             }
         )
     }

@@ -38,6 +38,8 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import com.garrettbutchko.minimate.content.helper.AppAlertDialog
+import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
+import com.garrettbutchko.minimate.content.helper.appTextFieldColors
 import com.garrettbutchko.minimate.content.helper.LoadingOverlay
 import com.garrettbutchko.minimate.content.helper.StatusMessage
 import com.garrettbutchko.minimate.content.helper.TransientStatusOverlay
@@ -624,7 +626,8 @@ private fun AddCourseDialog(
                 },
                 label = { Text("Password") },
                 singleLine = true,
-                shape = AppTextFieldShape
+                shape = AppTextFieldShape,
+                colors = appTextFieldColors()
             )
         }
     )

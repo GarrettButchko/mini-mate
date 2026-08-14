@@ -51,6 +51,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
+import com.garrettbutchko.minimate.content.helper.appTextFieldColors
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -406,8 +407,6 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
     val swiftBlue = colorResource(id = ResColor.swiftBlue)
-    val subColor = colorResource(id = ResColor.sub)
-    val subThreeOpp = colorResource(id = ResColor.subThreeOpp)
 
     // Long-press the row for "Copy Password" — the same affordance as iOS's
     // context menu, so the password can be shared without revealing it first.
@@ -488,17 +487,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                     label = { Text("New Password") },
                     visualTransformation = PasswordVisualTransformation(),
                     shape = AppTextFieldShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = subColor,
-                        unfocusedContainerColor = subColor,
-                        focusedTextColor = mainOpp,
-                        unfocusedTextColor = mainOpp,
-                        focusedLabelColor = mainOpp,
-                        unfocusedLabelColor = subThreeOpp,
-                        cursorColor = swiftBlue,
-                        focusedBorderColor = swiftBlue,
-                        unfocusedBorderColor = subThreeOpp
-                    )
+                    colors = appTextFieldColors()
                 )
                 OutlinedTextField(
                     value = confirmPassword,
@@ -506,17 +495,7 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
                     label = { Text("Confirm Password") },
                     visualTransformation = PasswordVisualTransformation(),
                     shape = AppTextFieldShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = subColor,
-                        unfocusedContainerColor = subColor,
-                        focusedTextColor = mainOpp,
-                        unfocusedTextColor = mainOpp,
-                        focusedLabelColor = mainOpp,
-                        unfocusedLabelColor = subThreeOpp,
-                        cursorColor = swiftBlue,
-                        focusedBorderColor = swiftBlue,
-                        unfocusedBorderColor = subThreeOpp
-                    )
+                    colors = appTextFieldColors()
                 )
             }
         )
