@@ -28,6 +28,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import com.garrettbutchko.minimate.shared.R
+import com.garrettbutchko.minimate.content.helper.ConsumeTransientStatusSignal
+import com.garrettbutchko.minimate.content.helper.LoadingOverlay
+import kotlinx.coroutines.flow.MutableStateFlow
 
 
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
@@ -47,6 +50,9 @@ fun SignInView(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    val signingInFlow = remember(authModel) { authModel?.isLoadingUser ?: MutableStateFlow(false) }
+    val isSigningIn by signingInFlow.collectAsState()
 
     val gradientColors = if (isMiniMateApp) {
         listOf(
@@ -119,6 +125,15 @@ fun SignInView(
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
+
+        // Sign-in is a multi-step round trip (auth → user load → navigation), so
+        // cover the card while it runs instead of leaving the buttons live.
+        LoadingOverlay(visible = isSigningIn, message = "Signing you in...")
+
+        // Picks up a message posted by whatever screen sent us here — logging out
+        // and deleting an account both land on this view with nothing else to
+        // explain why.
+        ConsumeTransientStatusSignal()
     }
 }
 

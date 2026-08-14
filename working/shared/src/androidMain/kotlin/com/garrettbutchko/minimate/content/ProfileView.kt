@@ -20,6 +20,7 @@ import com.garrettbutchko.minimate.shared.R
 import com.garrettbutchko.minimate.content.helper.InfoRow
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.PhotoPicker
+import com.garrettbutchko.minimate.content.helper.LoadingOverlay
 import com.garrettbutchko.minimate.content.helper.SectionCard
 
 enum class DeleteAlertType {
@@ -58,6 +59,15 @@ fun ProfileView(
     var deleteConfirmPasswordInput by remember { mutableStateOf("") }
     var showPhotoPicker by remember { mutableStateOf(false) }
 
+    // Mirrors iOS `isDeletingAccount`: drives the "Deleting your account..." popup.
+    var isDeletingAccount by remember { mutableStateOf(false) }
+
+    // iOS clears `isDeletingAccount` when a botMessage lands (i.e. an error), so the
+    // popup animates back out on failure instead of hanging.
+    LaunchedEffect(botMessage) {
+        if (botMessage.isNotEmpty()) isDeletingAccount = false
+    }
+
     val bgColor = colorResource(id = R.color.bg)
     val mainOppColor = colorResource(id = R.color.mainOpp)
     val subColor = colorResource(id = R.color.sub)
@@ -73,11 +83,12 @@ fun ProfileView(
         onDismiss = { showPhotoPicker = false }
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(bgColor)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(bgColor)
+        ) {
         // Header
         Row(
             modifier = Modifier
@@ -227,6 +238,9 @@ fun ProfileView(
         }
     }
 
+    LoadingOverlay(visible = isDeletingAccount, message = "Deleting your account...")
+    }
+
     // Edit Name Dialog
     if (showEditName) {
         AlertDialog(
@@ -271,6 +285,7 @@ fun ProfileView(
             confirmButton = {
                 Button(
                     onClick = {
+                        isDeletingAccount = true
                         if (activeDeleteAlert == DeleteAlertType.GOOGLE) {
                             onDeleteAccountGoogle()
                         } else {
@@ -347,6 +362,7 @@ fun ProfileView(
                 val valid = deletePasswordInput.isNotBlank() && deletePasswordInput == deleteConfirmPasswordInput
                 Button(
                     onClick = {
+                        isDeletingAccount = true
                         onDeleteAccountEmail(deletePasswordInput)
                         showEmailDeleteOverlay = false
                     },

@@ -260,6 +260,22 @@ struct CourseListView: View {
                 Spacer()
                 
                 Button(action: {
+                    withAnimation(){
+                        isRotating = true
+                        viewModel.kotlin.getCourses()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            isRotating = false
+                        }
+                    }
+                }) {
+                    Image(systemName: "arrow.trianglehead.2.clockwise")
+                        .rotationEffect(.degrees(isRotating ? 360 : 0))
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                        .frame(width: 30, height: 30)
+                }
+                
+                Button(action: {
                     isSheetPresented = true
                 }) {
                     if let photoURL = authModel.firebaseUser?.photoURL {

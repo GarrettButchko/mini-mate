@@ -12,17 +12,14 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 
 private val pickerColors = listOf(
     Color(0xFFFF383C), // red
@@ -46,15 +43,12 @@ fun ColorPickerView(
 ) {
     if (!visible) return
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Pick a Color",
-                style = MaterialTheme.typography.titleLarge
-            )
-        },
-        text = {
+        title = "Pick a Color",
+        dismissText = "Cancel",
+        onDismiss = onDismiss,
+        content = {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -73,12 +67,6 @@ fun ColorPickerView(
                         }
                     )
                 }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
             }
         }
     )

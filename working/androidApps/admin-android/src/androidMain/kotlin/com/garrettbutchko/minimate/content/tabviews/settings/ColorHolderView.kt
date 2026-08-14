@@ -7,11 +7,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,9 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
-import com.garrettbutchko.minimate.shared.R.color as ResColor
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 
 @Composable
 fun ColorHolderView(
@@ -34,23 +30,18 @@ fun ColorHolderView(
     var showDeleteAlert by remember { mutableStateOf(false) }
 
     if (showDeleteAlert) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showDeleteAlert = false },
-            title = { Text("Remove Color") },
-            text = { Text("Are you sure you want to remove this color?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteAlert = false
-                    deleteFunction()
-                }) {
-                    Text("Remove", color = colorResource(id = ResColor.swiftRed))
-                }
+            title = "Remove Color",
+            message = "Are you sure you want to remove this color?",
+            confirmText = "Remove",
+            onConfirm = {
+                showDeleteAlert = false
+                deleteFunction()
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteAlert = false }) {
-                    Text("Cancel")
-                }
-            }
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { showDeleteAlert = false }
         )
     }
 

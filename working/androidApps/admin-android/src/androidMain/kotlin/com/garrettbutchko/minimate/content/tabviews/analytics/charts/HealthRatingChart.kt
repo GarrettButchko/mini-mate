@@ -57,7 +57,7 @@ import com.garrettbutchko.minimate.viewModels.analytics.Insight
 import com.garrettbutchko.minimate.viewModels.analytics.InsightType
 import com.garrettbutchko.minimate.viewModels.analytics.SectionHealthRating
 
-private val HealthGrade.color: Color
+internal val HealthGrade.color: Color
     get() = when (this) {
         HealthGrade.EXCELLENT, HealthGrade.GREAT -> Color(0xFF34C759)
         HealthGrade.GOOD, HealthGrade.SATISFACTORY -> Color(0xFF0088FF)

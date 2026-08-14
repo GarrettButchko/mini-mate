@@ -50,6 +50,11 @@ fun AuthViewModel.signInWithGoogle(
         .build()
 
     coroutineScope.launch {
+        // Turn the loading flag on before the picker shows so the SignInView's
+        // "Signing you in..." overlay is already up when the picker returns
+        // (instead of only being set inside createOrSignInUserAndNavigateToHome,
+        // after the credential round-trip already ran).
+        setLoading(true)
         try {
             val result = credentialManager.getCredential(context, request)
             val googleCredential = parseGoogleIdTokenCredential(result.credential)
@@ -57,11 +62,15 @@ fun AuthViewModel.signInWithGoogle(
             val email = googleCredential.id
             // Credential Manager Google ID flow returns an ID token; access token is null here.
             signInWithGoogleTokens(googleCredential.idToken, null) { firebaseResult ->
+                // On success, handleSignInResult keeps the flag set through the
+                // user-load round trip and clears it when done.
                 completion(firebaseResult, photoUrl, email)
             }
         } catch (e: GetCredentialException) {
+            setLoading(false)
             completion(Result.failure(e), null, null)
         } catch (e: Exception) {
+            setLoading(false)
             completion(Result.failure(e), null, null)
         }
     }

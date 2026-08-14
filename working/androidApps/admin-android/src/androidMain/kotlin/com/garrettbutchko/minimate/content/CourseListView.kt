@@ -32,20 +32,26 @@ import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import com.garrettbutchko.minimate.content.helper.LogoLoadingView
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
+import com.garrettbutchko.minimate.content.helper.LoadingOverlay
+import com.garrettbutchko.minimate.content.helper.StatusMessage
+import com.garrettbutchko.minimate.content.helper.TransientStatusOverlay
+import com.garrettbutchko.minimate.content.helper.rememberTransientStatus
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
+import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
@@ -88,9 +95,11 @@ import kotlin.time.Duration.Companion.milliseconds
  *  - .cardShadow() → Surface tonalElevation
  *  - .sub / .mainOpp color tokens → surfaceVariant / onSurface
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseListView(
     vm: CourseListViewModel,
+    analyticsVM: AnalyticsViewModel,
     photoURL: String?,
     hasAdminCourses: Boolean,
     onNavigateToCourseTab: (Int) -> Unit,
@@ -99,7 +108,11 @@ fun CourseListView(
 ) {
     val userCourses by vm.userCourses.collectAsState()
     val showAddCourseAlert by vm.showAddCourseAlert.collectAsState()
-    
+    val loadingCourse by vm.loadingCourse.collectAsState()
+    val didLeaveCourse by vm.didLeaveCourse.collectAsState()
+    val leftCourseNotice = rememberTransientStatus()
+    var showFirstCourseSheet by remember { mutableStateOf(false) }
+
     // hasCourse should be true if they HAVE admin courses, even if not fetched yet.
     // This allows MultiCourseView to show its loading spinner.
     val hasCourse = hasAdminCourses || userCourses.isNotEmpty()
@@ -112,40 +125,83 @@ fun CourseListView(
         }
     }
 
-    Surface(
-        modifier = modifier.fillMaxSize().padding(vertical = 16.dp),
-        color = colorResource(id = ResColor.bg)
-    ) {
-        AnimatedContent(
-            targetState = hasCourse,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "courseListTransition",
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 16.dp)
-        ) { hasC ->
-            if (hasC) {
-                MultiCourseView(
-                    vm = vm,
-                    photoURL = photoURL,
-                    onNavigateToCourseTab = onNavigateToCourseTab,
-                    onProfileTap = onProfileTap,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+    // Show a transient "Left Course" notice once after removing yourself from a
+    // course (mirrors iOS CourseListView's didLeaveCourse overlay).
+    LaunchedEffect(didLeaveCourse) {
+        if (didLeaveCourse) {
+            vm.clearDidLeaveCourse()
+            leftCourseNotice.show(
+                StatusMessage(
+                    title = "Left Course",
+                    subtitle = "You're no longer an admin of this course.",
+                    icon = Icons.Filled.PersonRemove
                 )
-            } else {
-                FirstCourseView(
-                    vm = vm,
-                    photoURL = photoURL,
-                    onProfileTap = onProfileTap,
-                    modifier = Modifier.padding(16.dp)
-                )
+            )
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier.fillMaxSize().padding(vertical = 16.dp),
+            color = colorResource(id = ResColor.bg)
+        ) {
+            AnimatedContent(
+                targetState = hasCourse,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "courseListTransition",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 16.dp)
+            ) { hasC ->
+                if (hasC) {
+                    MultiCourseView(
+                        vm = vm,
+                        photoURL = photoURL,
+                        onNavigateToCourseTab = onNavigateToCourseTab,
+                        onProfileTap = onProfileTap,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                } else {
+                    FirstCourseView(
+                        vm = vm,
+                        photoURL = photoURL,
+                        onProfileTap = onProfileTap,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
+
+        LoadingOverlay(visible = loadingCourse, message = "Loading courses...")
+
+        TransientStatusOverlay(leftCourseNotice)
     }
 
     // Add Course dialog (replaces iOS .alert with TextField)
     if (showAddCourseAlert) {
-        AddCourseDialog(vm = vm)
+        AddCourseDialog(
+            vm = vm,
+            hasCourse = hasCourse,
+            onFirstCourseAdded = { showFirstCourseSheet = true }
+        )
+    }
+
+    if (showFirstCourseSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showFirstCourseSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = colorResource(id = ResColor.bg)
+        ) {
+            FirstCoursePreviewSheet(
+                courseListVM = vm,
+                analyticsVM = analyticsVM,
+                onOpenDashboard = {
+                    showFirstCourseSheet = false
+                    onNavigateToCourseTab(1)
+                },
+                onBack = { showFirstCourseSheet = false }
+            )
+        }
     }
 }
 
@@ -193,59 +249,55 @@ private fun MultiCourseView(
             UserAvatar(photoURL = photoURL, onClick = onProfileTap)
         }
 
-        if (loadingCourse) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                LogoLoadingView()
+        // The list stays put while refreshing — LoadingOverlay covers it instead
+        // of swapping the whole screen out for a spinner.
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(top = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Rate-limit message banner
+            if (message != null) {
+                RateLimitBanner(message = message!!, timeRemaining = timeRemaining)
             }
-        } else {
-            Column(
+
+            // Course buttons
+            userCourses.forEach { course ->
+                CourseButtonView(
+                    course = course,
+                    onClick = {
+                        vm.setCourse(course = course)
+                        onNavigateToCourseTab(1)
+                    }
+                )
+            }
+
+            // Add new course button
+            Button(
+                onClick = { vm.setShowAddCourseAlert(true) },
                 modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxWidth()
+                    .height(60.dp),
+                shape = RoundedCornerShape(25.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorResource(id = ResColor.swiftBlue),
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                enabled = timeRemaining <= 0
             ) {
-                // Rate-limit message banner
-                if (message != null) {
-                    RateLimitBanner(message = message!!, timeRemaining = timeRemaining)
-                }
-
-                // Course buttons
-                userCourses.forEach { course ->
-                    CourseButtonView(
-                        course = course,
-                        onClick = {
-                            vm.setCourse(course = course)
-                            onNavigateToCourseTab(1)
-                        }
-                    )
-                }
-
-                // Add new course button
-                Button(
-                    onClick = { vm.setShowAddCourseAlert(true) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp),
-                    shape = RoundedCornerShape(25.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorResource(id = ResColor.swiftBlue),
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    enabled = timeRemaining <= 0
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add a new course", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium))
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add a new course", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium))
             }
 
-            // Get password link button
-            Box(modifier = Modifier.padding(bottom = 16.dp)) {
-                GetPasswordButton()
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        // Get password link button
+        Box(modifier = Modifier.padding(bottom = 16.dp)) {
+            GetPasswordButton()
         }
     }
 }
@@ -264,9 +316,19 @@ private fun FirstCourseView(
     val timeRemaining by vm.timeRemaining.collectAsState()
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Top-right avatar only
-        Row(modifier = Modifier.fillMaxWidth()) {
+        // Top-right: retry + avatar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Spacer(modifier = Modifier.weight(1f))
+            IconButton(onClick = { vm.getCourses() }) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refresh courses",
+                    tint = colorResource(id = ResColor.swiftBlue)
+                )
+            }
             UserAvatar(photoURL = photoURL, onClick = onProfileTap)
         }
 
@@ -522,49 +584,48 @@ private fun FirstCourseFeature(icon: ImageVector, label: String, color: Color) {
 // Add Course dialog (replaces iOS .alert with TextField)
 // ---------------------------------------------------------------------------
 @Composable
-private fun AddCourseDialog(vm: CourseListViewModel) {
+private fun AddCourseDialog(
+    vm: CourseListViewModel,
+    hasCourse: Boolean,
+    onFirstCourseAdded: () -> Unit
+) {
     var password by remember { mutableStateOf("") }
 
-    AlertDialog(
-        onDismissRequest = {
-            vm.setShowAddCourseAlert(false)
-        },
-        title = { Text("Add Course", color = colorResource(id = ResColor.mainOpp)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Enter course password to begin.", color = colorResource(id = ResColor.mainOpp))
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = {
-                        password = it
-                        vm.setPassword(it)
-                    },
-                    label = { Text("Password") },
-                    singleLine = true,
-                    shape = AppTextFieldShape
-                )
+    AppAlertDialog(
+        onDismissRequest = { vm.setShowAddCourseAlert(false) },
+        title = "Add Course",
+        message = "Enter course password to begin.",
+        confirmText = "Add",
+        onConfirm = {
+            val wasFirstCourse = !hasCourse
+            vm.tryPassword { success ->
+                if (success) {
+                    vm.setPassword("")
+                    password = ""
+                    vm.setShowAddCourseAlert(false)
+                    // The very first course gets a guided tour of what it unlocked
+                    if (wasFirstCourse) onFirstCourseAdded()
+                }
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    vm.tryPassword { success ->
-                        if (success) {
-                            vm.setPassword("")
-                            password = ""
-                            vm.setShowAddCourseAlert(false)
-                        }
-                    }
-                },
-                enabled = password.isNotEmpty()
-            ) { Text("Add", color = colorResource(id = ResColor.swiftBlue)) }
+        confirmEnabled = password.isNotEmpty(),
+        dismissText = "Cancel",
+        onDismiss = {
+            vm.setPassword("")
+            password = ""
+            vm.setShowAddCourseAlert(false)
         },
-        dismissButton = {
-            TextButton(onClick = {
-                vm.setPassword("")
-                password = ""
-                vm.setShowAddCourseAlert(false)
-            }) { Text("Cancel", color = colorResource(id = ResColor.swiftRed)) }
+        content = {
+            OutlinedTextField(
+                value = password,
+                onValueChange = {
+                    password = it
+                    vm.setPassword(it)
+                },
+                label = { Text("Password") },
+                singleLine = true,
+                shape = AppTextFieldShape
+            )
         }
     )
 }

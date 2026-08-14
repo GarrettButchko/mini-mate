@@ -1,5 +1,6 @@
 package com.garrettbutchko.minimate.content.tabviews.settings
 
+import android.content.ClipData
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
@@ -8,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,13 +29,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ButtonDefaults
@@ -47,6 +49,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -60,6 +63,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,12 +72,18 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.content.helper.ButtonColors
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.LoadingOverlay
 import com.garrettbutchko.minimate.content.helper.PhotoPicker
 import com.garrettbutchko.minimate.content.helper.SectionCard
 import com.garrettbutchko.minimate.content.helper.StepperControl
@@ -127,44 +137,51 @@ fun CourseSettingsView(
     modifier: Modifier = Modifier
 ) {
     val course by courseListVM.selectedCourse.collectAsState()
+    val removingAdmin by courseListVM.removingAdmin.collectAsState()
     val bgColor = colorResource(id = ResColor.bg)
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(bgColor)
     ) {
-        // Header
-        CourseSettingsHeaderView(vm = courseSettingsVM, courseListVM = courseListVM)
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Header
+            CourseSettingsHeaderView(vm = courseSettingsVM, courseListVM = courseListVM)
 
-        course?.let { currentCourse ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                val tier = currentCourse.tier
+            course?.let { currentCourse ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    val tier = currentCourse.tier
 
-                if (tier >= 1) {
-                    SectionCard(title = "Course") { CourseSectionContent(course = currentCourse) }
-                    SectionCard(title = "Admins") { AdminsSectionContent(courseListVM = courseListVM) }
-                    SectionCard(title = "Password") { PasswordSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
-                    SectionCard(title = "Social Links") { SocialLinksSectionContent(course = currentCourse, courseListVM = courseListVM) }
+                    if (tier >= 1) {
+                        SectionCard(title = "Course") { CourseSectionContent(course = currentCourse) }
+                        SectionCard(title = "Admins") { AdminsSectionContent(courseListVM = courseListVM) }
+                        SectionCard(title = "Password") { PasswordSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
+                        SectionCard(title = "Social Links") { SocialLinksSectionContent(course = currentCourse, courseListVM = courseListVM) }
+                    }
+
+                    if (tier >= 2) {
+                        SectionCard(title = "Appearance") { AppearanceSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
+                        SectionCard(title = "Ad") { AdSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
+                        SectionCard(title = "Leaderboard") { LeaderboardSectionContent(course = currentCourse, courseListVM = courseListVM) }
+                    }
+
+                    ParConfigurationSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM)
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-
-                if (tier >= 2) {
-                    SectionCard(title = "Appearance") { AppearanceSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
-                    SectionCard(title = "Ad") { AdSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
-                    SectionCard(title = "Leaderboard") { LeaderboardSectionContent(course = currentCourse, courseListVM = courseListVM) }
-                }
-
-                ParConfigurationSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM)
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
+
+        LoadingOverlay(visible = removingAdmin, message = "Removing admin...")
     }
 }
 
@@ -262,6 +279,17 @@ private fun AdminsSectionContent(courseListVM: CourseListViewModel) {
     val adminUsers by courseListVM.adminUsers.collectAsState()
     val loadingAdmins by courseListVM.loadingAdmins.collectAsState()
     var userIdToDelete by remember { mutableStateOf<String?>(null) }
+    // Removed rows animate out before the VM drops them from the list
+    var removingIds by remember { mutableStateOf(emptySet<String>()) }
+    val scope = rememberCoroutineScope()
+
+    // Keep the row hidden until the VM actually drops it from the list; only
+    // then clear the id. Clearing early made the row flicker back in while the
+    // removal network call was still in flight.
+    LaunchedEffect(adminUsers) {
+        val currentIds = adminUsers.map { it.googleId }.toSet()
+        removingIds = removingIds.intersect(currentIds)
+    }
 
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
@@ -274,78 +302,88 @@ private fun AdminsSectionContent(courseListVM: CourseListViewModel) {
     } else {
         Column {
             adminUsers.forEachIndexed { index, user ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val photoUrl = user.photoURL
-                    if (!photoUrl.isNullOrBlank()) {
-                        AsyncImage(
-                            model = photoUrl,
-                            contentDescription = "Admin avatar",
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Admin avatar",
-                            tint = subOpp,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                        )
+                key(user.googleId) {
+                    AnimatedVisibility(
+                        visible = user.googleId !in removingIds,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val photoUrl = user.photoURL
+                                if (!photoUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = photoUrl,
+                                        contentDescription = "Admin avatar",
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Admin avatar",
+                                        tint = subOpp,
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    val isYou = user.email == courseListVM.currentUserEmail
+                                    Text(
+                                        text = user.name + if (isYou) " (you)" else "",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = mainOpp
+                                    )
+                                    Text(
+                                        text = user.email ?: "",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = subOpp
+                                    )
+                                }
+                                IconButton(onClick = { userIdToDelete = user.googleId }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove admin",
+                                        tint = swiftRed
+                                    )
+                                }
+                            }
+                            if (index < adminUsers.lastIndex) {
+                                HorizontalDivider(color = mainOpp.copy(alpha = 0.1f))
+                            }
+                        }
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        val isYou = user.email == courseListVM.currentUserEmail
-                        Text(
-                            text = user.name + if (isYou) " (you)" else "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = mainOpp
-                        )
-                        Text(
-                            text = user.email ?: "",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = subOpp
-                        )
-                    }
-                    IconButton(onClick = { userIdToDelete = user.googleId }) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Remove admin",
-                            tint = swiftRed
-                        )
-                    }
-                }
-                if (index < adminUsers.lastIndex) {
-                    HorizontalDivider(color = mainOpp.copy(alpha = 0.1f))
                 }
             }
         }
     }
 
     if (userIdToDelete != null) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { userIdToDelete = null },
-            title = { Text("Remove Admin?", color = mainOpp) },
-            text = { Text("This will remove their admin access.", color = mainOpp) },
-            confirmButton = {
-                TextButton(onClick = {
-                    courseListVM.removeAdmin(userIdToDelete!!)
-                    userIdToDelete = null
-                }) {
-                    Text("Remove", color = swiftRed)
+            title = "Remove Admin?",
+            message = "This will remove their admin access.",
+            confirmText = "Remove",
+            onConfirm = {
+                val removedId = userIdToDelete!!
+                removingIds = removingIds + removedId
+                userIdToDelete = null
+                scope.launch {
+                    delay(300.milliseconds)
+                    courseListVM.removeAdmin(removedId)
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { userIdToDelete = null }) {
-                    Text("Cancel", color = mainOpp)
-                }
-            }
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { userIdToDelete = null }
         )
     }
 }
@@ -357,6 +395,9 @@ private fun AdminsSectionContent(courseListVM: CourseListViewModel) {
 private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
     var showPassword by remember { mutableStateOf(false) }
     var showChangeDialog by remember { mutableStateOf(false) }
+    var showCopyMenu by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboard.current
+    val copyScope = rememberCoroutineScope()
 
     val newPassword by vm.newPassword.collectAsState()
     val confirmPassword by vm.confirmPassword.collectAsState()
@@ -368,19 +409,46 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
     val subColor = colorResource(id = ResColor.sub)
     val subThreeOpp = colorResource(id = ResColor.subThreeOpp)
 
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("Password:", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = if (showPassword) course.password else "••••••••••",
-            style = MaterialTheme.typography.bodyMedium,
-            color = subOpp
-        )
-        IconButton(onClick = { showPassword = !showPassword }) {
-            Icon(
-                imageVector = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                contentDescription = if (showPassword) "Hide" else "Show",
-                tint = swiftBlue
+    // Long-press the row for "Copy Password" — the same affordance as iOS's
+    // context menu, so the password can be shared without revealing it first.
+    Box {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = { showCopyMenu = true }
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Password:", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = if (showPassword) course.password else "••••••••••",
+                style = MaterialTheme.typography.bodyMedium,
+                color = subOpp
+            )
+            IconButton(onClick = { showPassword = !showPassword }) {
+                Icon(
+                    imageVector = if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                    contentDescription = if (showPassword) "Hide" else "Show",
+                    tint = swiftBlue
+                )
+            }
+        }
+
+        DropdownMenu(expanded = showCopyMenu, onDismissRequest = { showCopyMenu = false }) {
+            DropdownMenuItem(
+                text = { Text("Copy Password") },
+                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                onClick = {
+                    copyScope.launch {
+                        clipboard.setClipEntry(
+                            ClipEntry(ClipData.newPlainText("Course password", course.password))
+                        )
+                    }
+                    showCopyMenu = false
+                }
             )
         }
     }
@@ -395,68 +463,61 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
     }
 
     if (showChangeDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = {
                 vm.resetPasswordFields()
                 showChangeDialog = false
             },
-            title = { Text("Change Password", color = mainOpp) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Enter and confirm your new password", color = mainOpp)
-                    OutlinedTextField(
-                        value = newPassword,
-                        onValueChange = { vm.setNewPassword(it) },
-                        label = { Text("New Password") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        shape = AppTextFieldShape,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = subColor,
-                            unfocusedContainerColor = subColor,
-                            focusedTextColor = mainOpp,
-                            unfocusedTextColor = mainOpp,
-                            focusedLabelColor = mainOpp,
-                            unfocusedLabelColor = subThreeOpp,
-                            cursorColor = swiftBlue,
-                            focusedBorderColor = swiftBlue,
-                            unfocusedBorderColor = subThreeOpp
-                        )
-                    )
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { vm.setConfirmPassword(it) },
-                        label = { Text("Confirm Password") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        shape = AppTextFieldShape,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = subColor,
-                            unfocusedContainerColor = subColor,
-                            focusedTextColor = mainOpp,
-                            unfocusedTextColor = mainOpp,
-                            focusedLabelColor = mainOpp,
-                            unfocusedLabelColor = subThreeOpp,
-                            cursorColor = swiftBlue,
-                            focusedBorderColor = swiftBlue,
-                            unfocusedBorderColor = subThreeOpp
-                        )
-                    )
-                }
+            title = "Change Password",
+            message = "Enter and confirm your new password",
+            confirmText = "Save",
+            onConfirm = {
+                vm.changePassword(course = course, userID = "admin", onCourseUpdated = { courseListVM.setCourse(it) })
+                showChangeDialog = false
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        vm.changePassword(course = course, userID = "admin", onCourseUpdated = { courseListVM.setCourse(it) })
-                        showChangeDialog = false
-                    },
-                    enabled = isValidPassword,
-                    colors = ButtonDefaults.buttonColors(containerColor = swiftBlue, contentColor = MaterialTheme.colorScheme.onPrimary)
-                ) { Text("Save") }
+            confirmEnabled = isValidPassword,
+            dismissText = "Cancel",
+            onDismiss = {
+                vm.resetPasswordFields()
+                showChangeDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    vm.resetPasswordFields()
-                    showChangeDialog = false
-                }) { Text("Cancel", color = colorResource(id = ResColor.swiftRed)) }
+            content = {
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { vm.setNewPassword(it) },
+                    label = { Text("New Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    shape = AppTextFieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = subColor,
+                        unfocusedContainerColor = subColor,
+                        focusedTextColor = mainOpp,
+                        unfocusedTextColor = mainOpp,
+                        focusedLabelColor = mainOpp,
+                        unfocusedLabelColor = subThreeOpp,
+                        cursorColor = swiftBlue,
+                        focusedBorderColor = swiftBlue,
+                        unfocusedBorderColor = subThreeOpp
+                    )
+                )
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { vm.setConfirmPassword(it) },
+                    label = { Text("Confirm Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    shape = AppTextFieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = subColor,
+                        unfocusedContainerColor = subColor,
+                        focusedTextColor = mainOpp,
+                        unfocusedTextColor = mainOpp,
+                        focusedLabelColor = mainOpp,
+                        unfocusedLabelColor = subThreeOpp,
+                        cursorColor = swiftBlue,
+                        focusedBorderColor = swiftBlue,
+                        unfocusedBorderColor = subThreeOpp
+                    )
+                )
             }
         )
     }
@@ -1101,32 +1162,20 @@ private fun ParConfigurationSectionContent(
     // ── Disable-custom-pars confirmation dialog ───────────────────────────────
     // Mirrors iOS .alert("Disable Custom Pars?") with destructive Reset button.
     if (showDisableAlert) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showDisableAlert = false },
-            title = { Text("Disable Custom Pars?", color = mainOpp) },
-            text = {
-                Text(
-                    "Turning this off will permanently delete your leaderboard and reset all hole pars to default. This cannot be undone.",
-                    color = mainOpp
-                )
+            title = "Disable Custom Pars?",
+            message = "Turning this off will permanently delete your leaderboard and reset all hole pars to default. This cannot be undone.",
+            confirmText = "Reset",
+            onConfirm = {
+                // Mirror iOS Reset button: delete leaderboard, then set customPar = false
+                courseListVM.deleteLeaderboard()
+                courseListVM.updateCustomPar(false)
+                showDisableAlert = false
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        // Mirror iOS Reset button: delete leaderboard, then set customPar = false
-                        courseListVM.deleteLeaderboard()
-                        courseListVM.updateCustomPar(false)
-                        showDisableAlert = false
-                    }
-                ) {
-                    Text("Reset", color = swiftRed)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDisableAlert = false }) {
-                    Text("Cancel", color = mainOpp)
-                }
-            }
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { showDisableAlert = false }
         )
     }
 }

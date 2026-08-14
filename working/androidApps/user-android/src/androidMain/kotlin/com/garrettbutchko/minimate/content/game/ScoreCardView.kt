@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +32,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 import com.garrettbutchko.minimate.content.helper.CourseBannerAdView
 import com.garrettbutchko.minimate.content.helper.PhotoIconView
 import com.garrettbutchko.minimate.content.helper.StepperControl
@@ -425,23 +424,18 @@ fun ScoreCardGameView(
     }
 
     if (showCompleteDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showCompleteDialog = false },
-            title = { Text("Complete Game?") },
-            text = { Text("You will not be able to change your scores after this point.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showCompleteDialog = false
-                    gameModel.setCompletedGame(completedGame = true)
-                }) {
-                    Text("Complete", color = MaterialTheme.colorScheme.error)
-                }
+            title = "Complete Game?",
+            message = "You will not be able to change your scores after this point.",
+            confirmText = "Complete",
+            onConfirm = {
+                showCompleteDialog = false
+                gameModel.setCompletedGame(completedGame = true)
             },
-            dismissButton = {
-                TextButton(onClick = { showCompleteDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { showCompleteDialog = false }
         )
     }
 }

@@ -1,6 +1,10 @@
 package com.garrettbutchko.minimate.content.game
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,19 +23,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SportsGolf
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import com.garrettbutchko.minimate.content.helper.AppTextFieldShape
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -42,19 +43,38 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.di.KoinHelper
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
+import com.garrettbutchko.minimate.content.helper.GAME_CODE_LENGTH
+import com.garrettbutchko.minimate.content.helper.GameCodeTile
 import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.LobbyChurnNotifier
 import com.garrettbutchko.minimate.content.helper.SectionCard
+import com.garrettbutchko.minimate.content.helper.StatusMessage
+import com.garrettbutchko.minimate.content.helper.TransientStatusOverlay
 import com.garrettbutchko.minimate.content.helper.WaitingIndicatorView
+import com.garrettbutchko.minimate.content.helper.rememberTransientStatus
 import com.garrettbutchko.minimate.helper.QRScannerView
 import com.garrettbutchko.minimate.logic.JoinViewBusinessLogic
 import com.garrettbutchko.minimate.managers.ViewManager
+import com.garrettbutchko.minimate.shared.R as SharedR
+import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 
 @Composable
@@ -63,7 +83,8 @@ fun JoinGameView(
     showJoin: Boolean,
     onShowJoinChange: (Boolean) -> Unit,
     viewManager: ViewManager,
-    gameModel: GameViewModel
+    gameModel: GameViewModel,
+    authModel: AuthViewModel
 ) {
     val joinVM = remember { KoinHelper.getJoinViewModel() }
     val logic = remember { JoinViewBusinessLogic() }
@@ -73,8 +94,36 @@ fun JoinGameView(
     val gameCode by joinVM.gameCode.collectAsState()
     val message by joinVM.message.collectAsState()
     val showExitAlert by joinVM.showExitAlert.collectAsState()
+    val userModel by authModel.userModel.collectAsState()
 
     var showScanner by remember { mutableStateOf(false) }
+    val lobbyNotice = rememberTransientStatus()
+    val joinedTint = colorResource(id = SharedR.color.swiftGreen)
+
+    val wasInGame = remember { mutableStateOf(inGame) }
+    LaunchedEffect(inGame) {
+        val previouslyInGame = wasInGame.value
+        wasInGame.value = inGame
+        if (previouslyInGame || !inGame) return@LaunchedEffect
+
+        val host = game.players.firstOrNull { it.userId == game.hostUserId }
+        lobbyNotice.show(
+            StatusMessage(
+                title = "Joined!",
+                subtitle = host?.let { "You joined ${it.name}'s game." } ?: "You joined the game.",
+                icon = Icons.Default.PersonAdd,
+                tint = joinedTint
+            )
+        )
+    }
+
+    LobbyChurnNotifier(
+        players = game.players,
+        enabled = inGame,
+        possessive = "the game",
+        selfId = userModel?.googleId,
+        onNotice = { lobbyNotice.show(it) }
+    )
 
 
     LaunchedEffect(showJoin) {
@@ -123,7 +172,8 @@ fun JoinGameView(
                             gameCode = gameCode,
                             message = message,
                             mainOppColor = MaterialTheme.colorScheme.onSurface,
-                            onCodeChange = { joinVM.setGameCode(logic.formatEnteredCode(it)) },
+                            formatCode = logic::formatEnteredCode,
+                            onCodeChange = { joinVM.setGameCode(it) },
                             onScanClick = { showScanner = true }
                         )
                     }
@@ -211,27 +261,23 @@ fun JoinGameView(
                 }
             }
         }
+
+        TransientStatusOverlay(lobbyNotice)
     }
 
     if (showExitAlert) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { joinVM.setShowExitAlert(false) },
-            title = { Text("Exit Game?", color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text("Are you sure?", color = MaterialTheme.colorScheme.onSurface) },
-            confirmButton = {
-                TextButton(onClick = {
-                    joinVM.leaveGame()
-                    joinVM.setShowExitAlert(false)
-                }) {
-                    Text("Leave", color = MaterialTheme.colorScheme.error)
-                }
+            title = "Exit Game?",
+            message = "Are you sure?",
+            confirmText = "Leave",
+            onConfirm = {
+                joinVM.leaveGame()
+                joinVM.setShowExitAlert(false)
             },
-            dismissButton = {
-                TextButton(onClick = { joinVM.setShowExitAlert(false) }) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { joinVM.setShowExitAlert(false) }
         )
     }
 
@@ -251,6 +297,7 @@ private fun JoinCard(
     gameCode: String,
     message: String,
     mainOppColor: Color,
+    formatCode: (String) -> String,
     onCodeChange: (String) -> Unit,
     onScanClick: () -> Unit
 ) {
@@ -275,13 +322,10 @@ private fun JoinCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                OutlinedTextField(
-                    value = gameCode,
-                    onValueChange = onCodeChange,
-                    singleLine = true,
-                    label = { Text("GameCode") },
-                    shape = AppTextFieldShape,
-                    modifier = Modifier.width(220.dp)
+                GameCodeField(
+                    gameCode = gameCode,
+                    formatCode = formatCode,
+                    onCodeChange = onCodeChange
                 )
 
                 Text("OR", style = MaterialTheme.typography.labelSmall, color = mainOppColor)
@@ -315,6 +359,119 @@ private fun JoinCard(
     }
 }
 
+/**
+ * Passcode-style entry matching the host's GameCodeOverlay: one rounded square
+ * per character. A hidden text field drives the keyboard; the tiles are purely
+ * visual. Tap a filled tile to overwrite that position, tap an empty one to
+ * append, and paste/scan replace the whole code.
+ */
+@Composable
+private fun GameCodeField(
+    gameCode: String,
+    formatCode: (String) -> String,
+    onCodeChange: (String) -> Unit
+) {
+    // Which tile the next keystroke overwrites; null = append at the end. Mirrors
+    // iOS's selectedIndex — tapping a filled tile targets it for the next
+    // keystroke instead of just moving the (invisible, untappable) field's own
+    // caret, which is what let you type past a letter but never back into it.
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var fieldValue by remember { mutableStateOf(TextFieldValue(gameCode, TextRange(gameCode.length))) }
+    var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    // External updates (QR scan, Kotlin-side formatting) → resync the field
+    LaunchedEffect(gameCode) {
+        if (fieldValue.text != gameCode) {
+            selectedIndex = null
+            fieldValue = TextFieldValue(gameCode, TextRange(gameCode.length))
+        }
+    }
+
+    val chars = fieldValue.text
+    val cursorIndex = (selectedIndex ?: chars.length).coerceIn(0, GAME_CODE_LENGTH - 1)
+
+    fun selectTile(index: Int) {
+        // Tap a filled tile to overwrite it, tap an empty one to append.
+        selectedIndex = index.takeIf { it < chars.length }
+        focusRequester.requestFocus()
+    }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null
+        ) { selectTile(chars.length) }
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            repeat(GAME_CODE_LENGTH) { index ->
+                GameCodeTile(
+                    char = chars.getOrNull(index),
+                    isActive = isFocused && index == cursorIndex,
+                    onClick = { selectTile(index) }
+                )
+            }
+        }
+
+        BasicTextField(
+            value = fieldValue,
+            onValueChange = { new ->
+                // The field's own caret is meaningless here — it's invisible and
+                // always resets to the end on each resync below, so every raw
+                // keystroke shows up as an append/removal at the end regardless
+                // of which tile is "selected". Remap that onto the selected tile
+                // instead of trusting the field's native insert-at-cursor behavior,
+                // which would just shove the rest of the code sideways.
+                val old = fieldValue.text
+                var result = new.text
+                var newSelection = selectedIndex
+
+                val sel = selectedIndex
+                if (sel != null && sel < old.length && new.text.length == old.length + 1) {
+                    // Typed one character with a tile selected → overwrite that position
+                    val overwritten = old.toCharArray()
+                    overwritten[sel] = new.text.last()
+                    result = String(overwritten)
+                    newSelection = if (sel + 1 < overwritten.size) sel + 1 else null
+                } else if (sel != null && sel < old.length && new.text.length == old.length - 1) {
+                    // Backspace with a tile selected → delete that position
+                    val remaining = old.toMutableList().also { it.removeAt(sel) }
+                    result = remaining.joinToString(separator = "")
+                    newSelection = if (sel < remaining.size) sel else null
+                } else if (new.text.length > old.length + 1) {
+                    // Multi-character jump = paste → the pasted text becomes the code
+                    result = if (new.text.startsWith(old)) new.text.removePrefix(old) else new.text
+                    newSelection = null
+                }
+
+                val formatted = formatCode(result)
+                selectedIndex = newSelection
+                fieldValue = TextFieldValue(formatted, TextRange(formatted.length))
+                onCodeChange(formatted)
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Ascii,
+                capitalization = KeyboardCapitalization.Characters,
+                autoCorrectEnabled = false
+            ),
+            textStyle = TextStyle(color = Color.Transparent),
+            cursorBrush = SolidColor(Color.Transparent),
+            // Shrunk to 1.dp instead of overlaying the tile grid: a full-size
+            // invisible field drawn on top would win every tap itself (Compose
+            // hit-tests top-most first) before a tile's own onClick ever saw it.
+            // At 1.dp it holds focus/IME only — iOS solves the same problem with
+            // .allowsHitTesting(false) on its hidden field; this is the Compose
+            // equivalent since BasicTextField has no such flag.
+            modifier = Modifier
+                .size(1.dp)
+                .focusRequester(focusRequester)
+                .onFocusChanged { isFocused = it.isFocused }
+        )
+    }
+}
+
 @Composable
 private fun ActiveLobby(
     gameModel: GameViewModel,
@@ -342,8 +499,7 @@ private fun ActiveLobby(
                         )
                     }
                     WaitingIndicatorView(
-                        label = "Waiting...",
-                        color = mainOppColor
+                        label = "Waiting..."
                     )
                 }
             }

@@ -2,6 +2,12 @@ package com.garrettbutchko.minimate.content
 
 import co.touchlab.kermit.Logger
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -26,9 +32,11 @@ import androidx.compose.material3.CardDefaults
 import com.garrettbutchko.minimate.content.helper.LogoLoadingView
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -76,6 +84,7 @@ import com.garrettbutchko.minimate.content.game.HostGameView
 import com.garrettbutchko.minimate.content.game.ScoreCardGameView
 import com.garrettbutchko.minimate.content.helper.InterstitialAdView
 import com.garrettbutchko.minimate.content.main.MainContentView
+import com.garrettbutchko.minimate.content.preViews.LocationPermissionView
 import com.garrettbutchko.minimate.content.preViews.SignInView
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.content.preViews.WelcomeView
@@ -131,6 +140,13 @@ fun App() {
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    var showLocationExplainer by remember { mutableStateOf(false) }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        deps.locationHandler.requestLocationAccess()
+    }
+
     DisposableEffect(lifecycleOwner, deps.locationHandler) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -155,6 +171,12 @@ fun App() {
             val game = deps.gameModel.fetchGuestGame()
             guestGame.value = game
             guestGameDate = game?.let { "Saved guest game found" }
+
+            // Explain why we need location before the system dialog appears —
+            // once only, and only while the user still has a decision to make.
+            if (!context.hasSeenLocationExplainer() && !context.hasLocationPermission()) {
+                showLocationExplainer = true
+            }
         }
     }
 
@@ -268,9 +290,55 @@ fun App() {
                     )
                 }
             }
+
+            if (showLocationExplainer) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        context.markLocationExplainerSeen()
+                        showLocationExplainer = false
+                    },
+                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
+                    LocationPermissionView(
+                        onAllow = {
+                            context.markLocationExplainerSeen()
+                            showLocationExplainer = false
+                            locationPermissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION
+                                )
+                            )
+                        },
+                        onSkip = {
+                            context.markLocationExplainerSeen()
+                            showLocationExplainer = false
+                        }
+                    )
+                }
+            }
         }
     }
 }
+
+private const val LOCATION_PREFS = "minimate_location_prefs"
+private const val SEEN_LOCATION_EXPLAINER_KEY = "hasSeenLocationExplainer"
+
+private fun Context.hasSeenLocationExplainer(): Boolean =
+    getSharedPreferences(LOCATION_PREFS, Context.MODE_PRIVATE)
+        .getBoolean(SEEN_LOCATION_EXPLAINER_KEY, false)
+
+private fun Context.markLocationExplainerSeen() {
+    getSharedPreferences(LOCATION_PREFS, Context.MODE_PRIVATE)
+        .edit()
+        .putBoolean(SEEN_LOCATION_EXPLAINER_KEY, true)
+        .apply()
+}
+
+private fun Context.hasLocationPermission(): Boolean =
+    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
 @Composable
 private fun MainTabView(
@@ -339,23 +407,31 @@ private fun MainTabView(
         }
 
         try {
-            val loadedUser = try {
-                authModel.userRepository.loadOrCreateUser(
-                    id = userId
-                ) { refreshedModel ->
-                    authModel.setUserModel(refreshedModel)
+            // Load user data only when nothing has fully reconciled it this session
+            // (cold start with a cached session — the model may already be hydrated
+            // from the local DB, but that's cache, not a sync). Right after a fresh
+            // login, the sign-in pipeline just did this exact load — skip the duplicate.
+            if (!authModel.hasSyncedUserThisSession) {
+                val loadedUser = try {
+                    authModel.userRepository.loadOrCreateUser(
+                        id = userId
+                    ) { refreshedModel ->
+                        authModel.setUserModel(refreshedModel)
+                    }
+                } catch (e: IllegalStateException) {
+                    Logger.w("User load failed (transient?): ${e.message}. Retrying in 3s...")
+                    kotlinx.coroutines.delay(3_000.milliseconds)
+                    authModel.userRepository.loadOrCreateUser(
+                        id = userId
+                    ) { refreshedModel ->
+                        authModel.setUserModel(refreshedModel)
+                    }
                 }
-            } catch (e: IllegalStateException) {
-                Logger.w("User load failed (transient?): ${e.message}. Retrying in 3s...")
-                kotlinx.coroutines.delay(3_000.milliseconds)
-                authModel.userRepository.loadOrCreateUser(
-                    id = userId
-                ) { refreshedModel ->
-                    authModel.setUserModel(refreshedModel)
-                }
+
+                authModel.setUserModel(loadedUser)
+                authModel.markUserSynced()
             }
 
-            authModel.setUserModel(loadedUser)
             gameManager.onAppear()
             localGameRepo.deleteAllUnusedGames()
         } catch (e: kotlinx.coroutines.CancellationException) {

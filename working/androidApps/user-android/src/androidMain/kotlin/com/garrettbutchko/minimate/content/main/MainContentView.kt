@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -38,7 +39,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
@@ -69,7 +72,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.colorResource
+import com.garrettbutchko.minimate.content.helper.StatusMessage
+import com.garrettbutchko.minimate.content.helper.TransientStatusSignal
 import com.garrettbutchko.minimate.content.helper.modifiers.subtleShadow
+import com.garrettbutchko.minimate.shared.R.color as ResColor
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -148,6 +155,7 @@ fun MainContentView(
     var isRotating by remember { mutableStateOf(false) }
     var profileBotMessage by remember { mutableStateOf("") }
     var isProfileBotError by remember { mutableStateOf(false) }
+    val logoutTint = colorResource(id = ResColor.swiftBlue)
 
     var reviewGame by remember { mutableStateOf<Game?>(null) }
 
@@ -335,6 +343,12 @@ fun MainContentView(
                 ModalBottomSheet(
                     onDismissRequest = { showHostSheet = false },
                     sheetState = hostSheetState,
+                    // ModalBottomSheet insets its content by safeDrawing top+bottom
+                    // by default, reserving a strip at each edge the content (and
+                    // so the scrim living inside it) never reaches. Zero it out so
+                    // HostGameView runs edge-to-edge, matching iOS's
+                    // .ignoresSafeArea() on its dark overlays.
+                    contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
                     containerColor = MaterialTheme.colorScheme.background
                 ) {
                     HostGameView(
@@ -350,13 +364,16 @@ fun MainContentView(
                 ModalBottomSheet(
                     onDismissRequest = { showJoinSheet = false },
                     sheetState = joinSheetState,
+                    // Same reasoning as the host sheet above.
+                    contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
                     containerColor = MaterialTheme.colorScheme.background
                 ) {
                     JoinGameView(
                         showJoin = showJoinSheet,
                         onShowJoinChange = { showJoinSheet = it },
                         viewManager = viewManager,
-                        gameModel = gameModel
+                        gameModel = gameModel,
+                        authModel = authModel
                     )
                 }
             }
@@ -510,9 +527,17 @@ fun MainContentView(
                     }
                 },
                 onLogout = {
+                    // Posted before navigating away — SignInView picks this up via
+                    // ConsumeTransientStatusSignal() once it lands there.
+                    TransientStatusSignal.pending = StatusMessage(
+                        title = "Logged Out",
+                        subtitle = "You've been signed out.",
+                        icon = Icons.AutoMirrored.Filled.Logout,
+                        tint = logoutTint
+                    )
                     showProfileSheetState.value = false
                     authModel.logout()
-                    viewManager.navigateToWelcome()
+                    viewManager.navigateToSignIn()
                 },
                 onDeleteAccountGoogle = {
                     scope.launch {
@@ -522,8 +547,9 @@ fun MainContentView(
                                     scope.launch {
                                         authModel.deleteAccount(credential).fold(
                                             onSuccess = {
+                                                announceAccountDeleted()
                                                 showProfileSheetState.value = false
-                                                viewManager.navigateToWelcome()
+                                                viewManager.navigateToSignIn()
                                             },
                                             onFailure = {
                                                 profileBotMessage = it.message ?: "Unable to delete account."
@@ -557,8 +583,9 @@ fun MainContentView(
                             onSuccess = { credential ->
                                 authModel.deleteAccount(credential).fold(
                                     onSuccess = {
+                                        announceAccountDeleted()
                                         showProfileSheetState.value = false
-                                        viewManager.navigateToWelcome()
+                                        viewManager.navigateToSignIn()
                                     },
                                     onFailure = {
                                         profileBotMessage = it.message ?: "Unable to delete account."
@@ -1172,4 +1199,18 @@ private fun NoticeCard(message: String, makeColor: Color?) {
 @Composable
 private fun contextAsActivityOrNull(): Activity? {
     return LocalActivity.current
+}
+
+/**
+ * `deleteAccount` only invokes the onSuccess branch on the success path
+ * (failures only set botMessage), so any call here means deletion succeeded.
+ * Posted via TransientStatusSignal before navigating away, so SignInView
+ * shows it once it lands there (same pattern as the logout notice).
+ */
+private fun announceAccountDeleted() {
+    TransientStatusSignal.pending = StatusMessage(
+        title = "Account Deleted",
+        subtitle = "We're sorry to see you go.",
+        icon = Icons.Default.Delete
+    )
 }

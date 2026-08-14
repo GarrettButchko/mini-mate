@@ -15,10 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.dataModels.playerModels.LeaderboardEntry
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 
 /**
@@ -235,20 +234,17 @@ private fun PodiumColumn(
     }
 
     if (showDeleteDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Player?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.deletePlayerEntry(courseID = courseId, playerID = player.id)
-                    showDeleteDialog = false
-                }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
+            title = "Delete Player?",
+            confirmText = "Delete",
+            onConfirm = {
+                vm.deletePlayerEntry(courseID = courseId, playerID = player.id)
+                showDeleteDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
-            }
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { showDeleteDialog = false }
         )
     }
 }

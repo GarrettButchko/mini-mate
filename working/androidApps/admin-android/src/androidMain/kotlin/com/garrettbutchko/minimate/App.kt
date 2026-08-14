@@ -3,13 +3,9 @@ package com.garrettbutchko.minimate
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Arrangement
-import com.garrettbutchko.minimate.content.helper.LogoLoadingView
+import com.garrettbutchko.minimate.content.helper.LoadingOverlay
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -64,13 +60,19 @@ fun App() {
 
         authViewModel.setLoading(true)
         try {
-            val loadedUser = authViewModel.userRepository.loadOrCreateUser(
+            // Skip the round-trip when the sign-in pipeline already reconciled the
+            // user this session — userModel alone can't tell us, since it may just
+            // be hydrated from the local cache.
+            val syncedUser = authViewModel.userModel.value.takeIf { authViewModel.hasSyncedUserThisSession }
+            val loadedUser = syncedUser ?: authViewModel.userRepository.loadOrCreateUser(
                 id = userId
             ) { refreshedModel ->
                 authViewModel.setUserModel(refreshedModel)
+            }.also {
+                authViewModel.setUserModel(it)
+                authViewModel.markUserSynced()
             }
-            authViewModel.setUserModel(loadedUser)
-            
+
             // If the user has exactly one course, navigate directly to it.
             // If they have multiple, load the list.
             val adminCount = loadedUser.adminCourses.size
@@ -115,7 +117,7 @@ fun App() {
                     photoURL = userModel?.photoURL,
                     onNavigateToCourseTab = { tab -> viewManager.navigateToCourseTab(tab) },
                     onNavigateToCourseList = { viewManager.navigateToCourseList() },
-                    onNavigateToWelcome = { viewManager.navigateToWelcome() },
+                    onNavigateToSignIn = { viewManager.navigateToSignIn() },
                     authViewModel = authViewModel,
                     onSignInWithGoogle = {
                         authViewModel.signInWithGoogle(context, webClientId) { result, photoUrl, email ->
@@ -131,31 +133,13 @@ fun App() {
                     modifier = Modifier.fillMaxSize()
                 )
 
-                if (isLoadingUser && !initialLoadComplete && userModel == null) {
-                    LoadingOverlay()
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LoadingOverlay() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Surface(
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-            tonalElevation = 4.dp
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                LogoLoadingView()
-                Text("Loading your Mini Mate Manager data...")
+                // The SignIn view shows its own "Signing you in..." overlay, so
+                // skip the global one while it owns the screen.
+                LoadingOverlay(
+                    visible = isLoadingUser && !initialLoadComplete && userModel == null &&
+                        viewType !is ViewType.SignIn,
+                    message = "Loading your Mini Mate Manager data..."
+                )
             }
         }
     }

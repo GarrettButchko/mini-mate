@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,6 +20,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.ui.res.colorResource
+import com.garrettbutchko.minimate.content.helper.LoadingOverlay
+import com.garrettbutchko.minimate.content.helper.StatusMessage
+import com.garrettbutchko.minimate.content.helper.TransientStatusSignal
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -93,7 +99,7 @@ fun ContentView(
     photoURL: String?,
     onNavigateToCourseTab: (Int) -> Unit,
     onNavigateToCourseList: () -> Unit,
-    onNavigateToWelcome: () -> Unit,
+    onNavigateToSignIn: () -> Unit,
     onSignInWithGoogle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -105,6 +111,7 @@ fun ContentView(
     var showProfileSheet by remember { mutableStateOf(false) }
     var profileBotMessage by remember { mutableStateOf("") }
     var isProfileBotError by remember { mutableStateOf(false) }
+    val logoutTint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.swiftBlue)
 
     Box(
         modifier = modifier
@@ -120,6 +127,7 @@ fun ContentView(
                 is ViewState.CourseList -> {
                     CourseListView(
                         vm = courseListVM,
+                        analyticsVM = analyticsVM,
                         photoURL = photoURL,
                         hasAdminCourses = !user?.adminCourses.isNullOrEmpty(),
                         onNavigateToCourseTab = onNavigateToCourseTab,
@@ -232,9 +240,17 @@ fun ContentView(
                         }
                     },
                     onLogout = {
+                        // Posted before navigating away — SignInView picks this up via
+                        // ConsumeTransientStatusSignal() once it lands there.
+                        TransientStatusSignal.pending = StatusMessage(
+                            title = "Logged Out",
+                            subtitle = "You've been signed out.",
+                            icon = Icons.AutoMirrored.Filled.Logout,
+                            tint = logoutTint
+                        )
                         showProfileSheet = false
                         authViewModel.logout()
-                        onNavigateToWelcome()
+                        onNavigateToSignIn()
                     },
                     onDeleteAccountGoogle = {
                         scope.launch {
@@ -244,8 +260,9 @@ fun ContentView(
                                         scope.launch {
                                             authViewModel.deleteAccount(credential).fold(
                                                 onSuccess = {
+                                                    announceAccountDeleted()
                                                     showProfileSheet = false
-                                                    onNavigateToWelcome()
+                                                    onNavigateToSignIn()
                                                 },
                                                 onFailure = {
                                                     profileBotMessage = it.message ?: "Unable to delete account."
@@ -278,8 +295,9 @@ fun ContentView(
                                 onSuccess = { credential ->
                                     authViewModel.deleteAccount(credential).fold(
                                         onSuccess = {
+                                            announceAccountDeleted()
                                             showProfileSheet = false
-                                            onNavigateToWelcome()
+                                            onNavigateToSignIn()
                                         },
                                         onFailure = {
                                             profileBotMessage = it.message ?: "Unable to delete account."
@@ -426,6 +444,10 @@ private fun CourseTabView(
             onDismiss = { courseListVM.setShowColor(false) },
             notScoreCard = addTarget != ColorAddTarget.SCORE_CARD_COLOR
         )
+
+        // The tabs render against a course; until one resolves there's nothing
+        // meaningful behind them, so cover rather than flash empty state.
+        LoadingOverlay(visible = selectedCourse == null, message = "Loading course...")
     }
 }
 
@@ -443,4 +465,18 @@ private fun Color.toColorName(): String = when (this) {
     Color(0xFFFF2D55) -> "pink"
     Color(0xFFAC7F5E) -> "brown"
     else -> String.format("#%08X", toArgb())
+}
+
+/**
+ * `deleteAccount` only invokes the onSuccess branch on the success path
+ * (failures only set botMessage), so any call here means deletion succeeded.
+ * Posted via TransientStatusSignal before navigating away, so SignInView
+ * shows it once it lands there (same pattern as the logout notice).
+ */
+private fun announceAccountDeleted() {
+    TransientStatusSignal.pending = StatusMessage(
+        title = "Account Deleted",
+        subtitle = "We're sorry to see you go.",
+        icon = Icons.Default.Delete
+    )
 }

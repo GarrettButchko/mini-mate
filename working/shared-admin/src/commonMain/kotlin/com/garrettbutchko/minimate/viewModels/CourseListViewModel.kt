@@ -141,14 +141,24 @@ open class CourseListViewModel(
 
     fun getCourses() {
         _loadingCourse.value = true
-        val ids = authModel.userModel.value?.adminCourses
-        
-        if (!hasCourse || ids.isNullOrEmpty()) {
-            _loadingCourse.value = false
-            return
-        }
-
         coroutineScope.launch {
+            // Re-sync the user's admin course IDs from Firebase before fetching, so
+            // the list reflects any server-side changes (e.g. removed as an admin on
+            // another device) instead of the stale cached user model.
+            val currentUserId = authModel.currentUserIdentifier
+            if (currentUserId != null) {
+                userRepo.fetch(currentUserId)?.let { authModel.setUserModel(it) }
+            }
+
+            val ids = authModel.userModel.value?.adminCourses
+
+            if (ids.isNullOrEmpty()) {
+                // No admin courses anymore — drop anything we were previously showing.
+                _userCourses.value = emptyList()
+                _loadingCourse.value = false
+                return@launch
+            }
+
             val courses = courseRepo.fetchCourses(ids)
             _userCourses.value = courses
             _loadingCourse.value = false

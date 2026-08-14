@@ -3,6 +3,7 @@ package com.garrettbutchko.minimate.content.game
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -42,7 +43,7 @@ import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -50,6 +51,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,8 +59,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,9 +79,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.garrettbutchko.minimate.content.helper.AddLocalPlayerView
+import com.garrettbutchko.minimate.content.helper.AppAlertDialog
+import com.garrettbutchko.minimate.content.helper.GameCodeTiles
+import com.garrettbutchko.minimate.content.helper.LobbyChurnNotifier
 import com.garrettbutchko.minimate.content.helper.NumberPickerView
 import com.garrettbutchko.minimate.content.helper.InfoRow
+import com.garrettbutchko.minimate.content.helper.PopupCard
 import com.garrettbutchko.minimate.content.helper.SectionCard
+import com.garrettbutchko.minimate.content.helper.StatusMessage
+import com.garrettbutchko.minimate.content.helper.StatusOverlayScaffold
+import com.garrettbutchko.minimate.content.helper.TransientStatusOverlay
+import com.garrettbutchko.minimate.content.helper.rememberTransientStatus
 import com.garrettbutchko.minimate.di.KoinHelper
 import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.interfaces.LocationFinding
@@ -116,6 +128,20 @@ fun HostGameView(
     val qrCodeBytes by hostVM.qrCodeImage.collectAsState()
     val scope = rememberCoroutineScope()
     val verticalScrollState = rememberScrollState()
+
+    var showGameCode by remember { mutableStateOf(false) }
+    val lobbyNotice = rememberTransientStatus()
+
+    // Remote players only — local "Add Player" guests are managed by the host
+    // directly, and the host is always present.
+    LobbyChurnNotifier(
+        players = game.players,
+        enabled = onlineGame,
+        possessive = "your game",
+        ignoredIds = setOf(game.hostUserId),
+        ignoreLocalGuests = true,
+        onNotice = { lobbyNotice.show(it) }
+    )
 
 
     LaunchedEffect(Unit) {
@@ -174,7 +200,11 @@ fun HostGameView(
                 isRotating = isRotating,
                 qrCodeBytes = qrCodeBytes,
                 mainOppColor = MaterialTheme.colorScheme.onSurface,
-                isGuest = isGuest
+                isGuest = isGuest,
+                onShowGameCode = {
+                    hostVM.resetTimer()
+                    showGameCode = true
+                }
             )
         }
 
@@ -288,6 +318,20 @@ fun HostGameView(
                 Text("Start Game", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
             }
         }
+
+        GameCodeOverlay(
+            visible = showGameCode,
+            code = game.id,
+            // While the code popup is up the notice rides along inside it, so it
+            // doesn't cover the code the host is holding up for everyone to read.
+            notice = lobbyNotice.message.takeIf { showGameCode },
+            onDismiss = {
+                hostVM.resetTimer()
+                showGameCode = false
+            }
+        )
+
+        TransientStatusOverlay(lobbyNotice, visible = lobbyNotice.message != null && !showGameCode)
     }
 
     if (showAddLocalPlayer) {
@@ -302,27 +346,21 @@ fun HostGameView(
     }
 
     if (showDeleteAlert) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { hostVM.setShowDeleteAlert(false) },
-            title = { Text("Delete Player?", color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text("Are you sure?", color = MaterialTheme.colorScheme.onSurface) },
-            confirmButton = {
-                TextButton(onClick = {
-                    logic.handleDeletePlayer(playerToDelete) { id ->
-                        gameModel.removePlayer(id)
-                    }
-                    hostVM.setShowDeleteAlert(false)
-                    hostVM.setPlayerToDelete(null)
-                }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+            title = "Delete Player?",
+            message = "Are you sure?",
+            confirmText = "Delete",
+            onConfirm = {
+                logic.handleDeletePlayer(playerToDelete) { id ->
+                    gameModel.removePlayer(id)
                 }
+                hostVM.setShowDeleteAlert(false)
+                hostVM.setPlayerToDelete(null)
             },
-            dismissButton = {
-                TextButton(onClick = { hostVM.setShowDeleteAlert(false) }) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            destructive = true,
+            dismissText = "Cancel",
+            onDismiss = { hostVM.setShowDeleteAlert(false) }
         )
     }
 }
@@ -410,7 +448,8 @@ private fun GameInfoSection(
     isRotating: Boolean,
     qrCodeBytes: ByteArray?,
     mainOppColor: Color,
-    isGuest: Boolean = false
+    isGuest: Boolean = false,
+    onShowGameCode: () -> Unit
 ) {
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()
@@ -424,19 +463,13 @@ private fun GameInfoSection(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (onlineGame) {
+                // The code itself lives behind "Show Game Code" below, where it's
+                // big enough to read from across a table.
                 InfoRow(
                     label = "Game Code",
-                    value = game.id,
+                    value = "",
                     mainOppColor = mainOppColor,
-                    subOppColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    trailingIcon = {
-                        Icon(
-                            Icons.Default.QrCode,
-                            contentDescription = null,
-                            tint = mainOppColor,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    subOppColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 HorizontalDivider()
@@ -465,6 +498,21 @@ private fun GameInfoSection(
                             colorFilter = if (isDark) ColorFilter.colorMatrix(invertMatrix) else null
                         )
                     }
+                }
+
+                TextButton(
+                    onClick = onShowGameCode,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.QrCode,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Show Game Code", fontWeight = FontWeight.Medium)
                 }
 
                 HorizontalDivider()
@@ -662,5 +710,86 @@ private fun LocationButtons(
             subOppColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
         HorizontalDivider()
+    }
+}
+/**
+ * Full-screen popup showing the game code big enough to read across a table,
+ * styled to match the app's other transient popups. While it's up, lobby
+ * notices ("X joined your game") render as a compact banner underneath instead
+ * of a second full-screen overlay.
+ */
+@Composable
+private fun GameCodeOverlay(
+    visible: Boolean,
+    code: String,
+    notice: StatusMessage?,
+    onDismiss: () -> Unit
+) {
+    // Keep the last code/notice around so nothing pops out mid dismiss animation
+    var lastCode by remember { mutableStateOf(code) }
+    if (visible) lastCode = code
+    var lastNotice by remember { mutableStateOf<StatusMessage?>(null) }
+    notice?.let { lastNotice = it }
+
+    StatusOverlayScaffold(visible = visible, dismissOnScrimTap = onDismiss) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            PopupCard {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Game Code",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    GameCodeTiles(code = lastCode)
+
+                    Text(
+                        text = "Tap anywhere to close",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            AnimatedVisibility(
+                visible = notice != null,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut()
+            ) {
+                lastNotice?.let { message ->
+                    Surface(
+                        shape = CircleShape,
+                        color = AlertDialogDefaults.containerColor,
+                        tonalElevation = AlertDialogDefaults.TonalElevation
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = message.icon,
+                                contentDescription = null,
+                                tint = message.tint ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = message.subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
