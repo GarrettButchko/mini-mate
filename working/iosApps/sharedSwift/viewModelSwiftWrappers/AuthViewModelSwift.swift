@@ -113,20 +113,34 @@ class AuthViewModelSwift: ObservableObject {
         isTextFieldFocused: FocusState<SignInView.Field?>.Binding,
         errorMessage: Binding<(message: String?, type: Bool)>,
         showSignUp: Binding<Bool>,
+        showVerifyEmail: Binding<Bool>,
         guestGame: Binding<Game?>){
         
-        kotlinVM.signInUIManage(emailInput: email.wrappedValue, passwordInput: password.wrappedValue, guestGame: guestGame.wrappedValue) {
-            email.wrappedValue = ""
-            password.wrappedValue  = ""
-            confirmPassword.wrappedValue  = ""
-            isTextFieldFocused.wrappedValue = nil
-        } onShowSignUp: {
-            showSignUp.wrappedValue = true
-        } onErrorMessage: { message, type in
-            errorMessage.wrappedValue = (message, type.boolValue)
-        } onClearGuestGame: { game in
-            guestGame.wrappedValue = game
-        }
+        kotlinVM.signInUIManage(
+            emailInput: email.wrappedValue,
+            passwordInput: password.wrappedValue,
+            guestGame: guestGame.wrappedValue,
+            onClearForm: {
+                password.wrappedValue  = ""
+                confirmPassword.wrappedValue  = ""
+                isTextFieldFocused.wrappedValue = nil
+            },
+            onShowSignUp: {
+                showSignUp.wrappedValue = true
+            },
+            onErrorMessage: { message, type in
+                errorMessage.wrappedValue = (message, type.boolValue)
+            },
+            onClearGuestGame: { game in
+                guestGame.wrappedValue = game
+            },
+            onShowVerifyEmail: {
+                errorMessage.wrappedValue = (nil, false)
+                showSignUp.wrappedValue = false
+                showVerifyEmail.wrappedValue = true
+            },
+            keepSignedIn: true
+        )
     }
 
     func signUpUIManage(
@@ -136,6 +150,7 @@ class AuthViewModelSwift: ObservableObject {
         isTextFieldFocused: FocusState<SignInView.Field?>.Binding,
         errorMessage: Binding<(message: String?, type: Bool)>,
         showSignUp: Binding<Bool>,
+        showVerifyEmail: Binding<Bool>,
         guestGame: Binding<Game?>
     ) {
         kotlinVM.signUpUIManage(
@@ -143,7 +158,6 @@ class AuthViewModelSwift: ObservableObject {
             passwordInput: password.wrappedValue,
             guestGame: guestGame.wrappedValue,
             onClearForm: {
-                email.wrappedValue = ""
                 password.wrappedValue = ""
                 confirmPassword.wrappedValue = ""
                 isTextFieldFocused.wrappedValue = nil
@@ -156,8 +170,32 @@ class AuthViewModelSwift: ObservableObject {
             },
             onClearGuestGame: { game in
                 guestGame.wrappedValue = game
-            }
+            },
+            onShowVerifyEmail: {
+                errorMessage.wrappedValue = (nil, false)
+                showSignUp.wrappedValue = false
+                showVerifyEmail.wrappedValue = true
+            },
+            keepSignedIn: true
         )
+    }
+
+    func checkEmailVerified() async -> Bool {
+        do {
+            let result = try await kotlinVM.refreshVerificationStatus()
+            return Bool(truncating: result)
+        } catch {
+            return false
+        }
+    }
+
+    func resendVerificationEmail() async -> Bool {
+        do {
+            let result = try await kotlinVM.resendVerificationEmail()
+            return Bool(truncating: result)
+        } catch {
+            return false
+        }
     }
     
     

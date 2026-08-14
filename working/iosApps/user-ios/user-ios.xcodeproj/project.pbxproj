@@ -26,7 +26,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		21D7487F2F7232080014F6E7 /* Exceptions for "user-ios" folder in "user-ios" target */ = {
+		21D7487F2F7232080014F6E7 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -45,7 +45,7 @@
 		21B56BC12F64A65000DF589D /* user-ios */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				21D7487F2F7232080014F6E7 /* Exceptions for "user-ios" folder in "user-ios" target */,
+				21D7487F2F7232080014F6E7 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
 			path = "user-ios";
 			sourceTree = "<group>";

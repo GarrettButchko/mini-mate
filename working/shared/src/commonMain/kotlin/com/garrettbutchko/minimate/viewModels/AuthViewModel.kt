@@ -146,6 +146,10 @@ open class AuthViewModel(
         return authRepository.refreshVerificationStatus()
     }
 
+    suspend fun resendVerificationEmail(): Boolean {
+        return authRepository.sendEmailVerification().isSuccess
+    }
+
     suspend fun createUser(email: String, password: String): Result<FirebaseUser?> {
         val result = authRepository.createUser(email, password)
         if (result.isSuccess) {
@@ -298,7 +302,9 @@ open class AuthViewModel(
         onClearForm: () -> Unit,
         onSuccess: () -> Unit,
         onErrorMessage: (String?, Boolean) -> Unit,
-        onClearGuestGame: (Game?) -> Unit
+        onClearGuestGame: (Game?) -> Unit,
+        onShowVerifyEmail: () -> Unit = {},
+        keepSignedIn: Boolean = false
     ) {
         coroutineScope.launch {
             _isLoadingUser.value = true
@@ -339,8 +345,11 @@ open class AuthViewModel(
                         } else {
                             onClearForm()
                             onSuccess()
-                            onErrorMessage("Please Verify Your Email To Continue", true)
-                            logout()
+                            onShowVerifyEmail()
+                            if (!keepSignedIn) {
+                                onErrorMessage("Please Verify Your Email To Continue", true)
+                                logout()
+                            }
                         }
                         _isLoadingUser.value = false
                     }
@@ -441,7 +450,9 @@ open class AuthViewModel(
         onClearForm: () -> Unit,
         onShowSignUp: () -> Unit,
         onErrorMessage: (String?, Boolean) -> Unit,
-        onClearGuestGame: (Game?) -> Unit
+        onClearGuestGame: (Game?) -> Unit,
+        onShowVerifyEmail: () -> Unit = {},
+        keepSignedIn: Boolean = false
     ) {
         coroutineScope.launch {
             _isLoadingUser.value = true
@@ -485,8 +496,11 @@ open class AuthViewModel(
                         onErrorMessage("Couldn’t send verification email: ${error}", false)
                     } else {
                         onClearForm()
-                        onErrorMessage("Please Verify Your Email To Continue", true)
-                        logout() // Logout AFTER email is sent
+                        onShowVerifyEmail()
+                        if (!keepSignedIn) {
+                            onErrorMessage("Please Verify Your Email To Continue", true)
+                            logout() // Logout AFTER email is sent
+                        }
                     }
                     _isLoadingUser.value = false
                 }

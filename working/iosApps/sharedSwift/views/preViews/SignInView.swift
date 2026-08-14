@@ -24,6 +24,7 @@ struct SignInView: View {
     @State var email = ""
     @State var password = ""
     @State var confirmPassword = ""
+    @State var showVerifyEmail = false
     @State var guestGame: Game? = nil
     
     @Environment(\.colorScheme)  var colorScheme
@@ -119,6 +120,7 @@ struct SignInView: View {
                     email: $email,
                     password: $password,
                     confirmPassword: $confirmPassword,
+                    showVerifyEmail: $showVerifyEmail,
                     guestGame: $guestGame,
                     keyboardHeight: keyboard.keyboardHeight,
                     isTextFieldFocused: $isTextFieldFocused

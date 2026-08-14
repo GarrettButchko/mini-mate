@@ -22,6 +22,7 @@ struct EmailPasswordView: View {
     @Binding var email: String
     @Binding var password: String
     @Binding var confirmPassword: String
+    @Binding var showVerifyEmail: Bool
     @Binding var guestGame: Game?
     
     let keyboardHeight: CGFloat
@@ -35,12 +36,21 @@ struct EmailPasswordView: View {
 
     private let characterLimit = 15
     
+    var title: String {
+        if showVerifyEmail { return "Verify Email" }
+        return showSignUp ? "Sign Up" : "Login"
+    }
+
+    var subtitle: String {
+        if showVerifyEmail { return "We sent a verification link to \(email.isEmpty ? "your email" : email). Verify it, then come back here to continue." }
+        return "Enter email and password"
+    }
+    
     var disabled: Bool {
-        if !showSignUp {
-            return email.isEmpty || password.isEmpty
-        } else {
+        if showSignUp {
             return email.isEmpty || password.isEmpty || confirmPassword.isEmpty || password != confirmPassword
         }
+        return email.isEmpty || password.isEmpty
     }
 
     var body: some View {
@@ -49,86 +59,109 @@ struct EmailPasswordView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack {
-                            
                             // Back Button
                             Spacer(minLength: 90)
                             // Title
-                            VStack(spacing: 8) {
-                                HStack {
-                                    Text(showSignUp ? "Sign Up" : "Login")
-                                        .font(.system(size: 40, weight: .bold))
-                                        .foregroundColor(.primary)
-                                    Spacer()
-                                }
-                                HStack {
-                                    Text(showSignUp ? "Enter email and password" : "Enter email and password")
-                                        .font(.system(size: 20, weight: .light))
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                }
+                            VStack(alignment: showVerifyEmail ? .center : .leading, spacing: 8) {
+                                Text(title)
+                                    .font(.system(size: 40, weight: .bold))
+                                    .foregroundColor(.primary)
+                                    
+                                Text(subtitle)
+                                    .font(.system(size: 20, weight: .light))
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(showVerifyEmail ? .center : .leading)
                             }
+                            .frame(maxWidth: .infinity, alignment: showVerifyEmail ? .center : .leading)
+                            
                             Spacer(minLength: 50)
                             
-                            // Form Fields
-                            VStack(spacing: 20) {
-                                // Email Field
-                                
-                                emailSection.id(Field.email)
-                                passwordSection.id(Field.password)
-                                if showSignUp {
-                                    confirmSection.id(Field.confirm)
-                                        .transition(.move(edge: .top).combined(with: .opacity))
-                                }
-
-                                if let errorMessageText = errorMessage.message {
-                                    Text(errorMessageText)
-                                        .foregroundColor(errorMessage.type ? .green.mix(with: .subOpp, by: 0.5) : .red.mix(with: .subOpp, by: 0.5))
-                                        .font(.caption)
-                                        .multilineTextAlignment(.center)
-                                        .padding(.vertical, 8)
-                                        .padding(.horizontal, 12)
-                                        .background(
-                                            ZStack {
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .fill(.ultraThinMaterial)
-                                                RoundedRectangle(cornerRadius: 20)
-                                                    .fill(errorMessage.type ? .green.opacity(0.25) : .red.opacity(0.25))
-                                            }
-                                        )
-                                        .transition(.move(edge: .top).combined(with: .opacity))
-                                }
-                                
-                                Button {
-                                    isLoading = true
-                                    if !showSignUp {
-                                        authModel.signInUIManage(email: $email, password: $password, confirmPassword: $confirmPassword, isTextFieldFocused: isTextFieldFocused, errorMessage: $errorMessage, showSignUp: $showSignUp, guestGame: $guestGame)
-                                    } else {
-                                        authModel.signUpUIManage(email: $email, password: $password, confirmPassword: $confirmPassword, isTextFieldFocused: isTextFieldFocused, errorMessage: $errorMessage, showSignUp: $showSignUp, guestGame: $guestGame)
-                                    }
-                                } label: {
+                            if showVerifyEmail {
+                                verifySection
+                                    .transition(.move(edge: .top).combined(with: .opacity))
+                            } else {
+                                // Form Fields
+                                VStack(spacing: 20) {
+                                    // Email Field
                                     
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 25)
-                                            .frame(width: 150, height: 50)
-                                            .foregroundColor(.brand)
-                                        if isLoading {
-                                            ProgressView()
-                                                .tint(Color.white)
+                                    emailSection.id(Field.email)
+                                    passwordSection.id(Field.password)
+                                    if showSignUp {
+                                        confirmSection.id(Field.confirm)
+                                            .transition(.move(edge: .top).combined(with: .opacity))
+                                    }
+
+                                    if let errorMessageText = errorMessage.message {
+                                        Text(errorMessageText)
+                                            .foregroundColor(errorMessage.type ? .green.mix(with: .subOpp, by: 0.5) : .red.mix(with: .subOpp, by: 0.5))
+                                            .font(.caption)
+                                            .multilineTextAlignment(.center)
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 12)
+                                            .background(
+                                                ZStack {
+                                                    RoundedRectangle(cornerRadius: 20)
+                                                        .fill(.ultraThinMaterial)
+                                                    RoundedRectangle(cornerRadius: 20)
+                                                        .fill(errorMessage.type ? .green.opacity(0.25) : .red.opacity(0.25))
+                                                }
+                                            )
+                                            .transition(.move(edge: .top).combined(with: .opacity))
+                                    }
+                                    
+                                    Button {
+                                        isLoading = true
+                                        if showSignUp {
+                                            authModel.signUpUIManage(email: $email, password: $password, confirmPassword: $confirmPassword, isTextFieldFocused: isTextFieldFocused, errorMessage: $errorMessage, showSignUp: $showSignUp, showVerifyEmail: $showVerifyEmail, guestGame: $guestGame)
                                         } else {
-                                            Text(showSignUp ? "Sign Up" : "Login")
-                                                .foregroundColor(.white)
+                                            authModel.signInUIManage(email: $email, password: $password, confirmPassword: $confirmPassword, isTextFieldFocused: isTextFieldFocused, errorMessage: $errorMessage, showSignUp: $showSignUp, showVerifyEmail: $showVerifyEmail, guestGame: $guestGame)
+                                        }
+                                    } label: {
+                                        
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 25)
+                                                .frame(width: 150, height: 50)
+                                                .foregroundColor(.brand)
+                                            if isLoading {
+                                                ProgressView()
+                                                    .tint(Color.white)
+                                            } else {
+                                                Text(showSignUp ? "Sign Up" : "Login")
+                                                    .foregroundColor(.white)
+                                            }
+                                        }
+                                        .opacity(disabled || isLoading ? 0.5 : 1)
+                                    }
+                                    .disabled(disabled || isLoading)
+                                    .onChange(of: errorMessage.message) { _, _ in isLoading = false }
+                                    .onChange(of: showSignUp) { _, _ in isLoading = false }
+
+                                    // Bottom sign up / log in toggle (like the web version)
+                                    Button {
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                            if showSignUp {
+                                                showSignUp = false
+                                                confirmPassword = ""
+                                                errorMessage.message = nil
+                                            } else {
+                                                showSignUp = true
+                                                errorMessage.message = nil
+                                            }
+                                        }
+                                    } label: {
+                                        if showSignUp {
+                                            (Text("Already have an account? ").foregroundColor(.secondary)
+                                                + Text("Login").foregroundColor(.brand).fontWeight(.semibold))
+                                        } else {
+                                            (Text("Don't have an account? ").foregroundColor(.secondary)
+                                                + Text("Sign Up").foregroundColor(.brand).fontWeight(.semibold))
                                         }
                                     }
-                                    .opacity(disabled || isLoading ? 0.5 : 1)
+                                    .font(.system(size: 12))
+                                    .buttonStyle(.plain)
                                 }
-                                .disabled(disabled || isLoading)
-                                .onChange(of: errorMessage.message) { _, _ in isLoading = false }
-                                .onChange(of: showSignUp) { _, _ in isLoading = false }
+                                .transition(.move(edge: .top).combined(with: .opacity))
                             }
-                            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showSignUp)
-                            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: errorMessage.message)
-                            Spacer()
-                            Spacer()
                         }
                         .padding()
                         .padding(.bottom, keyboardHeight)
@@ -152,6 +185,7 @@ struct EmailPasswordView: View {
                         withAnimation {
                             showEmail = false
                             showSignUp = false
+                            showVerifyEmail = false
                             email = ""
                             password = ""
                             confirmPassword = ""
@@ -176,6 +210,96 @@ struct EmailPasswordView: View {
                 Spacer()
             }
             .padding()
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showSignUp)
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showVerifyEmail)
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: errorMessage.message)
+        .onChange(of: showVerifyEmail) { _, _ in isLoading = false }
+        .task(id: showVerifyEmail) {
+            guard showVerifyEmail else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                if await authModel.checkEmailVerified() {
+                    finishVerification()
+                    break
+                }
+            }
+        }
+    }
+    
+    var verifySection: some View {
+        VStack(spacing: 20) {
+            if let errorMessageText = errorMessage.message {
+                Text(errorMessageText)
+                    .foregroundColor(errorMessage.type ? .green.mix(with: .subOpp, by: 0.5) : .red.mix(with: .subOpp, by: 0.5))
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(.ultraThinMaterial)
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(errorMessage.type ? .green.opacity(0.25) : .red.opacity(0.25))
+                        }
+                    )
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            
+            Button {
+                doneVerifying()
+            } label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 25)
+                        .frame(width: 150, height: 50)
+                        .foregroundColor(.brand)
+                    Text("Done Verifying")
+                        .foregroundColor(.white)
+                }
+            }
+            
+            Button {
+                resendEmail()
+            } label: {
+                Text("Resend Email")
+                    .foregroundColor(.brand)
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+    
+    private func doneVerifying() {
+        isLoading = true
+        Task {
+            let verified = await authModel.checkEmailVerified()
+            if verified {
+                finishVerification()
+            } else {
+                errorMessage = ("Not verified yet — check your inbox and try again.", false)
+            }
+            isLoading = false
+        }
+    }
+    
+    private func resendEmail() {
+        Task {
+            let sent = await authModel.resendVerificationEmail()
+            errorMessage = (sent ? "Verification email sent." : "Couldn't send email. Try again.", sent)
+        }
+    }
+    
+    private func finishVerification() {
+        authModel.kotlinVM.logout()
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+            showVerifyEmail = false
+            showSignUp = false
+            email = ""
+            password = ""
+            confirmPassword = ""
+            errorMessage.message = nil
+            isLoading = false
         }
     }
     
@@ -229,5 +353,3 @@ struct EmailPasswordView: View {
         }
     }
 }
-
-
