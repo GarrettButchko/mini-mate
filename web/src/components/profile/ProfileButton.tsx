@@ -7,7 +7,7 @@ import { ProfileView } from "./ProfileView";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function ProfileButton() {
-  const { user, loading } = useAuth();
+  const { user, firestoreUser, loading } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -25,8 +25,10 @@ export default function ProfileButton() {
 
   if (loading) return <div style={{ width: 48, height: 48 }} />;
 
-  const initials = user?.displayName
-    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+  const displayName = firestoreUser?.name ?? user?.displayName ?? null;
+
+  const initials = displayName
+    ? displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() ?? "?";
 
   return (
@@ -44,7 +46,7 @@ export default function ProfileButton() {
           }}
         >
           {user.photoURL ? (
-            <Image src={user.photoURL} alt={user.displayName ?? "Profile"} width={48} height={48} style={{ borderRadius: "50%", objectFit: "cover" }} />
+            <Image src={user.photoURL} alt={displayName ?? "Profile"} width={48} height={48} style={{ borderRadius: "50%", objectFit: "cover" }} />
           ) : (
             <span style={{ fontSize: 14, fontWeight: 600, color: "#AF52DE" }}>{initials}</span>
           )}
@@ -53,8 +55,7 @@ export default function ProfileButton() {
         <button
           onClick={() => {
             // Remember where they were so sign-in returns to this screen.
-            sessionStorage.setItem("signinReturnTo", window.location.pathname);
-            router.push("/signin");
+            router.push(`/signin?next=${encodeURIComponent(window.location.pathname)}`);
           }}
           className="glass-pill flex items-center px-4 py-3.5"
           style={{ fontSize: 14, fontWeight: 500, color: "#AF52DE", cursor: "pointer", border: "none", whiteSpace: "nowrap" }}

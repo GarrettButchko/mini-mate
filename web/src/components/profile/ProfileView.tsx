@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { OverlayCard } from "@/components/OverlayCard";
 import MiniMateLogo from "@/components/MiniMateLogo";
 import { LogoLoadingView } from "./LogoLoadingView";
+import { Spinner } from "@/components/Spinner";
 
 const PURPLE = "#AF52DE";
 const BLUE   = "#0088FF";
@@ -15,7 +16,7 @@ const GREEN  = "#34C759";
 
 export function ProfileView({ onClose }: { onClose: () => void }) {
   const router = useRouter();
-  const { user, signOut, updateName, sendPasswordReset, deleteAccount, firestoreUser } = useAuth();
+  const { user, signOut, updateName, sendPasswordReset, deleteAccount, reauthenticateWithEmail, reauthenticateWithGoogle, reauthenticateWithApple, firestoreUser } = useAuth();
 
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
@@ -23,21 +24,49 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
   const [showNameSuccess, setShowNameSuccess] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
 
   if (!user) return null;
 
   const courseCount = firestoreUser?.adminCourses?.length ?? 0;
 
-  const initials = user.displayName
-    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+  const displayName = firestoreUser?.name ?? user.displayName ?? null;
+
+  const providerId = user.providerData[0]?.providerId;
+  const accountType = providerId === "google.com" ? "google" : providerId === "apple.com" ? "apple" : "email";
+  const email = user.email ?? "";
+
+  const initials = displayName
+    ? displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : user.email?.[0]?.toUpperCase() ?? "?";
 
   const detailRows = [
-    { label: "Name",    value: user.displayName ?? "—" },
+    { label: "Name",    value: displayName ?? "—" },
     { label: "Email",   value: firestoreUser?.email ?? user.email ?? "—" },
     { label: "UID",     value: firestoreUser?.googleId ?? "—" },
     ...(courseCount > 0 ? [{ label: "Courses", value: String(courseCount) }] : []),
   ];
+
+  async function handleDelete() {
+    setProfileBusy(true);
+    try {
+      if (accountType === "email") {
+        await reauthenticateWithEmail(email, deletePassword);
+      } else if (accountType === "google") {
+        await reauthenticateWithGoogle();
+      } else {
+        await reauthenticateWithApple();
+      }
+      await deleteAccount();
+      onClose();
+    } catch {
+      setProfileMsg({ text: "Sign in again then retry.", ok: false });
+      setShowDeleteConfirm(false);
+    } finally {
+      setProfileBusy(false);
+    }
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -55,8 +84,8 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
             </div>
           )}
           <div style={{ minWidth: 0, overflow: "hidden" }}>
-            {user.displayName && (
-              <OverflowMarquee style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{user.displayName}</OverflowMarquee>
+            {displayName && (
+              <OverflowMarquee style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{displayName}</OverflowMarquee>
             )}
             <OverflowMarquee style={{ fontSize: 11, color: "var(--text-muted)" }}>{user.email ?? ""}</OverflowMarquee>
           </div>
@@ -78,7 +107,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
         {/* Actions */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", gap: 10 }}>
-            <SmallButton label="Edit Name" background={BLUE} onClick={() => { setNewName(user.displayName ?? ""); setEditingName(true); setProfileMsg(null); }} />
+            <SmallButton label="Edit Name" background={BLUE} onClick={() => { setNewName(displayName ?? ""); setEditingName(true); setProfileMsg(null); }} />
             
           </div>
           {profileMsg && (
@@ -86,7 +115,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
           )}
           <div style={{ display: "flex", gap: 10 }}>
             <SmallButton label="Sign Out" background={ORANGE} onClick={() => { onClose(); setTimeout(signOut, 180); }} />
-            <SmallButton label="Delete Account" background={RED} onClick={() => setShowDeleteConfirm(true)} />
+            <SmallButton label="Delete Account" background={RED} onClick={() => { setDeletePassword(""); setDeleteConfirmPassword(""); setProfileMsg(null); setShowDeleteConfirm(true); }} />
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <SmallButton label="Manage Courses" background={PURPLE} onClick={() => { onClose(); router.push("/manage-courses"); }} />
@@ -105,7 +134,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder={user.displayName ?? "Your name"}
+              placeholder={displayName ?? "Your name"}
               style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)" }}
             />
           </div>
@@ -120,6 +149,7 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
             confirmLabel="Save"
             confirmBg={BLUE}
             disabled={profileBusy || !newName.trim()}
+            busy={profileBusy}
           />
         </OverlayCard>
 
@@ -147,18 +177,39 @@ export function ProfileView({ onClose }: { onClose: () => void }) {
 
         {/* Delete Account overlay */}
         <OverlayCard open={showDeleteConfirm}>
-          <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text)", fontWeight: 500, textAlign: "center" }}>Delete your account? This cannot be undone.</p>
+          <p style={{ margin: "0 0 8px", fontSize: 14, color: "var(--text)", fontWeight: 600, textAlign: "center" }}>Confirm Deletion</p>
+          <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-muted)", textAlign: "center" }}>This will permanently delete your account.</p>
+
+          {accountType === "email" && (
+            <>
+              <div style={{ borderRadius: 8, background: "var(--surface-two)", padding: "10px 12px", marginBottom: 8 }}>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Password"
+                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)" }}
+                />
+              </div>
+              <div style={{ borderRadius: 8, background: "var(--surface-two)", padding: "10px 12px", marginBottom: 12 }}>
+                <input
+                  type="password"
+                  value={deleteConfirmPassword}
+                  onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                  placeholder="Confirm Password"
+                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)" }}
+                />
+              </div>
+            </>
+          )}
+
           <InlineActionRow
-            onCancel={() => setShowDeleteConfirm(false)}
-            onConfirm={async () => {
-              setProfileBusy(true);
-              try { await deleteAccount(); onClose(); }
-              catch { setProfileMsg({ text: "Sign in again then retry.", ok: false }); setShowDeleteConfirm(false); }
-              finally { setProfileBusy(false); }
-            }}
+            onCancel={() => { setShowDeleteConfirm(false); setDeletePassword(""); setDeleteConfirmPassword(""); }}
+            onConfirm={handleDelete}
             confirmLabel="Delete"
             confirmBg={RED}
-            disabled={profileBusy}
+            disabled={profileBusy || (accountType === "email" && (deletePassword === "" || deletePassword !== deleteConfirmPassword))}
+            busy={profileBusy}
           />
         </OverlayCard>
       </div>
@@ -255,20 +306,21 @@ function SmallButton({ label, background, onClick, disabled = false }: {
   );
 }
 
-function InlineActionRow({ onCancel, onConfirm, confirmLabel, confirmBg, disabled }: {
+function InlineActionRow({ onCancel, onConfirm, confirmLabel, confirmBg, disabled, busy = false }: {
   onCancel: () => void;
   onConfirm: () => void;
   confirmLabel: string;
   confirmBg: string;
   disabled: boolean;
+  busy?: boolean;
 }) {
   return (
     <div style={{ display: "flex", gap: 8 }}>
       <button onClick={onCancel} style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: "var(--surface-two)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}>
         Cancel
       </button>
-      <button disabled={disabled} onClick={onConfirm} style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: confirmBg, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: disabled ? 0.6 : 1 }}>
-        {disabled ? "…" : confirmLabel}
+      <button disabled={disabled} onClick={onConfirm} style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: confirmBg, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: disabled ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {busy ? <Spinner size={14} /> : confirmLabel}
       </button>
     </div>
   );

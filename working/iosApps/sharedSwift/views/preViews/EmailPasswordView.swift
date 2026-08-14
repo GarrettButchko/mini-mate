@@ -36,16 +36,6 @@ struct EmailPasswordView: View {
 
     private let characterLimit = 15
     
-    var title: String {
-        if showVerifyEmail { return "Verify Email" }
-        return showSignUp ? "Sign Up" : "Login"
-    }
-
-    var subtitle: String {
-        if showVerifyEmail { return "We sent a verification link to \(email.isEmpty ? "your email" : email). Verify it, then come back here to continue." }
-        return "Enter email and password"
-    }
-    
     var disabled: Bool {
         if showSignUp {
             return email.isEmpty || password.isEmpty || confirmPassword.isEmpty || password != confirmPassword
@@ -61,25 +51,28 @@ struct EmailPasswordView: View {
                         VStack {
                             // Back Button
                             Spacer(minLength: 90)
-                            // Title
-                            VStack(alignment: showVerifyEmail ? .center : .leading, spacing: 8) {
-                                Text(title)
-                                    .font(.system(size: 40, weight: .bold))
-                                    .foregroundColor(.primary)
-                                    
-                                Text(subtitle)
-                                    .font(.system(size: 20, weight: .light))
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(showVerifyEmail ? .center : .leading)
-                            }
-                            .frame(maxWidth: .infinity, alignment: showVerifyEmail ? .center : .leading)
-                            
-                            Spacer(minLength: 50)
                             
                             if showVerifyEmail {
                                 verifySection
                                     .transition(.move(edge: .top).combined(with: .opacity))
                             } else {
+                                // Title
+                                VStack(spacing: 8) {
+                                    HStack {
+                                        Text(showSignUp ? "Sign Up" : "Login")
+                                            .font(.system(size: 40, weight: .bold))
+                                            .foregroundColor(.primary)
+                                        Spacer()
+                                    }
+                                    HStack {
+                                        Text("Enter email and password")
+                                            .font(.system(size: 20, weight: .light))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                    }
+                                }
+                                Spacer(minLength: 50)
+                                
                                 // Form Fields
                                 VStack(spacing: 20) {
                                     // Email Field
@@ -229,22 +222,24 @@ struct EmailPasswordView: View {
     
     var verifySection: some View {
         VStack(spacing: 20) {
+            Image(systemName: "envelope.badge")
+                .font(.system(size: 44))
+                .foregroundStyle(.brand)
+            
+            Text("Please Verify Your Email")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(.primary)
+            
+            Text("We sent a verification link to \(email.isEmpty ? "your email" : email). Verify it, then come back here to continue.")
+                .font(.system(size: 14, weight: .light))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
             if let errorMessageText = errorMessage.message {
                 Text(errorMessageText)
-                    .foregroundColor(errorMessage.type ? .green.mix(with: .subOpp, by: 0.5) : .red.mix(with: .subOpp, by: 0.5))
-                    .font(.caption)
+                    .foregroundColor(errorMessage.type ? .green : .red)
+                    .font(.system(size: 12))
                     .multilineTextAlignment(.center)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(.ultraThinMaterial)
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(errorMessage.type ? .green.opacity(0.25) : .red.opacity(0.25))
-                        }
-                    )
-                    .transition(.move(edge: .top).combined(with: .opacity))
             }
             
             Button {
@@ -254,20 +249,30 @@ struct EmailPasswordView: View {
                     RoundedRectangle(cornerRadius: 25)
                         .frame(width: 150, height: 50)
                         .foregroundColor(.brand)
-                    Text("Done Verifying")
-                        .foregroundColor(.white)
+                    if isLoading {
+                        ProgressView()
+                            .tint(Color.white)
+                    } else {
+                        Text("Done Verifying")
+                            .foregroundColor(.white)
+                    }
                 }
             }
             
             Button {
                 resendEmail()
             } label: {
-                Text("Resend Email")
-                    .foregroundColor(.brand)
-                    .font(.system(size: 12, weight: .semibold))
+                HStack(spacing: 4) {
+                    Image(systemName: "paperplane")
+                        .font(.system(size: 12))
+                    Text("Resend Email")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundColor(.brand)
             }
             .buttonStyle(.plain)
         }
+        .frame(maxWidth: .infinity)
     }
     
     private func doneVerifying() {

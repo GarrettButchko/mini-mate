@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileSignInOptions } from "@/components/profile/ProfileSignInOptions";
@@ -10,27 +10,42 @@ import MiniMateLogo from "@/components/MiniMateLogo";
 function SignInContent() {
   const { user, firestoreUser, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"options" | "email">("options");
 
   useEffect(() => {
     if (loading) return;
     if (!user) return;
 
-    // Return to the screen the user was on before signing in (recorded on the
-    // way to /signin), so signing in never dumps them on /find-course.
-    const returnTo = sessionStorage.getItem("signinReturnTo");
-    if (returnTo && returnTo.startsWith("/") && returnTo !== "/signin") {
-      sessionStorage.removeItem("signinReturnTo");
-      router.replace(returnTo);
+    // Keep an unverified email/password account on the sign-in screen so it can
+    // finish email verification (mirrors the native apps).
+    const isEmailUser = user.providerData?.some((p) => p.providerId === "password");
+    if (isEmailUser && !user.emailVerified) return;
+
+    const next = searchParams.get("next");
+
+    // "Get Started" (course-owner area) leads into the course flow after sign-in.
+    if (next === "course") {
+      if ((firestoreUser?.adminCourses?.length ?? 0) > 0) {
+        router.replace("/manage-courses");
+      } else {
+        router.replace("/find-course");
+      }
+      return;
+    }
+
+    // Otherwise return to where the user was before signing in.
+    if (next && next.startsWith("/") && !next.startsWith("//") && next !== "/signin") {
+      router.replace(next);
       return;
     }
 
     if ((firestoreUser?.adminCourses?.length ?? 0) > 0) {
       router.replace("/manage-courses");
     } else {
-      router.replace("/find-course");
+      router.replace("/");
     }
-  }, [user, firestoreUser, loading, router]);
+  }, [user, firestoreUser, loading, router, searchParams]);
 
   if (loading) return <div style={{ flex: 1 }} />;
 
@@ -108,7 +123,9 @@ export default function SignInPage() {
         animation: "gradient-pan 20s ease infinite",
       }}
     >
-      <SignInContent />
+      <Suspense fallback={<div style={{ flex: 1 }} />}>
+        <SignInContent />
+      </Suspense>
     </div>
   );
 }

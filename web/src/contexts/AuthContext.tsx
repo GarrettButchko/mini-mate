@@ -10,7 +10,11 @@ import {
   updateProfile,
   updateCurrentUser,
   sendPasswordResetEmail,
+  sendEmailVerification as firebaseSendEmailVerification,
   deleteUser,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  EmailAuthProvider,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
@@ -46,8 +50,14 @@ interface AuthContextValue {
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   createAccountWithEmail: (email: string, password: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  refreshEmailVerified: () => Promise<boolean>;
+  signOutQuietly: () => Promise<void>;
   updateName: (name: string) => Promise<void>;
   sendPasswordReset: () => Promise<void>;
+  reauthenticateWithEmail: (email: string, password: string) => Promise<void>;
+  reauthenticateWithGoogle: () => Promise<void>;
+  reauthenticateWithApple: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -152,6 +162,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await createUserWithEmailAndPassword(auth, email, password);
   }
 
+  async function sendVerificationEmail() {
+    const u = auth.currentUser;
+    if (!u) throw new Error("Not signed in");
+    await firebaseSendEmailVerification(u);
+  }
+
+  async function refreshEmailVerified(): Promise<boolean> {
+    const u = auth.currentUser;
+    if (!u) return false;
+    try {
+      await u.reload();
+      return u.emailVerified;
+    } catch {
+      return u.emailVerified;
+    }
+  }
+
+  async function signOutQuietly() {
+    await firebaseSignOut(auth);
+  }
+
   async function updateName(name: string) {
     if (!auth.currentUser) return;
     await updateProfile(auth.currentUser, { displayName: name });
@@ -170,6 +201,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await sendPasswordResetEmail(auth, auth.currentUser.email);
   }
 
+  async function reauthenticateWithEmail(email: string, password: string) {
+    const u = auth.currentUser;
+    if (!u) throw new Error("Not signed in");
+    await reauthenticateWithCredential(u, EmailAuthProvider.credential(email, password));
+  }
+
+  async function reauthenticateWithGoogle() {
+    const u = auth.currentUser;
+    if (!u) throw new Error("Not signed in");
+    await reauthenticateWithPopup(u, new GoogleAuthProvider());
+  }
+
+  async function reauthenticateWithApple() {
+    const u = auth.currentUser;
+    if (!u) throw new Error("Not signed in");
+    await reauthenticateWithPopup(u, new OAuthProvider("apple.com"));
+  }
+
   async function deleteAccount() {
     if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
@@ -183,7 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, firestoreUser, loading, signInWithGoogle, signInWithApple, signInWithEmail, createAccountWithEmail, updateName, sendPasswordReset, deleteAccount, signOut }}>
+    <AuthContext.Provider value={{ user, firestoreUser, loading, signInWithGoogle, signInWithApple, signInWithEmail, createAccountWithEmail, sendVerificationEmail, refreshEmailVerified, signOutQuietly, updateName, sendPasswordReset, reauthenticateWithEmail, reauthenticateWithGoogle, reauthenticateWithApple, deleteAccount, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -12,6 +12,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { OverlayCard } from "@/components/OverlayCard";
 import MiniMateLogo from "@/components/MiniMateLogo";
 import { LogoLoadingView } from "@/components/profile/LogoLoadingView";
+import { Spinner } from "@/components/Spinner";
 
 const PURPLE = "#AF52DE";
 const BLUE = "#0088FF";
@@ -135,15 +136,7 @@ export default function ManageCoursesPage() {
         {authLoading ? null : !user ? (
           <div className="glass-card p-8 text-center">
             <p className="font-semibold mb-1" style={{ color: "var(--text)" }}>Sign in to manage your courses</p>
-            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>Create an account or sign in to view and manage your course listings.</p>
-            <Link
-              href="/signin"
-              onClick={() => sessionStorage.setItem("signinReturnTo", "/manage-courses")}
-              className="inline-block rounded-full px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 transition-all duration-200"
-              style={{ background: PURPLE }}
-            >
-              Sign In
-            </Link>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Create an account or sign in to view and manage your course listings.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -312,9 +305,9 @@ export default function ManageCoursesPage() {
                   <button
                     onClick={tryAdd}
                     disabled={busy || !code.trim()}
-                    style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: PURPLE, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: busy || !code.trim() ? 0.5 : 1 }}
+                    style={{ flex: 1, height: 38, borderRadius: 9, border: "none", background: PURPLE, cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#fff", opacity: busy || !code.trim() ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
-                    {busy ? "…" : "Add Course"}
+                    {busy ? <Spinner size={14} /> : "Add Course"}
                   </button>
                 </div>
               </OverlayCard>
