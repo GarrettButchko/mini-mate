@@ -160,7 +160,7 @@ export default function ForCoursesPage() {
 
       {/* Pricing infographic */}
       <section id="pricing" className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto p-6">
           <h2 className="text-center text-3xl font-bold mb-3" style={{ color: "var(--text)" }}>Simple, transparent pricing</h2>
           <p className="text-center mb-14" style={{ color: "var(--text-muted)" }}>Start free. Upgrade when you need more.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
