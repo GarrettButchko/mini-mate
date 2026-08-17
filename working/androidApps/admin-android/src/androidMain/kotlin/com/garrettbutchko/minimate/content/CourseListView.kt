@@ -74,7 +74,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
-import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
@@ -101,7 +100,6 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun CourseListView(
     vm: CourseListViewModel,
-    analyticsVM: AnalyticsViewModel,
     photoURL: String?,
     hasAdminCourses: Boolean,
     onNavigateToCourseTab: (Int) -> Unit,
@@ -196,7 +194,6 @@ fun CourseListView(
         ) {
             FirstCoursePreviewSheet(
                 courseListVM = vm,
-                analyticsVM = analyticsVM,
                 onOpenDashboard = {
                     showFirstCourseSheet = false
                     onNavigateToCourseTab(1)

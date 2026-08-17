@@ -8,9 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,8 +20,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.ui.res.colorResource
 import com.garrettbutchko.minimate.content.helper.LoadingOverlay
-import com.garrettbutchko.minimate.content.helper.StatusMessage
-import com.garrettbutchko.minimate.content.helper.TransientStatusSignal
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,12 +30,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.collectAsState
 import com.garrettbutchko.minimate.admin.BuildConfig
@@ -52,11 +45,8 @@ import com.garrettbutchko.minimate.content.preViews.SignInView
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.ColorAddTarget
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
-import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
-import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
-import com.garrettbutchko.minimate.viewModels.reauthenticateWithApple
-import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
+import com.garrettbutchko.minimate.modelKotlinExtensions.toColorName
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.admin.R as AdminR
@@ -93,25 +83,17 @@ fun ContentView(
     viewState: ViewState,
     authViewModel: AuthViewModel,
     courseListVM: CourseListViewModel,
-    analyticsVM: AnalyticsViewModel,
-    leaderboardVM: LeaderBoardViewModel,
     photoURL: String?,
     onNavigateToCourseTab: (Int) -> Unit,
     onNavigateToCourseList: () -> Unit,
-    onNavigateToSignIn: () -> Unit,
     onSignInWithGoogle: () -> Unit,
     onSignInWithApple: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val user by authViewModel.userModel.collectAsState()
     val defaultWebClientId = stringResource(AdminR.string.default_web_client_id)
 
     var showProfileSheet by remember { mutableStateOf(false) }
-    var profileBotMessage by remember { mutableStateOf("") }
-    var isProfileBotError by remember { mutableStateOf(false) }
-    val logoutTint = colorResource(id = com.garrettbutchko.minimate.shared.R.color.swiftBlue)
 
     Box(
         modifier = modifier
@@ -127,15 +109,10 @@ fun ContentView(
                 is ViewState.CourseList -> {
                     CourseListView(
                         vm = courseListVM,
-                        analyticsVM = analyticsVM,
                         photoURL = photoURL,
                         hasAdminCourses = !user?.adminCourses.isNullOrEmpty(),
                         onNavigateToCourseTab = onNavigateToCourseTab,
-                        onProfileTap = {
-                            profileBotMessage = ""
-                            isProfileBotError = false
-                            showProfileSheet = true
-                        },
+                        onProfileTap = { showProfileSheet = true },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -144,15 +121,9 @@ fun ContentView(
                     CourseTabView(
                         initialTab = state.initialTab,
                         courseListVM = courseListVM,
-                        analyticsVM = analyticsVM,
-                        leaderboardVM = leaderboardVM,
                         photoURL = photoURL,
                         onNavigateToCourseList = onNavigateToCourseList,
-                        onProfileTap = {
-                            profileBotMessage = ""
-                            isProfileBotError = false
-                            showProfileSheet = true
-                        }
+                        onProfileTap = { showProfileSheet = true }
                     )
                 }
 
@@ -186,155 +157,10 @@ fun ContentView(
             ) {
                 ProfileView(
                     isMiniMateApp = false,
-                    userProfileImage = user?.photoURL,
-                    userName = user?.name ?: "Manager",
-                    userEmail = user?.email,
-                    userGoogleId = user?.googleId ?: "",
-                    userIsPro = user?.isPro ?: false,
-                    userAccountType = user?.accountType?.joinToString(",") ?: "",
-                    userBallColor = user?.ballColorDT.toColor(),
+                    defaultWebClientId = defaultWebClientId,
                     isDebug = BuildConfig.DEBUG,
-                    botMessage = profileBotMessage,
-                    isBotMessageError = isProfileBotError,
-                    onPhotoChange = {
-                        profileBotMessage = "Photo updates are not available here yet."
-                        isProfileBotError = true
-                    },
-                    onGetPro = { /* Admin app doesn't have Pro yet? */ },
-                    onEditName = { newName ->
-                        val currentUser = user ?: return@ProfileView
-                        scope.launch {
-                            val updated = currentUser.copy(name = newName)
-                            authViewModel.setUserModel(updated)
-                            runCatching {
-                                authViewModel.userRepository.saveUnified(updated.googleId, updated)
-                            }.onSuccess {
-                                profileBotMessage = "Name updated."
-                                isProfileBotError = false
-                            }.onFailure {
-                                profileBotMessage = it.message ?: "Unable to update name."
-                                isProfileBotError = true
-                            }
-                        }
-                    },
-                    onPasswordReset = {
-                        val email = user?.email
-                        if (email.isNullOrBlank()) {
-                            profileBotMessage = "No email found for this account."
-                            isProfileBotError = true
-                            return@ProfileView
-                        }
-                        scope.launch {
-                            runCatching { authViewModel.authRepository.sendPasswordReset(email) }
-                                .getOrElse { Result.failure(it) }
-                                .fold(
-                                    onSuccess = {
-                                        profileBotMessage = "Password reset email sent."
-                                        isProfileBotError = false
-                                    },
-                                    onFailure = {
-                                        profileBotMessage = it.message ?: "Could not send reset email."
-                                        isProfileBotError = true
-                                    }
-                                )
-                        }
-                    },
-                    onLogout = {
-                        // Posted before navigating away — SignInView picks this up via
-                        // ConsumeTransientStatusSignal() once it lands there.
-                        TransientStatusSignal.pending = StatusMessage(
-                            title = "Logged Out",
-                            subtitle = "You've been signed out.",
-                            icon = Icons.AutoMirrored.Filled.Logout,
-                            tint = logoutTint
-                        )
-                        showProfileSheet = false
-                        authViewModel.logout()
-                        onNavigateToSignIn()
-                    },
-                    onDeleteAccountGoogle = {
-                        scope.launch {
-                            authViewModel.reauthenticateWithGoogle(context, defaultWebClientId, loginHint = user?.email) { res ->
-                                res.fold(
-                                    onSuccess = { credential ->
-                                        scope.launch {
-                                            authViewModel.deleteAccount(credential).fold(
-                                                onSuccess = {
-                                                    announceAccountDeleted()
-                                                    showProfileSheet = false
-                                                    onNavigateToSignIn()
-                                                },
-                                                onFailure = {
-                                                    profileBotMessage = it.message ?: "Unable to delete account."
-                                                    isProfileBotError = true
-                                                }
-                                            )
-                                        }
-                                    },
-                                    onFailure = {
-                                        profileBotMessage = it.message ?: "Google re-authentication failed."
-                                        isProfileBotError = true
-                                    }
-                                )
-                            }
-                        }
-                    },
-                    onDeleteAccountApple = {
-                        scope.launch {
-                            authViewModel.reauthenticateWithApple(context) { res ->
-                                res.fold(
-                                    onSuccess = { credential ->
-                                        scope.launch {
-                                            authViewModel.deleteAccount(credential).fold(
-                                                onSuccess = {
-                                                    announceAccountDeleted()
-                                                    showProfileSheet = false
-                                                    onNavigateToSignIn()
-                                                },
-                                                onFailure = {
-                                                    profileBotMessage = it.message ?: "Unable to delete account."
-                                                    isProfileBotError = true
-                                                }
-                                            )
-                                        }
-                                    },
-                                    onFailure = {
-                                        profileBotMessage = it.message ?: "Apple re-authentication failed."
-                                        isProfileBotError = true
-                                    }
-                                )
-                            }
-                        }
-                    },
-                    onDeleteAccountEmail = { password ->
-                        val email = user?.email
-                        if (email.isNullOrBlank()) {
-                            profileBotMessage = "No email found for this account."
-                            isProfileBotError = true
-                            return@ProfileView
-                        }
-                        scope.launch {
-                            authViewModel.reauthenticateWithEmail(email, password).fold(
-                                onSuccess = { credential ->
-                                    authViewModel.deleteAccount(credential).fold(
-                                        onSuccess = {
-                                            announceAccountDeleted()
-                                            showProfileSheet = false
-                                            onNavigateToSignIn()
-                                        },
-                                        onFailure = {
-                                            profileBotMessage = it.message ?: "Unable to delete account."
-                                            isProfileBotError = true
-                                        }
-                                    )
-                                },
-                                onFailure = {
-                                    profileBotMessage = it.message ?: "Re-authentication failed."
-                                    isProfileBotError = true
-                                }
-                            )
-                        }
-                    }
+                    userNameFallback = "Manager",
+                    onDismiss = { showProfileSheet = false }
                 )
             }
         }
@@ -349,12 +175,11 @@ fun ContentView(
 private fun CourseTabView(
     initialTab: Int,
     courseListVM: CourseListViewModel,
-    analyticsVM: AnalyticsViewModel,
-    leaderboardVM: LeaderBoardViewModel,
     photoURL: String?,
     onNavigateToCourseList: () -> Unit,
     onProfileTap: () -> Unit
 ) {
+    val analyticsVM = LocalAnalyticsViewModel.current
     var selectedTab by remember { mutableIntStateOf(initialTab) }
     val showColor by courseListVM.showColor.collectAsState()
     val addTarget by courseListVM.addTarget.collectAsState()
@@ -432,8 +257,6 @@ private fun CourseTabView(
                     )
                     1 -> MainView(
                         course = selectedCourse,
-                        analyticsVM = analyticsVM,
-                        leaderboardVM = leaderboardVM,
                         photoURL = photoURL,
                         onNavigateToCourseList = onNavigateToCourseList,
                         onProfileTap = onProfileTap,
@@ -469,34 +292,4 @@ private fun CourseTabView(
         // meaningful behind them, so cover rather than flash empty state.
         LoadingOverlay(visible = selectedCourse == null, message = "Loading course...")
     }
-}
-
-private fun Color.toColorName(): String = when (this) {
-    Color(0xFFFF383C) -> "red"
-    Color(0xFFFF8D28) -> "orange"
-    Color(0xFFFFCC00) -> "yellow"
-    Color(0xFF34C759) -> "green"
-    Color(0xFF00C8B3) -> "mint"
-    Color(0xFF00C3D0) -> "teal"
-    Color(0xFF00C0E8) -> "cyan"
-    Color(0xFF0088FF) -> "blue"
-    Color(0xFF6155F5) -> "indigo"
-    Color(0xFFCB30E0) -> "purple"
-    Color(0xFFFF2D55) -> "pink"
-    Color(0xFFAC7F5E) -> "brown"
-    else -> String.format("#%08X", toArgb())
-}
-
-/**
- * `deleteAccount` only invokes the onSuccess branch on the success path
- * (failures only set botMessage), so any call here means deletion succeeded.
- * Posted via TransientStatusSignal before navigating away, so SignInView
- * shows it once it lands there (same pattern as the logout notice).
- */
-private fun announceAccountDeleted() {
-    TransientStatusSignal.pending = StatusMessage(
-        title = "Account Deleted",
-        subtitle = "We're sorry to see you go.",
-        icon = Icons.Default.Delete
-    )
 }

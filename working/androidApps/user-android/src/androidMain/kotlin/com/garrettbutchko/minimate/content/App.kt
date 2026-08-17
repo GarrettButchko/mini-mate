@@ -70,13 +70,11 @@ import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
-import com.garrettbutchko.minimate.viewModels.HostViewModel
 import com.garrettbutchko.minimate.viewModels.StatsViewModel
-import com.garrettbutchko.minimate.viewModels.JoinViewModel
 import com.garrettbutchko.minimate.viewModels.signInWithGoogle
 import com.garrettbutchko.minimate.viewModels.signInWithApple
 import kotlinx.coroutines.launch
-import org.koin.core.context.GlobalContext
+import org.koin.compose.koinInject
 import androidx.compose.ui.graphics.Color
 import com.garrettbutchko.minimate.content.helper.modifiers.subVsColor
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
@@ -93,40 +91,7 @@ import com.garrettbutchko.minimate.content.stats.StatsView
 import com.garrettbutchko.minimate.generateUUID
 import com.garrettbutchko.minimate.viewModels.GuestData
 import com.garrettbutchko.minimate.helper.IAPManager
-import kotlin.time.Duration.Companion.milliseconds
 import androidx.core.content.edit
-
-private data class AppDependencies(
-    val viewManager: ViewManager,
-    val authModel: AuthViewModel,
-    val gameModel: GameViewModel,
-    val hostVM: HostViewModel,
-    val joinVM: JoinViewModel,
-    val gameManager: GameManager,
-    val statsViewModel: StatsViewModel,
-    val courseViewModel: CourseViewModel,
-    val locationHandler: LocationFinding,
-    val localGameRepo: LocalGameRepository
-)
-
-@Composable
-private fun rememberAppDependencies(): AppDependencies {
-    val koin = remember { GlobalContext.get() }
-    return remember(koin) {
-        AppDependencies(
-            viewManager = koin.get(),
-            authModel = koin.get(),
-            gameModel = koin.get(),
-            hostVM = koin.get(),
-            joinVM = koin.get(),
-            gameManager = koin.get(),
-            statsViewModel = koin.get(),
-            courseViewModel = koin.get(),
-            locationHandler = koin.get(),
-            localGameRepo = koin.get()
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,9 +99,14 @@ fun App() {
     val context = LocalContext.current
     val defaultWebClientId = stringResource(R.string.default_web_client_id)
     val appScope = rememberCoroutineScope()
-    val deps = rememberAppDependencies()
 
-    val currentView by deps.viewManager.currentView.collectAsState()
+    val viewManager: ViewManager = koinInject()
+    val authModel: AuthViewModel = koinInject()
+    val gameModel: GameViewModel = koinInject()
+    val locationHandler: LocationFinding = koinInject()
+    val localGameRepo: LocalGameRepository = koinInject()
+
+    val currentView by viewManager.currentView.collectAsState()
     var guestGameDate by remember { mutableStateOf<String?>(null) }
     val guestGame = remember { mutableStateOf<Game?>(null) }
 
@@ -146,13 +116,13 @@ fun App() {
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        deps.locationHandler.requestLocationAccess()
+        locationHandler.requestLocationAccess()
     }
 
-    DisposableEffect(lifecycleOwner, deps.locationHandler) {
+    DisposableEffect(lifecycleOwner, locationHandler) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                deps.locationHandler.requestLocationAccess()
+                locationHandler.requestLocationAccess()
             }
         }
 
@@ -165,12 +135,12 @@ fun App() {
     }
 
     LaunchedEffect(Unit) {
-        deps.locationHandler.requestLocationAccess()
+        locationHandler.requestLocationAccess()
     }
 
     LaunchedEffect(currentView) {
         if (currentView is ViewType.SignIn) {
-            val game = deps.gameModel.fetchGuestGame()
+            val game = gameModel.fetchGuestGame()
             guestGame.value = game
             guestGameDate = game?.let { "Saved guest game found" }
 
@@ -206,26 +176,16 @@ fun App() {
             ) { targetView ->
                 when (targetView) {
                     is ViewType.Main -> {
-                        MainTabView(
-                            initialSelectedTab = targetView.tab,
-                            viewManager = deps.viewManager,
-                            authModel = deps.authModel,
-                            gameModel = deps.gameModel,
-                            gameManager = deps.gameManager,
-                            localGameRepo = deps.localGameRepo,
-                            locationHandler = deps.locationHandler,
-                            statsViewModel = deps.statsViewModel,
-                            courseViewModel = deps.courseViewModel
-                        )
+                        MainTabView(initialSelectedTab = targetView.tab)
                     }
 
                     ViewType.Welcome -> WelcomeView()
 
                     is ViewType.ScoreCard -> ScoreCardGameView(
                         isGuest = targetView.isGuest,
-                        gameModel = deps.gameModel,
-                        authModel = deps.authModel,
-                        viewManager = deps.viewManager,
+                        gameModel = gameModel,
+                        authModel = authModel,
+                        viewManager = viewManager,
                         modifier = Modifier
                     )
 
@@ -234,31 +194,31 @@ fun App() {
                             adUnitID = "ca-app-pub-8261962597301587/3394145015"
                         ) {
                             if (targetView.isGuest) {
-                                deps.viewManager.navigateToSignIn()
+                                viewManager.navigateToSignIn()
                             } else {
-                                deps.viewManager.navigateToMain(1)
+                                viewManager.navigateToMain(1)
                             }
                         }
                     }
 
                     ViewType.SignIn -> SignInView(
                         isMiniMateApp = true,
-                        authModel = deps.authModel,
+                        authModel = authModel,
                         onSignInWithGoogle = {
                             if (defaultWebClientId.isBlank()) {
                                 Logger.i("Missing default_web_client_id string; Google sign-in not configured.")
                             } else {
-                                deps.authModel.signInWithGoogle(context,
+                                authModel.signInWithGoogle(context,
                                     defaultWebClientId
                                 ) { result, photoUrl, email ->
-                                    deps.authModel.handleSignInResult(
+                                    authModel.handleSignInResult(
                                         result = result,
                                         photoUrl = photoUrl,
                                         email = email,
                                         onErrorMessage = { msg, _ -> Logger.i("Google sign-in error: ${msg ?: "Unknown error"}") },
                                         onClearGuestGame = {
                                             appScope.launch {
-                                                deps.localGameRepo.deleteGuestGame()
+                                                localGameRepo.deleteGuestGame()
                                             }
                                         }
                                     )
@@ -266,8 +226,8 @@ fun App() {
                             }
                         },
                         onSignInWithApple = {
-                            deps.authModel.signInWithApple(context) { result, name, email, appleId ->
-                                deps.authModel.handleAppleSignInResult(
+                            authModel.signInWithApple(context) { result, name, email, appleId ->
+                                authModel.handleAppleSignInResult(
                                     result = result,
                                     name = name,
                                     email = email,
@@ -276,14 +236,14 @@ fun App() {
                                     onErrorMessage = { msg, _ -> Logger.i("Apple sign-in error: ${msg ?: "Unknown error"}") },
                                     onClearGuestGame = {
                                         appScope.launch {
-                                            deps.localGameRepo.deleteGuestGame()
+                                            localGameRepo.deleteGuestGame()
                                         }
                                     }
                                 )
                             }
                         },
                         onCreateGuestGame = { name, email ->
-                            deps.gameModel.createGame(
+                            gameModel.createGame(
                                 online = false,
                                 guestData = GuestData(
                                     id = generateUUID(),
@@ -291,18 +251,18 @@ fun App() {
                                     name = name
                                 )
                             )
-                            deps.viewManager.navigateToHost(isGuest = true)
+                            viewManager.navigateToHost(isGuest = true)
                         },
                         guestGameDate = guestGameDate,
                         guestGame = guestGame.value
                     )
 
                     is ViewType.Host -> HostGameView(
-                        gameModel = deps.gameModel,
-                        locationHandler = deps.locationHandler,
+                        gameModel = gameModel,
+                        locationHandler = locationHandler,
                         onDismiss = {
                             appScope.launch {
-                                deps.viewManager.navigateToSignIn() // Navigate back to main tab
+                                viewManager.navigateToSignIn() // Navigate back to main tab
                             }
                         },
                         isGuest = true
@@ -361,16 +321,17 @@ private fun Context.hasLocationPermission(): Boolean =
 
 @Composable
 private fun MainTabView(
-    initialSelectedTab: Int,
-    viewManager: ViewManager,
-    authModel: AuthViewModel,
-    gameModel: GameViewModel,
-    gameManager: GameManager,
-    localGameRepo: LocalGameRepository,
-    locationHandler: LocationFinding,
-    statsViewModel: StatsViewModel,
-    courseViewModel: CourseViewModel
+    initialSelectedTab: Int
 ) {
+    val viewManager: ViewManager = koinInject()
+    val authModel: AuthViewModel = koinInject()
+    val gameModel: GameViewModel = koinInject()
+    val gameManager: GameManager = koinInject()
+    val localGameRepo: LocalGameRepository = koinInject()
+    val locationHandler: LocationFinding = koinInject()
+    val statsViewModel: StatsViewModel = koinInject()
+    val courseViewModel: CourseViewModel = koinInject()
+
     val context = LocalContext.current
     val appScope = rememberCoroutineScope()
     val iapManager = remember(context.applicationContext, appScope) {
@@ -419,37 +380,8 @@ private fun MainTabView(
 
         authModel.setLoading(true)
 
-        val sessionValid = authModel.verifyAndCleanupIfDeleted()
-        if (!sessionValid) {
-            authModel.setLoading(false)
-            return@LaunchedEffect
-        }
-
         try {
-            // Load user data only when nothing has fully reconciled it this session
-            // (cold start with a cached session — the model may already be hydrated
-            // from the local DB, but that's cache, not a sync). Right after a fresh
-            // login, the sign-in pipeline just did this exact load — skip the duplicate.
-            if (!authModel.hasSyncedUserThisSession) {
-                val loadedUser = try {
-                    authModel.userRepository.loadOrCreateUser(
-                        id = userId
-                    ) { refreshedModel ->
-                        authModel.setUserModel(refreshedModel)
-                    }
-                } catch (e: IllegalStateException) {
-                    Logger.w("User load failed (transient?): ${e.message}. Retrying in 3s...")
-                    kotlinx.coroutines.delay(3_000.milliseconds)
-                    authModel.userRepository.loadOrCreateUser(
-                        id = userId
-                    ) { refreshedModel ->
-                        authModel.setUserModel(refreshedModel)
-                    }
-                }
-
-                authModel.setUserModel(loadedUser)
-                authModel.markUserSynced()
-            }
+            authModel.bootstrapUserSession(userId) ?: return@LaunchedEffect
 
             gameManager.onAppear()
             localGameRepo.deleteAllUnusedGames()
@@ -555,12 +487,7 @@ private fun MainTabView(
                             loadedTabs,
                             onLoaded = { loadedTabs = loadedTabs + it }) {
                             MainContentView(
-                                authModel = authModel,
-                                viewManager = viewManager,
-                                gameModel = gameModel,
-                                gameManager = gameManager,
-                                iapManager = iapManager,
-                                locationHandler = locationHandler
+                                iapManager = iapManager
                             )
                         }
 

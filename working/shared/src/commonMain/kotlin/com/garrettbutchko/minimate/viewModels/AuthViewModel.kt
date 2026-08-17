@@ -12,6 +12,7 @@ import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +22,7 @@ import com.garrettbutchko.minimate.extensions.safePhotoURL
 import dev.gitlive.firebase.auth.EmailAuthProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.time.Duration.Companion.milliseconds
 
 data class FirebaseUserSmallData (
     val uid: String,
@@ -135,6 +137,38 @@ open class AuthViewModel(
         _userModel.value = null
         viewManager.navigateToSignIn()
         return false
+    }
+
+    /**
+     * Bootstraps the signed-in user for this session: verifies the Firebase session is
+     * still valid (cleaning up + navigating to sign-in if the account was deleted on
+     * another device), then loads-or-creates the [UserModel] — reusing this session's
+     * already-synced model instead of re-fetching if the sign-in pipeline just did it.
+     *
+     * Shared between admin-android and user-android so both apps' cold-start bootstrap
+     * behaves identically (retry-on-transient-failure, dedupe against a fresh sign-in).
+     *
+     * @return `null` if the session was invalidated (already handled — caller has
+     * nothing more to do). Throws on a genuine load failure so the caller can decide
+     * how to respond (e.g. keep showing stale data).
+     */
+    suspend fun bootstrapUserSession(userId: String): UserModel? {
+        val sessionValid = verifyAndCleanupIfDeleted()
+        if (!sessionValid) return null
+
+        val syncedUser = _userModel.value.takeIf { hasSyncedUserThisSession }
+        if (syncedUser != null) return syncedUser
+
+        val loadedUser = try {
+            userRepository.loadOrCreateUser(id = userId) { refreshedModel -> setUserModel(refreshedModel) }
+        } catch (e: IllegalStateException) {
+            log.w("User load failed (transient?): ${e.message}. Retrying in 3s...")
+            delay(3_000.milliseconds)
+            userRepository.loadOrCreateUser(id = userId) { refreshedModel -> setUserModel(refreshedModel) }
+        }
+        setUserModel(loadedUser)
+        markUserSynced()
+        return loadedUser
     }
 
     fun refreshUID() {

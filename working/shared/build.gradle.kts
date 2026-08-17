@@ -79,6 +79,7 @@ kotlin {
             implementation(libs.google.id)
             implementation(libs.bytebeats.compose.charts)
             api("io.insert-koin:koin-android")
+            implementation(libs.koin.compose)
         }
 
         commonTest.dependencies {

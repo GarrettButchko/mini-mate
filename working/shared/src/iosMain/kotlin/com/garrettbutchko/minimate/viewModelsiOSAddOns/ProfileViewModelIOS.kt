@@ -17,6 +17,7 @@ import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import com.garrettbutchko.minimate.auth.AppleRauthCoordinator
 import com.garrettbutchko.minimate.viewModels.ProfileViewModel
+import dev.gitlive.firebase.auth.GoogleAuthProvider
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 
@@ -24,6 +25,23 @@ private var activeReauthCoordinator: AppleRauthCoordinator? = null
 private var currentNonce: String? = null
 private val log = Logger.withTag("ProfileViewModelIOS")
 
+/**
+ * Finishing step for iOS's Google reauth-and-delete: ProfileViewModelSwift.swift runs
+ * Apple's native Google Sign-In flow itself (Swift-side, via AuthViewModelSwift), then
+ * hands the resulting idToken/accessToken here to build the credential and delegate to
+ * the shared [ProfileViewModel.handleDeleteAccount]. Android's equivalent
+ * (ProfileViewModelAndroid.kt) already has a full AuthCredential by the time it reaches
+ * Kotlin, so it calls handleDeleteAccount directly instead of going through this.
+ */
+fun ProfileViewModel.googleReauthAndDelete(idToken: String, accessToken: String?, isSheetPresented: (Boolean) -> Unit) {
+    try {
+        val credential = GoogleAuthProvider.credential(idToken, accessToken)
+        handleDeleteAccount(credential, isSheetPresented)
+    } catch (e: Exception) {
+        setBotMessage(e.message ?: "Unknown error")
+        setIsRed(true)
+    }
+}
 
 fun ProfileViewModel.startAppleReauthAndDelete(onSheetPresentChange: (Boolean) -> Unit) {
     val provider = ASAuthorizationAppleIDProvider()

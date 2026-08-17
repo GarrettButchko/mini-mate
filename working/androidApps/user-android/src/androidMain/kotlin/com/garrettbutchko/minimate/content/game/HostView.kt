@@ -63,6 +63,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,7 +91,6 @@ import com.garrettbutchko.minimate.content.helper.StatusMessage
 import com.garrettbutchko.minimate.content.helper.StatusOverlayScaffold
 import com.garrettbutchko.minimate.content.helper.TransientStatusOverlay
 import com.garrettbutchko.minimate.content.helper.rememberTransientStatus
-import com.garrettbutchko.minimate.di.KoinHelper
 import com.garrettbutchko.minimate.di.KoinHelperParent
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.logic.HostViewBusinessLogic
@@ -111,8 +111,7 @@ fun HostGameView(
 ) {
     val localGameRepo: LocalGameRepository = KoinHelperParent.getLocalGameRepo()
 
-
-    val hostVM = remember { KoinHelper.getHostViewModel() }
+    val hostVM: HostViewModel = koinInject()
     val logic = remember { HostViewBusinessLogic() }
     val game by gameModel.game.collectAsState()
     val course by gameModel.course.collectAsState()

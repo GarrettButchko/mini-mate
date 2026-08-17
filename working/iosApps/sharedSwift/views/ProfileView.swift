@@ -222,7 +222,6 @@ struct ProfileView: View {
                 .onAppear {
                     if let user = authModel.userModel {
                         viewModel.name = user.name
-                        viewModel.email = user.email ?? ""
                     }
                 }
             }

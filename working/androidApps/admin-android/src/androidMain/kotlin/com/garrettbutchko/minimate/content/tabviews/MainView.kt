@@ -50,6 +50,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.garrettbutchko.minimate.content.LocalAnalyticsViewModel
+import com.garrettbutchko.minimate.content.LocalLeaderBoardViewModel
 import com.garrettbutchko.minimate.content.tabviews.leaderboard.LeaderBoardView
 import com.garrettbutchko.minimate.content.tabviews.tournament.TournamentView
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
@@ -90,13 +92,13 @@ import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 @Composable
 fun MainView(
     course: Course?,
-    analyticsVM: AnalyticsViewModel,
-    leaderboardVM: LeaderBoardViewModel,
     photoURL: String?,
     onNavigateToCourseList: () -> Unit,
     onProfileTap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val analyticsVM = LocalAnalyticsViewModel.current
+    val leaderboardVM = LocalLeaderBoardViewModel.current
     var showLeaderboardSheet by remember { mutableStateOf(false) }
     var showTournamentSheet by remember { mutableStateOf(false) }
     val leaderboardSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

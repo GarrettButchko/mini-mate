@@ -74,7 +74,6 @@ import com.garrettbutchko.minimate.content.tabviews.analytics.helperviews.skelet
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.shared.R.color as ResColor
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
-import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.SectionHealthRating
 import kotlin.math.roundToInt
 
@@ -85,11 +84,11 @@ import kotlin.math.roundToInt
 @Composable
 fun FirstCoursePreviewSheet(
     courseListVM: CourseListViewModel,
-    analyticsVM: AnalyticsViewModel,
     onOpenDashboard: (Course) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val analyticsVM = LocalAnalyticsViewModel.current
     val userCourses by courseListVM.userCourses.collectAsState()
     val loadingCourse by courseListVM.loadingCourse.collectAsState()
     val healthReport by analyticsVM.healthReport.collectAsState()

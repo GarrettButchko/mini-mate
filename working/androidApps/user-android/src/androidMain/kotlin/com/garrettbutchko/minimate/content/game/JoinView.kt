@@ -59,7 +59,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.garrettbutchko.minimate.di.KoinHelper
+import org.koin.compose.koinInject
 import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 import com.garrettbutchko.minimate.content.helper.GAME_CODE_LENGTH
 import com.garrettbutchko.minimate.content.helper.GameCodeTile
@@ -76,6 +76,7 @@ import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.shared.R as SharedR
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
+import com.garrettbutchko.minimate.viewModels.JoinViewModel
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,7 +87,7 @@ fun JoinGameView(
     gameModel: GameViewModel,
     authModel: AuthViewModel
 ) {
-    val joinVM = remember { KoinHelper.getJoinViewModel() }
+    val joinVM: JoinViewModel = koinInject()
     val logic = remember { JoinViewBusinessLogic() }
 
     val game by gameModel.game.collectAsState()

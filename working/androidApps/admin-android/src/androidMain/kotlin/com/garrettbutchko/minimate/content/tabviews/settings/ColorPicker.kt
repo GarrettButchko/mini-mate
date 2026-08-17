@@ -20,18 +20,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.helper.AppAlertDialog
+import com.garrettbutchko.minimate.modelKotlinExtensions.swiftColorPalette
 
-private val pickerColors = listOf(
-    Color(0xFFFF383C), // red
-    Color(0xFFFF8D28), // orange
-    Color(0xFFFFCC00), // yellow
-    Color(0xFF34C759), // green
-    Color(0xFF0088FF), // blue
-    Color(0xFF6155F5), // indigo
-    Color(0xFFCB30E0), // purple
-    Color(0xFFFF2D55), // pink
-    Color(0xFFAC7F5E), // brown
-)
+// Curated subset of the shared palette for course branding — deliberately skips
+// mint/teal/cyan (kept out of the picker, not because they're missing from the palette).
+private val pickerColorNames = setOf("mint", "teal", "cyan")
+private val pickerColors = swiftColorPalette
+    .filterNot { (name, _) -> name in pickerColorNames }
+    .map { (_, color) -> color }
 
 @Composable
 fun ColorPickerView(

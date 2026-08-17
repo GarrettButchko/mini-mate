@@ -7,6 +7,7 @@ import com.garrettbutchko.minimate.content.helper.LoadingOverlay
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,6 +20,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.garrettbutchko.minimate.content.ContentView
+import com.garrettbutchko.minimate.content.LocalAnalyticsViewModel
+import com.garrettbutchko.minimate.content.LocalLeaderBoardViewModel
 import com.garrettbutchko.minimate.content.ViewState
 import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.managers.ViewType
@@ -59,18 +62,7 @@ fun App() {
 
         authViewModel.setLoading(true)
         try {
-            // Skip the round-trip when the sign-in pipeline already reconciled the
-            // user this session — userModel alone can't tell us, since it may just
-            // be hydrated from the local cache.
-            val syncedUser = authViewModel.userModel.value.takeIf { authViewModel.hasSyncedUserThisSession }
-            val loadedUser = syncedUser ?: authViewModel.userRepository.loadOrCreateUser(
-                id = userId
-            ) { refreshedModel ->
-                authViewModel.setUserModel(refreshedModel)
-            }.also {
-                authViewModel.setUserModel(it)
-                authViewModel.markUserSynced()
-            }
+            val loadedUser = authViewModel.bootstrapUserSession(userId) ?: return@LaunchedEffect
 
             // If the user has exactly one course, navigate directly to it.
             // If they have multiple, load the list.
@@ -107,41 +99,43 @@ fun App() {
             }
 
             Box(modifier = Modifier.fillMaxSize()) {
-                ContentView(
-                    viewState = viewState,
-                    courseListVM = courseListVM,
-                    analyticsVM = analyticsVM,
-                    leaderboardVM = leaderboardVM,
-                    photoURL = userModel?.photoURL,
-                    onNavigateToCourseTab = { tab -> viewManager.navigateToCourseTab(tab) },
-                    onNavigateToCourseList = { viewManager.navigateToCourseList() },
-                    onNavigateToSignIn = { viewManager.navigateToSignIn() },
-                    authViewModel = authViewModel,
-                    onSignInWithGoogle = {
-                        authViewModel.signInWithGoogle(context, webClientId) { result, photoUrl, email ->
-                            authViewModel.handleSignInResult(
-                                result = result,
-                                photoUrl = photoUrl,
-                                email = email,
-                                onErrorMessage = { _, _ -> },
-                                onClearGuestGame = { }
-                            )
-                        }
-                    },
-                    onSignInWithApple = {
-                        authViewModel.signInWithApple(context) { result, name, email, appleId ->
-                            authViewModel.handleAppleSignInResult(
-                                result = result,
-                                name = name,
-                                email = email,
-                                appleId = appleId,
-                                onErrorMessage = { _, _ -> },
-                                onClearGuestGame = { }
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
+                CompositionLocalProvider(
+                    LocalAnalyticsViewModel provides analyticsVM,
+                    LocalLeaderBoardViewModel provides leaderboardVM
+                ) {
+                    ContentView(
+                        viewState = viewState,
+                        courseListVM = courseListVM,
+                        photoURL = userModel?.photoURL,
+                        onNavigateToCourseTab = { tab -> viewManager.navigateToCourseTab(tab) },
+                        onNavigateToCourseList = { viewManager.navigateToCourseList() },
+                        authViewModel = authViewModel,
+                        onSignInWithGoogle = {
+                            authViewModel.signInWithGoogle(context, webClientId) { result, photoUrl, email ->
+                                authViewModel.handleSignInResult(
+                                    result = result,
+                                    photoUrl = photoUrl,
+                                    email = email,
+                                    onErrorMessage = { _, _ -> },
+                                    onClearGuestGame = { }
+                                )
+                            }
+                        },
+                        onSignInWithApple = {
+                            authViewModel.signInWithApple(context) { result, name, email, appleId ->
+                                authViewModel.handleAppleSignInResult(
+                                    result = result,
+                                    name = name,
+                                    email = email,
+                                    appleId = appleId,
+                                    onErrorMessage = { _, _ -> },
+                                    onClearGuestGame = { }
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
                 // The SignIn view shows its own "Signing you in..." overlay, so
                 // skip the global one while it owns the screen.

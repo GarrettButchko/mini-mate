@@ -24,7 +24,6 @@ class ProfileViewModelSwift: ObservableObject {
     @Published private var _botMessage: String = ""
     @Published private var _isRed: Bool = true
     @Published private var _name: String = ""
-    @Published private var _email: String = ""
     @Published private var _activeDeleteAlert: DeleteAlertType? = nil
 
     // 2. Public Computed Properties (Getters and Setters)
@@ -46,11 +45,6 @@ class ProfileViewModelSwift: ObservableObject {
     var name: String {
         get { _name }
         set { kotlinVM.setName(value: newValue) }
-    }
-
-    var email: String {
-        get { _email }
-        set { kotlinVM.setEmail(value: newValue) }
     }
 
     var activeDeleteAlert: DeleteAlertType? {
@@ -88,12 +82,6 @@ class ProfileViewModelSwift: ObservableObject {
         Task {
             for await value in kotlinVM.name {
                 self._name = value
-            }
-        }
-        
-        Task {
-            for await value in kotlinVM.email {
-                self._email = value
             }
         }
         
