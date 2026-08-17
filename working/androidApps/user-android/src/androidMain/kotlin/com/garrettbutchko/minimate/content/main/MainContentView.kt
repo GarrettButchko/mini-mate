@@ -114,6 +114,7 @@ import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
+import com.garrettbutchko.minimate.viewModels.reauthenticateWithApple
 import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -567,8 +568,31 @@ fun MainContentView(
                     }
                 },
                 onDeleteAccountApple = {
-                    profileBotMessage = "Apple account deletion is not available here yet."
-                    isProfileBotError = true
+                    scope.launch {
+                        authModel.reauthenticateWithApple(context) { res ->
+                            res.fold(
+                                onSuccess = { credential ->
+                                    scope.launch {
+                                        authModel.deleteAccount(credential).fold(
+                                            onSuccess = {
+                                                announceAccountDeleted()
+                                                showProfileSheetState.value = false
+                                                viewManager.navigateToSignIn()
+                                            },
+                                            onFailure = {
+                                                profileBotMessage = it.message ?: "Unable to delete account."
+                                                isProfileBotError = true
+                                            }
+                                        )
+                                    }
+                                },
+                                onFailure = {
+                                    profileBotMessage = it.message ?: "Apple re-authentication failed."
+                                    isProfileBotError = true
+                                }
+                            )
+                        }
+                    }
                 },
                 onDeleteAccountEmail = { password ->
                     val email = user?.email

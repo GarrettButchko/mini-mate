@@ -301,11 +301,7 @@ struct HostView: View {
                 ScrollView(.horizontal) {
                     HStack {
                         ForEach(gameModel.game.players) { player in
-                            PlayerIconView(player: player, isRemovable: player.userId.count == 6) {
-                                VM.playerToDelete = player.userId
-                                VM.kotlin.resetTimer()
-                                VM.showDeleteAlert = true
-                            }
+                            playerIconView(for: player)
                         }
                         Button(action: {
                             VM.showAddLocalPlayer = true
@@ -330,6 +326,7 @@ struct HostView: View {
                             }.padding(.horizontal)
                         }
                     }
+                    .animation(.easeInOut, value: gameModel.game.players.count)
                 }
                 .simultaneousGesture(
                     DragGesture().onChanged { _ in
@@ -341,6 +338,16 @@ struct HostView: View {
                 Text(logic.getPlayersHeaderText(playerCount: Int32(gameModel.game.players.count)))
             }
         }
+    }
+    
+    @ViewBuilder
+    private func playerIconView(for player: Player) -> some View {
+        PlayerIconView(player: player, isRemovable: player.userId.count == 6) {
+            VM.playerToDelete = player.userId
+            VM.kotlin.resetTimer()
+            VM.showDeleteAlert = true
+        }
+        .transition(.opacity)
     }
     
     private var startGameSection: some View {

@@ -29,7 +29,6 @@ struct JoinView: View {
     
     var body: some View {
         ZStack{
-            
             mainContent
                 .contentMargins(.top, contentMargins)
                 .contentMargins(.bottom, contentMargins)
@@ -502,13 +501,15 @@ struct JoinView: View {
                 HStack {
                     ForEach(gameModel.game.players) { player in
                         PlayerIconView(player: player, isRemovable: false) {}
+                            .transition(.opacity)
                     }
                     VStack {
-                        LogoLoadingView()
+                        ProgressView()
                             .frame(width: 40, height: 40)
                         Text("Waiting...").font(.caption)
                     }.padding(.horizontal)
                 }
+                .animation(.easeInOut, value: gameModel.game.players.count)
             }
             .frame(height: 75)
         }

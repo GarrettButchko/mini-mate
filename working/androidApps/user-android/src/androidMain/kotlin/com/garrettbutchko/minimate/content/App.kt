@@ -74,6 +74,7 @@ import com.garrettbutchko.minimate.viewModels.HostViewModel
 import com.garrettbutchko.minimate.viewModels.StatsViewModel
 import com.garrettbutchko.minimate.viewModels.JoinViewModel
 import com.garrettbutchko.minimate.viewModels.signInWithGoogle
+import com.garrettbutchko.minimate.viewModels.signInWithApple
 import kotlinx.coroutines.launch
 import org.koin.core.context.GlobalContext
 import androidx.compose.ui.graphics.Color
@@ -93,6 +94,7 @@ import com.garrettbutchko.minimate.generateUUID
 import com.garrettbutchko.minimate.viewModels.GuestData
 import com.garrettbutchko.minimate.helper.IAPManager
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.core.content.edit
 
 private data class AppDependencies(
     val viewManager: ViewManager,
@@ -263,6 +265,23 @@ fun App() {
                                 }
                             }
                         },
+                        onSignInWithApple = {
+                            deps.authModel.signInWithApple(context) { result, name, email, appleId ->
+                                deps.authModel.handleAppleSignInResult(
+                                    result = result,
+                                    name = name,
+                                    email = email,
+                                    appleId = appleId,
+                                    guestGame = guestGame.value,
+                                    onErrorMessage = { msg, _ -> Logger.i("Apple sign-in error: ${msg ?: "Unknown error"}") },
+                                    onClearGuestGame = {
+                                        appScope.launch {
+                                            deps.localGameRepo.deleteGuestGame()
+                                        }
+                                    }
+                                )
+                            }
+                        },
                         onCreateGuestGame = { name, email ->
                             deps.gameModel.createGame(
                                 online = false,
@@ -331,9 +350,9 @@ private fun Context.hasSeenLocationExplainer(): Boolean =
 
 private fun Context.markLocationExplainerSeen() {
     getSharedPreferences(LOCATION_PREFS, Context.MODE_PRIVATE)
-        .edit()
-        .putBoolean(SEEN_LOCATION_EXPLAINER_KEY, true)
-        .apply()
+        .edit {
+            putBoolean(SEEN_LOCATION_EXPLAINER_KEY, true)
+        }
 }
 
 private fun Context.hasLocationPermission(): Boolean =

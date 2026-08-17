@@ -6,11 +6,15 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +62,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -66,6 +71,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
+import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -119,6 +126,16 @@ private fun appSwitchColors(swiftBlue: Color, mainOpp: Color) = SwitchDefaults.c
     disabledUncheckedThumbColor = mainOpp.copy(alpha = 0.3f),
 )
 
+// CourseSettingsViewModel is Koin `factory`-scoped (mirrors iOS, which creates a fresh
+// instance whenever CourseTabView remounts, so transient UI state like password fields
+// doesn't leak between visits). CourseSettingsView resolves it exactly once via
+// koinInject() and shares that single instance with its section composables through this
+// CompositionLocal — calling koinInject() again in each section would each yield a
+// different factory instance and desync their state.
+private val LocalCourseSettingsViewModel = staticCompositionLocalOf<CourseSettingsViewModel> {
+    error("LocalCourseSettingsViewModel not provided — must be read within CourseSettingsView")
+}
+
 /**
  * CourseSettingsView
  *
@@ -133,56 +150,58 @@ private fun appSwitchColors(swiftBlue: Color, mainOpp: Color) = SwitchDefaults.c
  */
 @Composable
 fun CourseSettingsView(
-    courseListVM: CourseListViewModel,
-    courseSettingsVM: CourseSettingsViewModel,
     modifier: Modifier = Modifier
 ) {
+    val courseListVM: CourseListViewModel = koinInject()
+    val courseSettingsVM: CourseSettingsViewModel = koinInject()
     val course by courseListVM.selectedCourse.collectAsState()
     val removingAdmin by courseListVM.removingAdmin.collectAsState()
     val bgColor = colorResource(id = ResColor.bg)
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(bgColor)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+    CompositionLocalProvider(LocalCourseSettingsViewModel provides courseSettingsVM) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(bgColor)
         ) {
-            // Header
-            CourseSettingsHeaderView(vm = courseSettingsVM, courseListVM = courseListVM)
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Header
+                CourseSettingsHeaderView()
 
-            course?.let { currentCourse ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    val tier = currentCourse.tier
+                course?.let { currentCourse ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        val tier = currentCourse.tier
 
-                    if (tier >= 1) {
-                        SectionCard(title = "Course") { CourseSectionContent(course = currentCourse) }
-                        SectionCard(title = "Admins") { AdminsSectionContent(courseListVM = courseListVM) }
-                        SectionCard(title = "Password") { PasswordSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
-                        SectionCard(title = "Social Links") { SocialLinksSectionContent(course = currentCourse, courseListVM = courseListVM) }
+                        if (tier >= 1) {
+                            SectionCard(title = "Course") { CourseSectionContent(course = currentCourse) }
+                            SectionCard(title = "Admins") { AdminsSectionContent() }
+                            SectionCard(title = "Password") { PasswordSectionContent(course = currentCourse) }
+                            SectionCard(title = "Social Links") { SocialLinksSectionContent(course = currentCourse) }
+                        }
+
+                        if (tier >= 2) {
+                            SectionCard(title = "Appearance") { AppearanceSectionContent(course = currentCourse) }
+                            SectionCard(title = "Ad") { AdSectionContent(course = currentCourse) }
+                            SectionCard(title = "Leaderboard") { LeaderboardSectionContent(course = currentCourse) }
+                        }
+
+                        ParConfigurationSectionContent(course = currentCourse)
+
+                        Spacer(modifier = Modifier.height(32.dp))
                     }
-
-                    if (tier >= 2) {
-                        SectionCard(title = "Appearance") { AppearanceSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
-                        SectionCard(title = "Ad") { AdSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM) }
-                        SectionCard(title = "Leaderboard") { LeaderboardSectionContent(course = currentCourse, courseListVM = courseListVM) }
-                    }
-
-                    ParConfigurationSectionContent(course = currentCourse, vm = courseSettingsVM, courseListVM = courseListVM)
-
-                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
-        }
 
-        LoadingOverlay(visible = removingAdmin, message = "Removing admin...")
+            LoadingOverlay(visible = removingAdmin, message = "Removing admin...")
+        }
     }
 }
 
@@ -191,7 +210,9 @@ fun CourseSettingsView(
 // ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CourseSettingsHeaderView(vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
+private fun CourseSettingsHeaderView() {
+    val vm = LocalCourseSettingsViewModel.current
+    val courseListVM: CourseListViewModel = koinInject()
     val showReviewSheet by vm.showReviewSheet.collectAsState()
     val course by courseListVM.selectedCourse.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -276,7 +297,8 @@ private fun CourseSectionContent(course: Course) {
 // Admins section
 // ---------------------------------------------------------------------------
 @Composable
-private fun AdminsSectionContent(courseListVM: CourseListViewModel) {
+private fun AdminsSectionContent() {
+    val courseListVM: CourseListViewModel = koinInject()
     val adminUsers by courseListVM.adminUsers.collectAsState()
     val loadingAdmins by courseListVM.loadingAdmins.collectAsState()
     var userIdToDelete by remember { mutableStateOf<String?>(null) }
@@ -393,7 +415,9 @@ private fun AdminsSectionContent(courseListVM: CourseListViewModel) {
 // Password section
 // ---------------------------------------------------------------------------
 @Composable
-private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
+private fun PasswordSectionContent(course: Course) {
+    val vm = LocalCourseSettingsViewModel.current
+    val courseListVM: CourseListViewModel = koinInject()
     var showPassword by remember { mutableStateOf(false) }
     var showChangeDialog by remember { mutableStateOf(false) }
     var showCopyMenu by remember { mutableStateOf(false) }
@@ -506,7 +530,8 @@ private fun PasswordSectionContent(course: Course, vm: CourseSettingsViewModel, 
 // Social Links section
 // ---------------------------------------------------------------------------
 @Composable
-private fun SocialLinksSectionContent(course: Course, courseListVM: CourseListViewModel) {
+private fun SocialLinksSectionContent(course: Course) {
+    val courseListVM: CourseListViewModel = koinInject()
     val links = course.socialLinks
     var visibleIds by remember { mutableStateOf(links.map { it.id }.toSet()) }
 
@@ -631,7 +656,9 @@ private fun SocialLinkRow(
 // Appearance section
 // ---------------------------------------------------------------------------
 @Composable
-private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
+private fun AppearanceSectionContent(course: Course) {
+    val vm = LocalCourseSettingsViewModel.current
+    val courseListVM: CourseListViewModel = koinInject()
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
     val context = LocalContext.current
@@ -728,27 +755,39 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
     // ── Course Colors row ─────────────────────────────────────────────────────
     Column {
         Text("Course Colors", style = MaterialTheme.typography.bodyMedium, color = mainOpp)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            course.courseColorsDT?.forEachIndexed { index, dt ->
+            itemsIndexed(
+                items = course.courseColorsDT ?: emptyList(),
+                key = { _, dt -> dt },
+            ) { index, dt ->
+                var visible by remember(dt) { mutableStateOf(false) }
+                LaunchedEffect(dt) { visible = true }
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.animateItem(),
+                ) {
+                    ColorHolderView(
+                        color = dt.toColor(),
+                        showFunction = {},
+                        deleteFunction = { vm.deleteColor(ColorDeleteTarget.CourseColor(index), course) { courseListVM.setCourse(it) } },
+                    )
+                }
+            }
+            item(key = "add_color") {
                 ColorHolderView(
-                    color = dt.toColor(),
-                    showFunction = {},
-                    deleteFunction = { vm.deleteColor(ColorDeleteTarget.CourseColor(index), course) { courseListVM.setCourse(it) } },
+                    color = null,
+                    showFunction = {
+                        courseListVM.setAddTarget(ColorAddTarget.COURSE_COLOR)
+                        courseListVM.setShowColor(true)
+                    },
+                    deleteFunction = {},
                 )
             }
-            ColorHolderView(
-                color = null,
-                showFunction = {
-                    courseListVM.setAddTarget(ColorAddTarget.COURSE_COLOR)
-                    courseListVM.setShowColor(true)
-                },
-                deleteFunction = {},
-            )
         }
     }
 }
@@ -757,7 +796,9 @@ private fun AppearanceSectionContent(course: Course, vm: CourseSettingsViewModel
 // Ad section
 // ---------------------------------------------------------------------------
 @Composable
-private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, courseListVM: CourseListViewModel) {
+private fun AdSectionContent(course: Course) {
+    val vm = LocalCourseSettingsViewModel.current
+    val courseListVM: CourseListViewModel = koinInject()
     var adActive by remember(course.customAdActive) { mutableStateOf(course.customAdActive) }
     val showingAdPicker by vm.showingPickerAd.collectAsState()
     val context = LocalContext.current
@@ -921,7 +962,8 @@ private fun AdSectionContent(course: Course, vm: CourseSettingsViewModel, course
 // Leaderboard section
 // ---------------------------------------------------------------------------
 @Composable
-private fun LeaderboardSectionContent(course: Course, courseListVM: CourseListViewModel) {
+private fun LeaderboardSectionContent(course: Course) {
+    val courseListVM: CourseListViewModel = koinInject()
     var lbActive by remember(course.leaderBoardActive) { mutableStateOf(course.leaderBoardActive) }
     val mainOpp = colorResource(id = ResColor.mainOpp)
     val subOpp = colorResource(id = ResColor.subOpp)
@@ -976,10 +1018,10 @@ private fun LeaderboardSectionContent(course: Course, courseListVM: CourseListVi
  */
 @Composable
 private fun ParConfigurationSectionContent(
-    course: Course,
-    vm: CourseSettingsViewModel,
-    courseListVM: CourseListViewModel
+    course: Course
 ) {
+    val vm = LocalCourseSettingsViewModel.current
+    val courseListVM: CourseListViewModel = koinInject()
     val showParConfig by vm.showParConfiguration.collectAsState()
     var showDisableAlert by remember { mutableStateOf(false) }
 

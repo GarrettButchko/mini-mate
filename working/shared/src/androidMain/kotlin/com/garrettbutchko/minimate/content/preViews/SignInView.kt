@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,6 +46,7 @@ fun SignInView(
     authModel: AuthViewModel? = null,
     guestGame: Game? = null,
     onSignInWithGoogle: () -> Unit,
+    onSignInWithApple: () -> Unit,
     onCreateGuestGame: (name: String, email: String) -> Unit,
     guestGameDate: String? = null // Passed down if guest game is found
 ) {
@@ -106,6 +108,7 @@ fun SignInView(
                             isMiniMateApp = isMiniMateApp,
                             onShowEmailSignInChange = { showEmailSignIn = it },
                             onSignInWithGoogle = onSignInWithGoogle,
+                            onSignInWithApple = onSignInWithApple,
                             onCreateGuestGame = onCreateGuestGame,
                             guestGameDate = guestGameDate
                         )
@@ -183,6 +186,7 @@ fun StartButtons(
     isMiniMateApp: Boolean,
     onShowEmailSignInChange: (Boolean) -> Unit,
     onSignInWithGoogle: () -> Unit,
+    onSignInWithApple: () -> Unit,
     onCreateGuestGame: (name: String, email: String) -> Unit,
     guestGameDate: String?
 ) {
@@ -314,6 +318,38 @@ fun StartButtons(
             }
             Spacer(Modifier.width(8.dp))
             Text("Sign in with Google", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        }
+
+        val isDarkTheme = isSystemInDarkTheme()
+        val appleBackground = if (isDarkTheme) Color.White else Color.Black
+        val appleForeground = if (isDarkTheme) Color.Black else Color.White
+
+        Button(
+            onClick = onSignInWithApple,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(25.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = appleBackground,
+                contentColor = appleForeground
+            )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = R.drawable.apple),
+                        contentDescription = "Apple Logo",
+                        modifier = Modifier.size(23.dp),
+                        colorFilter = ColorFilter.tint(appleForeground)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Sign in with Apple", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
         }
     }
 }

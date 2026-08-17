@@ -24,10 +24,10 @@ import com.garrettbutchko.minimate.managers.ViewManager
 import com.garrettbutchko.minimate.managers.ViewType
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
-import com.garrettbutchko.minimate.viewModels.CourseSettingsViewModel
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
 import com.garrettbutchko.minimate.viewModels.signInWithGoogle
+import com.garrettbutchko.minimate.viewModels.signInWithApple
 import com.garrettbutchko.minimate.content.MiniMateDarkColorScheme
 import com.garrettbutchko.minimate.content.MiniMateLightColorScheme
 import org.koin.compose.koinInject
@@ -39,7 +39,6 @@ fun App() {
     val courseListVM: CourseListViewModel = koinInject()
     val analyticsVM: AnalyticsViewModel = koinInject()
     val leaderboardVM: LeaderBoardViewModel = koinInject()
-    val courseSettingsVM: CourseSettingsViewModel = koinInject()
 
     val context = LocalContext.current
     val webClientId = stringResource(com.garrettbutchko.minimate.admin.R.string.default_web_client_id)
@@ -113,7 +112,6 @@ fun App() {
                     courseListVM = courseListVM,
                     analyticsVM = analyticsVM,
                     leaderboardVM = leaderboardVM,
-                    courseSettingsVM = courseSettingsVM,
                     photoURL = userModel?.photoURL,
                     onNavigateToCourseTab = { tab -> viewManager.navigateToCourseTab(tab) },
                     onNavigateToCourseList = { viewManager.navigateToCourseList() },
@@ -125,6 +123,18 @@ fun App() {
                                 result = result,
                                 photoUrl = photoUrl,
                                 email = email,
+                                onErrorMessage = { _, _ -> },
+                                onClearGuestGame = { }
+                            )
+                        }
+                    },
+                    onSignInWithApple = {
+                        authViewModel.signInWithApple(context) { result, name, email, appleId ->
+                            authViewModel.handleAppleSignInResult(
+                                result = result,
+                                name = name,
+                                email = email,
+                                appleId = appleId,
                                 onErrorMessage = { _, _ -> },
                                 onClearGuestGame = { }
                             )

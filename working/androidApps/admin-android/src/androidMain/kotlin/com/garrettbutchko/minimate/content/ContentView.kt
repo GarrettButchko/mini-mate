@@ -52,9 +52,9 @@ import com.garrettbutchko.minimate.content.preViews.SignInView
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.ColorAddTarget
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
-import com.garrettbutchko.minimate.viewModels.CourseSettingsViewModel
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
+import com.garrettbutchko.minimate.viewModels.reauthenticateWithApple
 import com.garrettbutchko.minimate.viewModels.reauthenticateWithGoogle
 import com.garrettbutchko.minimate.modelKotlinExtensions.toColor
 import kotlinx.coroutines.flow.first
@@ -95,12 +95,12 @@ fun ContentView(
     courseListVM: CourseListViewModel,
     analyticsVM: AnalyticsViewModel,
     leaderboardVM: LeaderBoardViewModel,
-    courseSettingsVM: CourseSettingsViewModel,
     photoURL: String?,
     onNavigateToCourseTab: (Int) -> Unit,
     onNavigateToCourseList: () -> Unit,
     onNavigateToSignIn: () -> Unit,
     onSignInWithGoogle: () -> Unit,
+    onSignInWithApple: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -146,7 +146,6 @@ fun ContentView(
                         courseListVM = courseListVM,
                         analyticsVM = analyticsVM,
                         leaderboardVM = leaderboardVM,
-                        courseSettingsVM = courseSettingsVM,
                         photoURL = photoURL,
                         onNavigateToCourseList = onNavigateToCourseList,
                         onProfileTap = {
@@ -172,6 +171,7 @@ fun ContentView(
                         isMiniMateApp = false,
                         authModel = authViewModel,
                         onSignInWithGoogle = onSignInWithGoogle,
+                        onSignInWithApple = onSignInWithApple,
                         onCreateGuestGame = { _, _ -> /* Manager app doesn't use guest games */ }
                     )
                 }
@@ -280,8 +280,31 @@ fun ContentView(
                         }
                     },
                     onDeleteAccountApple = {
-                        profileBotMessage = "Apple account deletion is not available here yet."
-                        isProfileBotError = true
+                        scope.launch {
+                            authViewModel.reauthenticateWithApple(context) { res ->
+                                res.fold(
+                                    onSuccess = { credential ->
+                                        scope.launch {
+                                            authViewModel.deleteAccount(credential).fold(
+                                                onSuccess = {
+                                                    announceAccountDeleted()
+                                                    showProfileSheet = false
+                                                    onNavigateToSignIn()
+                                                },
+                                                onFailure = {
+                                                    profileBotMessage = it.message ?: "Unable to delete account."
+                                                    isProfileBotError = true
+                                                }
+                                            )
+                                        }
+                                    },
+                                    onFailure = {
+                                        profileBotMessage = it.message ?: "Apple re-authentication failed."
+                                        isProfileBotError = true
+                                    }
+                                )
+                            }
+                        }
                     },
                     onDeleteAccountEmail = { password ->
                         val email = user?.email
@@ -328,7 +351,6 @@ private fun CourseTabView(
     courseListVM: CourseListViewModel,
     analyticsVM: AnalyticsViewModel,
     leaderboardVM: LeaderBoardViewModel,
-    courseSettingsVM: CourseSettingsViewModel,
     photoURL: String?,
     onNavigateToCourseList: () -> Unit,
     onProfileTap: () -> Unit
@@ -418,8 +440,6 @@ private fun CourseTabView(
                         modifier = Modifier.fillMaxSize()
                     )
                     2 -> CourseSettingsView(
-                        courseListVM = courseListVM,
-                        courseSettingsVM = courseSettingsVM,
                         modifier = Modifier.fillMaxSize()
                     )
                     else -> {}

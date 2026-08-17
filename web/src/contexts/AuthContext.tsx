@@ -92,9 +92,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const userRef = doc(db, "users", u.uid);
+      // Tracks whether this listener has ever seen an existing Firestore doc for
+      // the user. Used to detect a mid-session deletion (doc existed, then gone).
+      let hasSeenExistingDoc = false;
 
       firestoreUnsubRef.current = onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
+          hasSeenExistingDoc = true;
           const data = snap.data() as FirestoreUser;
           setFirestoreUser(data);
 
@@ -115,7 +119,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             updateDoc(userRef, { email: authEmail });
           }
         } else {
-          // Backfill: user exists in Auth but has no Firestore doc
+          // The Firestore doc for this user no longer exists. This means one of:
+          //   1. A brand-new account that just signed in and whose doc hasn't been
+          //      created yet → backfill it (below).
+          //   2. An existing account whose doc was deleted — normally because the
+          //      account was deleted on another device. Recreating the doc here
+          //      would resurrect a deleted account's Firestore data, so instead we
+          //      sign out locally so this web session follows the account deletion.
+          const accountAgeMs = Date.now() - new Date(u.metadata.creationTime ?? 0).getTime();
+          const isFreshAccount = accountAgeMs >= 0 && accountAgeMs < 60_000;
+
+          if (hasSeenExistingDoc || !isFreshAccount) {
+            // Doc disappeared mid-session, or this account predates the doc (i.e. it
+            // was deleted on another device). Tear down the listener and sign out.
+            firestoreUnsubRef.current?.();
+            firestoreUnsubRef.current = null;
+            void firebaseSignOut(auth);
+            return;
+          }
+
+          // Brand-new account → backfill the user doc.
           const providerType = providerIdToAccountType(u.providerData[0]?.providerId);
           setDoc(userRef, {
             googleId: u.uid,

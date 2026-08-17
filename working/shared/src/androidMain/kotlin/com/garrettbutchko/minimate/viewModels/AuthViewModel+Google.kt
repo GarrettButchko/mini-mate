@@ -10,6 +10,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseUser
+import dev.gitlive.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
 private fun parseGoogleIdTokenCredential(credential: Credential): GoogleIdTokenCredential {
@@ -77,20 +78,18 @@ fun AuthViewModel.signInWithGoogle(
 }
 
 /**
- * Reauthenticate a Google user and hand back the tokens (Android implementation).
- * Returns a Result containing a Pair of (idToken, accessToken).
- * Note: Access token might be null with Credential Manager for Google.
+ * Reauthenticate a Google user and hand back the KMP `AuthCredential`.
  *
  * @param context The Android context.
  * @param serverClientId The Web Client ID.
- * @param completion Callback with the tokens result.
+ * @param loginHint The email of the currently signed-in user to prevent account mismatch.
+ * @param completion Callback with the Result<AuthCredential>.
  */
-
-fun AuthViewModel.reauthenticateWithGooglePair(
+fun AuthViewModel.reauthenticateWithGoogle(
     context: Context,
     serverClientId: String,
     loginHint: String? = null,
-    completion: (Result<Pair<String, String?>>) -> Unit
+    completion: (Result<AuthCredential>) -> Unit
 ) {
     val credentialManager = CredentialManager.create(context.applicationContext)
     val googleIdOption = GetGoogleIdOption.Builder()
@@ -111,38 +110,28 @@ fun AuthViewModel.reauthenticateWithGooglePair(
                 completion(Result.failure(Exception("Please select the account you are signed in with: $loginHint")))
                 return@launch
             }
-            completion(Result.success(googleCredential.idToken to null))
+            // Credential Manager Google ID flow returns an ID token; access token is null here.
+            getGoogleCredential(googleCredential.idToken, null) { credRes ->
+                completion(credRes)
+            }
         } catch (e: Exception) {
             completion(Result.failure(e))
         }
     }
 }
 
-/**
- * Reauthenticate a Google user and hand back the KMP `AuthCredential`.
- *
- * @param context The Android context.
- * @param serverClientId The Web Client ID.
- * @param loginHint The email of the currently signed-in user to prevent account mismatch.
- * @param completion Callback with the Result<AuthCredential>.
- */
-fun AuthViewModel.reauthenticateWithGoogle(
-    context: Context,
-    serverClientId: String,
-    loginHint: String? = null,
+
+
+fun getGoogleCredential(
+    idToken: String,
+    accessToken: String?,
     completion: (Result<AuthCredential>) -> Unit
 ) {
-    val completionPair: (Result<Pair<String, String?>>) -> Unit = { res ->
-        res.fold(
-            onSuccess = { tokens ->
-                getGoogleCredential(tokens.first, tokens.second) { credRes ->
-                    completion(credRes)
-                }
-            },
-            onFailure = {
-                completion(Result.failure(it))
-            }
-        )
+    try {
+        val credential = GoogleAuthProvider.credential(idToken, accessToken)
+        completion(Result.success(credential))
+    } catch (e: Exception) {
+        completion(Result.failure(e))
     }
-    reauthenticateWithGooglePair(context, serverClientId, loginHint, completionPair)
 }
+

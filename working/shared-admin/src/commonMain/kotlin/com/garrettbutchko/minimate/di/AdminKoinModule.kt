@@ -18,7 +18,7 @@ val sharedAdminModule = module {
     single<AppNavigationManaging> { get<ViewManager>() }
 
     // ViewModels
-    factory { CourseListViewModel(courseRepo = get(), userRepo = get(), authModel = get()) }
+    single { CourseListViewModel(courseRepo = get(), userRepo = get(), authModel = get()) }
     factory { CourseSettingsViewModel(courseRepo = get()) }
     factory { LeaderBoardViewModel(lbRepo = get()) }
     factory { AnalyticsViewModel(analyticsRepo = get()) }

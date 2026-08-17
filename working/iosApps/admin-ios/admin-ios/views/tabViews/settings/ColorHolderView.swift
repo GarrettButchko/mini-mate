@@ -16,35 +16,32 @@ struct ColorHolderView: View {
     let deleteFunction: () -> Void
     
     var body: some View {
-        if let color {
-            Button {
-                deleteFunction()
-            } label: {
-                Circle()
-                    .fill(.ultraThinMaterial)
-                    .frame(width: 40, height: 40)
-                    .overlay{
-                        Circle()
-                            .fill(color)
-                            .frame(width: 30, height: 30)
-                    }
-            }
-        } else {
-            Button {
-                withAnimation(){
+        Button {
+            if color == nil {
+                withAnimation() {
                     showFunction()
                 }
-            } label: {
+            } else {
+                deleteFunction()
+            }
+        } label: {
+            ZStack {
                 Circle()
                     .fill(.ultraThinMaterial)
                     .frame(width: 40, height: 40)
-                    .overlay {
-                        Image(systemName: "plus")
-                            .resizable()
-                            .frame(width: 20, height: 20)
-                    }
+                Circle()
+                    .fill(color ?? .clear)
+                    .frame(width: 30, height: 30)
+                    .scaleEffect(color == nil ? 0 : 1)
+                    .opacity(color == nil ? 0 : 1)
+                Image(systemName: "plus")
+                    .resizable()
+                    .frame(width: 20, height: 20)
+                    .scaleEffect(color == nil ? 1 : 0)
+                    .opacity(color == nil ? 1 : 0)
             }
         }
+        .animation(.easeInOut, value: color == nil)
     }
 }
 

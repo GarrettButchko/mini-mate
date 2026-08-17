@@ -43,7 +43,9 @@ data class Course(
     var adDescription: String? = null,
     var adLink: String? = null,
     var adImage: String? = null,
-    var adClicks: Int? = null
+    var adClicks: Int? = null,
+    var stripeCustomerId: String? = null,
+    var stripeSubscriptionId: String? = null
 ) {
     fun updateComputedProperties() {
         this.isClaimed = adminIDs.isNotEmpty()

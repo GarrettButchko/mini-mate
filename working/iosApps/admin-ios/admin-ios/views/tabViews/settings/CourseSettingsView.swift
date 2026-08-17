@@ -433,6 +433,7 @@ struct CourseColorsSectionView: View {
                     secondaryButton: .cancel()
                 )
             }
+            .animation(.easeInOut, value: courseViewModel.selectedCourse?.courseColorsDT?.count)
         }
     }
 }

@@ -228,20 +228,6 @@ open class AuthViewModel(
             }
         }
     }
-
-    fun getGoogleCredential(
-        idToken: String,
-        accessToken: String?,
-        completion: (Result<AuthCredential>) -> Unit
-    ) {
-        try {
-            val credential = GoogleAuthProvider.credential(idToken, accessToken)
-            completion(Result.success(credential))
-        } catch (e: Exception) {
-            completion(Result.failure(e))
-        }
-    }
-
     @DefaultArgumentInterop.Enabled
     fun createOrSignInUserAndNavigateToHome(
         user: FirebaseUserSmallData,

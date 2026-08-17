@@ -25,7 +25,8 @@ import com.garrettbutchko.minimate.content.helper.AppAlertDialog
 fun ColorHolderView(
     color: Color? = null,
     showFunction: () -> Unit = {},
-    deleteFunction: () -> Unit = {}
+    deleteFunction: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     var showDeleteAlert by remember { mutableStateOf(false) }
 
@@ -47,7 +48,7 @@ fun ColorHolderView(
 
     if (color != null) {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -63,7 +64,7 @@ fun ColorHolderView(
         }
     } else {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
