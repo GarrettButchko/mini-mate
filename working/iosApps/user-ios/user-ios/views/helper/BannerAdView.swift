@@ -1,5 +1,6 @@
 import SwiftUI
 import GoogleMobileAds
+import shared_user
 
 // Google's intended preloading pattern: instantiate a BannerView early, kick off
 // load(), and hand the same instance into the view hierarchy when ready.
@@ -33,7 +34,7 @@ final class BannerAdLoader: NSObject, BannerViewDelegate {
     }
 
     nonisolated func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
-        print("Banner ad failed to load: \(error.localizedDescription)")
+        AppLogger.shared.error(tag: "BannerAdLoader", message: "Banner ad failed to load: \(error.localizedDescription)")
         Task { @MainActor in
             continuation?.resume(returning: nil)
             continuation = nil

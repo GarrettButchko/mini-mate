@@ -1,7 +1,6 @@
 package com.garrettbutchko.minimate.viewModels
 
-import co.touchlab.kermit.Logger
-
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.dataModels.MapRegionData
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
@@ -132,12 +131,12 @@ class CourseViewModel(
 
         activeSearchToken += 1
         val requestToken = activeSearchToken
-        Logger.i("[CourseViewModel] searchNearby() start userLocation=${locationHandler.userLocation.value}")
+        AppLogger.info("CourseViewModel", "searchNearby() start userLocation=${locationHandler.userLocation.value}")
         _isLoadingCourses.value = true
         _isUpperHalf.value = true
 
         locationHandler.searchNearbyCourses(0.03, 0.1, 0.1) { success, newPosition ->
-            Logger.i("[CourseViewModel] searchNearby() completion success=$success items=${locationHandler.mapItems.value.size} newPosition=$newPosition")
+            AppLogger.info("CourseViewModel", "searchNearby() completion success=$success items=${locationHandler.mapItems.value.size} newPosition=$newPosition")
             scope.launch {
                 if (requestToken != activeSearchToken) {
                     return@launch

@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 
 /**
@@ -30,8 +30,6 @@ class IAPManager(
     private val context: Context,
     private val coroutineScope: CoroutineScope
 ) : PurchasesUpdatedListener {
-
-    private val log = Logger.withTag("IAPManager")
 
     private val _products = MutableStateFlow<List<ProductDetails>>(emptyList())
     val products: StateFlow<List<ProductDetails>> = _products.asStateFlow()
@@ -92,9 +90,9 @@ class IAPManager(
         val result = billingClient.queryProductDetails(params)
         if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
             _products.value = result.productDetailsList ?: emptyList()
-            log.i("Products retrieved: ${_products.value.map { it.name }}")
+            AppLogger.info("IAPManager", "Products retrieved: ${_products.value.map { it.name }}")
         } else {
-            log.e("Failed to fetch products: ${result.billingResult.debugMessage}")
+            AppLogger.error("IAPManager", "Failed to fetch products: ${result.billingResult.debugMessage}")
         }
     }
 
@@ -102,7 +100,7 @@ class IAPManager(
      * Pass the Activity from Jetpack Compose using `LocalContext.current as Activity`
      */
     fun purchase(activity: Activity, productDetails: ProductDetails) {
-        log.i("🛒 Purchase started for product: ${productDetails.productId}")
+        AppLogger.info("IAPManager", "Purchase started for product: ${productDetails.productId}")
         _isPurchasing.value = true
 
         val productDetailsParamsList = listOf(
@@ -132,11 +130,11 @@ class IAPManager(
                 }
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> {
-                log.i("🛑 Purchase: User cancelled the payment sheet.")
+                AppLogger.warning("IAPManager", "Purchase: User cancelled the payment sheet.")
                 _isPurchasing.value = false
             }
             else -> {
-                log.e("🚨 Purchase: System error: ${billingResult.debugMessage}")
+                AppLogger.error("IAPManager", "Purchase: System error: ${billingResult.debugMessage}")
                 _isPurchasing.value = false
             }
         }
@@ -144,21 +142,21 @@ class IAPManager(
 
     private suspend fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            log.i("✅ Google Play: Purchase call successful. Verifying...")
+            AppLogger.success("IAPManager", "Google Play: Purchase call successful. Verifying...")
 
             // Android requires acknowledging within 3 days or it refunds automatically!
             if (!purchase.isAcknowledged) {
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
-                
+
                 val ackResult = billingClient.acknowledgePurchase(acknowledgePurchaseParams)
                 if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    log.i("🏁 Transaction finished with Google.")
+                    AppLogger.success("IAPManager", "Transaction finished with Google.")
                     onPurchaseSuccess(purchase)
                     _isPurchasing.value = false
                 } else {
-                    log.e("❌ Verification: Failed to acknowledge purchase.")
+                    AppLogger.error("IAPManager", "Verification: Failed to acknowledge purchase.")
                     _isPurchasing.value = false
                 }
             } else {
@@ -188,25 +186,25 @@ class IAPManager(
                 }
             }
         } else {
-            log.w("checkIsPurchasedPro: billing not ready (${result.billingResult.responseCode}), skipping")
+            AppLogger.warning("IAPManager", "checkIsPurchasedPro: billing not ready (${result.billingResult.responseCode}), skipping")
             return
         }
 
         if (!hasPro) {
-            log.i("checkIsPurchasedPro: no active Pro entitlement")
+            AppLogger.info("IAPManager", "checkIsPurchasedPro: no active Pro entitlement")
             onProStatusChecked(false)
             return
         }
 
-        log.i("checkIsPurchasedPro: Pro entitlement found")
+        AppLogger.info("IAPManager", "checkIsPurchasedPro: Pro entitlement found")
         val user = authModel.userModel.value
         if (user != null) {
             val wasAlreadyPro = user.isPro
             authModel.setUserModel(user.copy(isPro = true))
             if (!wasAlreadyPro) {
                 runCatching { authModel.userRepository.saveUnified(user.googleId, user.copy(isPro = true)) }
-                    .onSuccess { log.i("✅ Pro status synced to Firebase") }
-                    .onFailure { log.w("⚠️ Failed to sync Pro status to Firebase: ${it.message}") }
+                    .onSuccess { AppLogger.success("IAPManager", "Pro status synced to Firebase") }
+                    .onFailure { AppLogger.warning("IAPManager", "Failed to sync Pro status to Firebase: ${it.message}") }
             }
         }
 

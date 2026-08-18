@@ -111,7 +111,7 @@ struct AnalyticsView: View {
                         let _ = try await anaRepo.uploadDebugDailyDocs(courseID: courseVM.selectedCourse!.id, days: 90)
                         VM.refreshAnalytics(course: courseVM.selectedCourse)
                     } catch {
-                        print("\(error)")
+                        AppLogger.shared.error(tag: "AnalyticsView", message: "Upload debug daily docs failed: \(error)")
                     }
                 }
             } label: {
@@ -124,7 +124,7 @@ struct AnalyticsView: View {
                         let _ = try await anaRepo.uploadDebugEmails(courseID: courseVM.selectedCourse!.id, count: 100)
                         VM.refreshAnalytics(course: courseVM.selectedCourse)
                     } catch {
-                        print("\(error)")
+                        AppLogger.shared.error(tag: "AnalyticsView", message: "Upload debug test emails failed: \(error)")
                     }
                 }
             } label: {
@@ -244,7 +244,7 @@ struct AnalyticsView: View {
                 do {
                     try await VM.onAppearRetention(course: courseVM.selectedCourse)
                 } catch {
-                    print("\(error)")
+                    AppLogger.shared.error(tag: "AnalyticsView", message: "Retention refresh failed: \(error)")
                 }
             }
         }

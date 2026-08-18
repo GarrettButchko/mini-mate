@@ -1,7 +1,6 @@
 package com.garrettbutchko.minimate.repositories
 
-import co.touchlab.kermit.Logger
-
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.playerModels.PlayerDTO
 import dev.gitlive.firebase.Firebase
@@ -90,7 +89,7 @@ class LiveGameRepository {
                     completion(true)
                 }
             } catch (e: Exception) {
-                Logger.i("❌ Encoding game error: ${e.message}")
+                AppLogger.error("LiveGameRepository", "Encoding game error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     completion(false)
                 }
@@ -115,7 +114,7 @@ class LiveGameRepository {
                     }
                 }
             } catch (e: Exception) {
-                Logger.i("❌ Decoding game error: ${e.message}")
+                AppLogger.error("LiveGameRepository", "Decoding game error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     completion(null)
                 }
@@ -132,7 +131,7 @@ class LiveGameRepository {
                     completion(true)
                 }
             } catch (e: Exception) {
-                Logger.i("❌ Deleting game error: ${e.message}")
+                AppLogger.error("LiveGameRepository", "Deleting game error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     completion(false)
                 }

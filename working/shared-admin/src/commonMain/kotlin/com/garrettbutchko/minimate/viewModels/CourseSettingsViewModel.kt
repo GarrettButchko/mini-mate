@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import dev.gitlive.firebase.storage.Data
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 enum class ColorAddTarget {
     SCORE_CARD_COLOR,
@@ -28,8 +28,6 @@ open class CourseSettingsViewModel(
     private val courseRepo: CourseRepository = CourseRepository(),
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
-    private val log = Logger.withTag("CourseSettingsViewModel")
-
     // MARK: - Published Properties
     private val _editCourse = MutableStateFlow(false)
     val editCourse: StateFlow<Boolean> = _editCourse.asStateFlow()
@@ -92,7 +90,7 @@ open class CourseSettingsViewModel(
                 onCourseUpdated(updatedCourse)
                 courseRepo.addOrUpdateCourse(updatedCourse)
             } else {
-                log.e("❌ Photo upload failed")
+                AppLogger.error("CourseSettingsViewModel", "Photo upload failed")
             }
         }
     }
@@ -114,7 +112,7 @@ open class CourseSettingsViewModel(
                 onCourseUpdated(updatedCourse)
                 courseRepo.addOrUpdateCourse(updatedCourse)
             } else {
-                log.e("❌ Photo upload failed")
+                AppLogger.error("CourseSettingsViewModel", "Photo upload failed")
             }
         }
     }

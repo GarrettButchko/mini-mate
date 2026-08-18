@@ -1,6 +1,6 @@
 package com.garrettbutchko.minimate.content.courseScreen
 
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -74,7 +74,7 @@ fun CourseSearchResultsView(
     }
 
     LaunchedEffect(isLoading, mapItems.size, nameExists.size) {
-        Logger.i("[CourseSearchResultsView] loading=$isLoading mapItems=${mapItems.size} nameExists=${nameExists.size}")
+        AppLogger.info("CourseSearchResultsView", "loading=$isLoading mapItems=${mapItems.size} nameExists=${nameExists.size}")
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

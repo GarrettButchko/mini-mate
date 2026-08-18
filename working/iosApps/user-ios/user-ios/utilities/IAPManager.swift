@@ -32,7 +32,7 @@ final class IAPManager: ObservableObject {
     /// Loads products from StoreKit. Safe to call multiple times.
     func initialize() async {
         guard !isInitialized else {
-            print("[IAP] initialize() already ran, skipping")
+            AppLogger.shared.info(tag: "IAPManager", message: "initialize() already ran, skipping")
             return
         }
         isInitialized = true
@@ -40,17 +40,17 @@ final class IAPManager: ObservableObject {
     }
 
     func retrieveProducts() async {
-        print("[IAP] Fetching products for ID: \(Self.productID)")
+        AppLogger.shared.info(tag: "IAPManager", message: "Fetching products for ID: \(Self.productID)")
         do {
             let fetched = try await Product.products(for: [Self.productID])
             self.products = fetched
             if fetched.isEmpty {
-                print("⚠️ [IAP] No products returned. Check the .storekit config or App Store Connect listing.")
+                AppLogger.shared.warning(tag: "IAPManager", message: "No products returned. Check the .storekit config or App Store Connect listing.")
             } else {
-                print("[IAP] Loaded \(fetched.count) product(s): \(fetched.map { "\($0.id) @ \($0.displayPrice)" })")
+                AppLogger.shared.info(tag: "IAPManager", message: "Loaded \(fetched.count) product(s): \(fetched.map { "\($0.id) @ \($0.displayPrice)" })")
             }
         } catch {
-            print("❌ [IAP] Product fetch failed: \(error)")
+            AppLogger.shared.error(tag: "IAPManager", message: "Product fetch failed: \(error)")
             lastError = error.localizedDescription
         }
     }
@@ -58,30 +58,30 @@ final class IAPManager: ObservableObject {
     /// Presents the system purchase sheet and handles the result.
     /// Cross-platform rule: only writes `isPro = true` to Firebase if it was previously `false`.
     func purchase(_ product: Product, authModel: AuthViewModelSwift, showSheet: Binding<Bool>) async -> Bool {
-        print("🛒 [IAP] Purchase started for: \(product.id) (\(product.displayPrice))")
+        AppLogger.shared.info(tag: "IAPManager", message: "Purchase started for: \(product.id) (\(product.displayPrice))")
         isPurchasing = true
         defer { isPurchasing = false }
 
         do {
-            print("🛒 [IAP] Calling product.purchase()…")
+            AppLogger.shared.debug(tag: "IAPManager", message: "Calling product.purchase()…")
             let result = try await product.purchase()
-            print("🛒 [IAP] product.purchase() returned a result")
+            AppLogger.shared.debug(tag: "IAPManager", message: "product.purchase() returned a result")
 
             switch result {
             case .success(let verification):
-                print("✅ [IAP] Purchase result: .success — verifying…")
+                AppLogger.shared.success(tag: "IAPManager", message: "Purchase result: .success — verifying…")
                 let transaction: StoreKit.Transaction
                 do {
                     transaction = try checkVerified(verification)
-                    print("🛡️ [IAP] Verified transaction \(transaction.id)")
+                    AppLogger.shared.info(tag: "IAPManager", message: "Verified transaction \(transaction.id)")
                 } catch {
-                    print("❌ [IAP] Verification failed: \(error)")
+                    AppLogger.shared.error(tag: "IAPManager", message: "Verification failed: \(error)")
                     lastError = "Purchase verification failed."
                     return false
                 }
 
                 await transaction.finish()
-                print("🏁 [IAP] Transaction finished with Apple")
+                AppLogger.shared.success(tag: "IAPManager", message: "Transaction finished with Apple")
 
                 await applyProUnlock(authModel: authModel)
 
@@ -89,21 +89,21 @@ final class IAPManager: ObservableObject {
                 return true
 
             case .userCancelled:
-                print("🛑 [IAP] Purchase result: .userCancelled")
+                AppLogger.shared.info(tag: "IAPManager", message: "Purchase result: .userCancelled")
                 return false
 
             case .pending:
-                print("⏳ [IAP] Purchase result: .pending (Ask to Buy)")
+                AppLogger.shared.warning(tag: "IAPManager", message: "Purchase result: .pending (Ask to Buy)")
                 lastError = "Purchase is pending approval."
                 return false
 
             @unknown default:
-                print("❓ [IAP] Purchase result: unknown")
+                AppLogger.shared.warning(tag: "IAPManager", message: "Purchase result: unknown")
                 return false
             }
 
         } catch {
-            print("🚨 [IAP] Purchase threw: \(error.localizedDescription)")
+            AppLogger.shared.error(tag: "IAPManager", message: "Purchase threw: \(error.localizedDescription)")
             lastError = error.localizedDescription
             return false
         }
@@ -122,10 +122,10 @@ final class IAPManager: ObservableObject {
             }
         }
         guard hasPro else {
-            print("[IAP] Entitlement check: no active Apple Pro entitlement.")
+            AppLogger.shared.info(tag: "IAPManager", message: "Entitlement check: no active Apple Pro entitlement.")
             return
         }
-        print("[IAP] Entitlement check: Apple Pro entitlement found.")
+        AppLogger.shared.info(tag: "IAPManager", message: "Entitlement check: Apple Pro entitlement found.")
         await applyProUnlock(authModel: authModel)
     }
 
@@ -133,7 +133,7 @@ final class IAPManager: ObservableObject {
     /// Only writes to Firebase if the user wasn't already Pro (cross-platform safe).
     private func applyProUnlock(authModel: AuthViewModelSwift) async {
         guard let userModel = authModel.userModel else {
-            print("⚠️ [IAP] No userModel — can't sync Pro state.")
+            AppLogger.shared.warning(tag: "IAPManager", message: "No userModel — can't sync Pro state.")
             return
         }
 
@@ -144,15 +144,15 @@ final class IAPManager: ObservableObject {
         }
 
         guard !wasAlreadyPro else {
-            print("ℹ️ [IAP] User was already Pro — skipping remote save.")
+            AppLogger.shared.info(tag: "IAPManager", message: "User was already Pro — skipping remote save.")
             return
         }
 
         do {
             _ = try await KoinHelperParent.shared.getRemoteUserRepo().save(userModel: userModel, updateLastUpdated: true)
-            print("✅ [IAP] Pro status synced to Firebase.")
+            AppLogger.shared.success(tag: "IAPManager", message: "Pro status synced to Firebase.")
         } catch {
-            print("⚠️ [IAP] Failed to sync Pro status to Firebase: \(error)")
+            AppLogger.shared.warning(tag: "IAPManager", message: "Failed to sync Pro status to Firebase: \(error)")
         }
     }
 
@@ -164,9 +164,9 @@ final class IAPManager: ObservableObject {
                 do {
                     let transaction = try Self.staticCheckVerified(update)
                     await transaction.finish()
-                    print("[IAP] External transaction processed: \(transaction.productID)")
+                    AppLogger.shared.info(tag: "IAPManager", message: "External transaction processed: \(transaction.productID)")
                 } catch {
-                    print("⚠️ [IAP] External transaction failed verification: \(error)")
+                    AppLogger.shared.warning(tag: "IAPManager", message: "External transaction failed verification: \(error)")
                 }
             }
         }

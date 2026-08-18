@@ -1,6 +1,5 @@
 package com.garrettbutchko.minimate.repositories
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.courseModels.CourseEmail
 import com.garrettbutchko.minimate.dataModels.courseModels.DailyDoc
@@ -19,13 +18,12 @@ import com.garrettbutchko.minimate.utilities.DateUtils
 import com.garrettbutchko.minimate.repositories.analytics.AnalyticsRange
 import com.garrettbutchko.minimate.repositories.analytics.isoDayNumber
 import com.garrettbutchko.minimate.repositories.analytics.random
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 class AnalyticsRepository {
 
     private val db = Firebase.firestore
     private val collectionName = "courses"
-
-    private val log = Logger.withTag("AnalyticsRepo")
 
     // MARK: - Update Day Analytics
     suspend fun updateDayAnalytics(
@@ -50,7 +48,7 @@ class AnalyticsRepository {
             .distinct()
 
         if (uniqueEmails.isEmpty()) {
-            log.i { "Empty Emails" }
+            AppLogger.info("AnalyticsRepository", "Empty Emails")
             return Result.success(true)
         }
 
@@ -141,7 +139,7 @@ class AnalyticsRepository {
             }
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ updateDayAnalytics failed: ${e.message}" }
+            AppLogger.error("AnalyticsRepository", "updateDayAnalytics failed: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -186,7 +184,7 @@ class AnalyticsRepository {
                 }
                 fetchedDocs.addAll(deferred.awaitAll().flatten())
             } catch (e: Exception) {
-                log.e(e) { "❌ Firestore fetch failed: ${e.message}" }
+                AppLogger.error("AnalyticsRepository", "Firestore fetch failed: ${e.message}", e)
             }
         }
 
@@ -232,7 +230,7 @@ class AnalyticsRepository {
             batch.commit()
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to upload debug daily docs: ${e.message}" }
+            AppLogger.error("AnalyticsRepository", "Failed to upload debug daily docs: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -359,7 +357,7 @@ class AnalyticsRepository {
                 if (snapshot.documents.size < pageSize) break
             }
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore fetch emails failed: ${e.message}" }
+            AppLogger.error("AnalyticsRepository", "Firestore fetch emails failed: ${e.message}", e)
         }
         return emailsMap
     }
@@ -377,7 +375,7 @@ class AnalyticsRepository {
             batch.commit()
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to upload debug emails: ${e.message}" }
+            AppLogger.error("AnalyticsRepository", "Failed to upload debug emails: ${e.message}", e)
             Result.failure(e)
         }
     }

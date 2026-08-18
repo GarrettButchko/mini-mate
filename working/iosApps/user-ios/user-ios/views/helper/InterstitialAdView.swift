@@ -8,6 +8,7 @@
 
 import SwiftUI
 import GoogleMobileAds
+import shared_user
 
 struct InterstitialAdView: UIViewControllerRepresentable {
     /// Your real Ad Unit ID here
@@ -46,7 +47,7 @@ struct InterstitialAdView: UIViewControllerRepresentable {
         let request = Request()
         InterstitialAd.load(with: adUnitID, request: request) { ad, error in
             if let error = error {
-                print("Failed to load interstitial ad: \(error.localizedDescription)")
+                AppLogger.shared.error(tag: "InterstitialAdView", message: "Failed to load interstitial ad: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
@@ -66,7 +67,7 @@ struct InterstitialAdView: UIViewControllerRepresentable {
         }
 
         func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
-            print("Ad failed to present with error: \(error.localizedDescription)")
+            AppLogger.shared.error(tag: "Coordinator", message: "Ad failed to present with error: \(error.localizedDescription)")
             parent.onDismiss()
         }
     }

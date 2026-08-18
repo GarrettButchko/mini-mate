@@ -1,6 +1,5 @@
 package com.garrettbutchko.minimate.managers
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.holeModels.Hole
 import com.garrettbutchko.minimate.dataModels.playerModels.Player
@@ -8,6 +7,7 @@ import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.extensions.toInstant
 import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
 import com.garrettbutchko.minimate.repositories.gameRepos.RemoteGameRepository
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.utilities.NetworkChecker
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -25,8 +25,6 @@ class GameManager(
     private val remoteGameRepo: RemoteGameRepository,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
-    private val log = Logger.withTag("GameManager")
-
     private val _userGames = MutableStateFlow<List<Game>>(emptyList())
     val userGames: StateFlow<List<Game>> = _userGames.asStateFlow()
 
@@ -44,10 +42,10 @@ class GameManager(
         coroutineScope.launch {
             authModel.userModel.collectLatest { user ->
                 if (user != null) {
-                    log.d { "👤 User changed/loaded: ${user.name}. Initializing games sync..." }
+                    AppLogger.debug("GameManager", "User changed/loaded: ${user.name}. Initializing games sync...")
                     syncGames(user)
                 } else {
-                    log.d { "👤 User logged out. Clearing games." }
+                    AppLogger.debug("GameManager", "User logged out. Clearing games.")
                     _userGames.value = emptyList()
                     _sessionAttemptedIDs.clear()
                 }
@@ -72,7 +70,7 @@ class GameManager(
      */
     fun onAppear() {
         val user = authModel.userModel.value
-        log.d { "📊 onAppear: user=${user?.name}, currentGamesCount=${userGames.value.size}" }
+        AppLogger.debug("GameManager", "onAppear: user=${user?.name}, currentGamesCount=${userGames.value.size}")
 
         // Trigger a cloud refresh if needed
         if (user != null && NetworkChecker.shared.isConnected && userGames.value.size != user.gameIDs.size) {
@@ -92,7 +90,7 @@ class GameManager(
         // 1. Initial local fetch to populate UI quickly
         val games = localGameRepo.fetchAll(ids = user.gameIDs)
         _userGames.value = games
-        log.d { "📦 Initial local fetch returned ${games.size}/${user.gameIDs.size} games" }
+        AppLogger.debug("GameManager", "Initial local fetch returned ${games.size}/${user.gameIDs.size} games")
 
         // 2. If there are missing games locally and we have internet, trigger a background refresh
         if (NetworkChecker.shared.isConnected && games.size != user.gameIDs.size) {
@@ -106,7 +104,7 @@ class GameManager(
     suspend fun refreshFromCloud(user: UserModel) {
         if (_isRefreshing.value) return
 
-        log.d { "☁️ Starting cloud refresh for missing games..." }
+        AppLogger.debug("GameManager", "Starting cloud refresh for missing games...")
         _isRefreshing.value = true
 
         var idsAddedThisCall = emptySet<String>()
@@ -119,9 +117,9 @@ class GameManager(
 
             if (missingIDs.isEmpty()) {
                 if (allMissingIDs.isNotEmpty()) {
-                    log.d { "⏭️ Skipping ${allMissingIDs.size} already-attempted IDs this session." }
+                    AppLogger.debug("GameManager", "Skipping ${allMissingIDs.size} already-attempted IDs this session.")
                 } else {
-                    log.d { "✅ No missing games locally." }
+                    AppLogger.success("GameManager", "No missing games locally.")
                 }
                 return
             }
@@ -131,14 +129,14 @@ class GameManager(
             idsAddedThisCall = missingIDs.toSet()
             _sessionAttemptedIDs.addAll(idsAddedThisCall)
 
-            log.d { "📡 Fetching ${missingIDs.size} games from Remote..." }
+            AppLogger.debug("GameManager", "Fetching ${missingIDs.size} games from Remote...")
             val remoteDTOs = remoteGameRepo.fetchAll(missingIDs)
             val remoteGames = remoteDTOs.map { it.toGame() }
 
             if (remoteGames.isNotEmpty()) {
                 val success = localGameRepo.save(remoteGames)
                 if (success) {
-                    log.d { "✅ Saved ${remoteGames.size} games to local DB" }
+                    AppLogger.success("GameManager", "Saved ${remoteGames.size} games to local DB")
 
                     // Re-fetch all to ensure full consistency and update the StateFlow
                     _userGames.value = localGameRepo.fetchAll(ids = user.gameIDs)
@@ -148,7 +146,7 @@ class GameManager(
                     remoteGames.forEach { _sessionAttemptedIDs.remove(it.id) }
                 }
             } else {
-                log.w { "⚠️ Remote returned 0 results for IDs: $missingIDs — likely a network failure or missing documents. Will not retry this session." }
+                AppLogger.warning("GameManager", "Remote returned 0 results for IDs: $missingIDs — likely a network failure or missing documents. Will not retry this session.")
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
             // On cancellation the fetch was interrupted, not definitively empty —
@@ -156,7 +154,7 @@ class GameManager(
             _sessionAttemptedIDs.removeAll(idsAddedThisCall)
             throw e
         } catch (e: Exception) {
-            log.e(e) { "❌ Error during cloud refresh" }
+            AppLogger.error("GameManager", "Error during cloud refresh", e)
         } finally {
             _isRefreshing.value = false
         }

@@ -223,7 +223,7 @@ struct PlayerTierCard: View {
                     self.csvURL = fileURL
                 }
             } catch {
-                print("❌ Failed to generate CSV file: \(error)")
+                AppLogger.shared.error(tag: "PlayerTierCard", message: "Failed to generate CSV file: \(error)")
             }
         }
     }

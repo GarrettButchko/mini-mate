@@ -84,14 +84,14 @@ struct AddToLeaderBoardButton: View {
                 // the success/failure of that specific Kotlin object.
                 if (result as AnyObject).description.contains("Success") {
                     self.added = true
-                    print("Score submitted successfully!")
+                    AppLogger.shared.success(tag: "AddToLeaderBoardButton", message: "Score submitted successfully!")
                 } else {
-                    print("Submission failed")
+                    AppLogger.shared.warning(tag: "AddToLeaderBoardButton", message: "Submission failed")
                 }
-                
+
             } catch {
                 // This catches 'system' level errors (e.g., the bridge failing)
-                print("Network or System Error: \(error.localizedDescription)")
+                AppLogger.shared.error(tag: "AddToLeaderBoardButton", message: "Network or System Error: \(error.localizedDescription)")
             }
         self.isSubmitting = false
     }

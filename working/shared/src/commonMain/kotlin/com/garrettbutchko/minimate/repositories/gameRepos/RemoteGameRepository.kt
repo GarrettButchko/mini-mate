@@ -1,8 +1,8 @@
 package com.garrettbutchko.minimate.repositories.gameRepos
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.gameModels.GameDTO
+import com.garrettbutchko.minimate.utilities.AppLogger
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.async
@@ -15,8 +15,6 @@ class RemoteGameRepository {
     private val db = Firebase.firestore
     private val collectionName = "games"
 
-    private val log = Logger.withTag("RemoteGameRepo")
-
     // Save or update a game in Firestore
     suspend fun save(game: Game): Result<Boolean> {
         return try {
@@ -24,7 +22,7 @@ class RemoteGameRepository {
             Result.success(true)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            log.e(e) { "❌ Firestore save error: ${e.message}" }
+            AppLogger.error("RemoteGameRepo", "Firestore save error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -41,7 +39,7 @@ class RemoteGameRepository {
             Result.success(true)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            log.e(e) { "❌ Firestore save multiple error: ${e.message}" }
+            AppLogger.error("RemoteGameRepo", "Firestore save multiple error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -57,7 +55,7 @@ class RemoteGameRepository {
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            log.e(e) { "❌ Firestore fetch error: ${e.message}" }
+            AppLogger.error("RemoteGameRepo", "Firestore fetch error: ${e.message}", e)
             null
         }
     }
@@ -77,18 +75,18 @@ class RemoteGameRepository {
                             snapshot.data<GameDTO>()
                         } catch (e: Exception) {
                             if (e is CancellationException) throw e
-                            log.e(e) { "❌ Failed to deserialize doc $id: ${e.message}" }
+                            AppLogger.error("RemoteGameRepo", "Failed to deserialize doc $id: ${e.message}", e)
                             null
                         }
                     } else {
-                        log.w { "⚠️ Document $id not found in Firestore" }
+                        AppLogger.warning("RemoteGameRepo", "Document $id not found in Firestore")
                         null
                     }
                 }
             }.awaitAll().filterNotNull()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            log.e(e) { "❌ Firestore fetchAll error: ${e.message}" }
+            AppLogger.error("RemoteGameRepo", "Firestore fetchAll error: ${e.message}", e)
             emptyList()
         }
     }
@@ -100,7 +98,7 @@ class RemoteGameRepository {
             Result.success(true)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            log.e(e) { "❌ Firestore delete error: ${e.message}" }
+            AppLogger.error("RemoteGameRepo", "Firestore delete error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -118,7 +116,7 @@ class RemoteGameRepository {
             Result.success(true)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            log.e(e) { "❌ Firestore batch delete error: ${e.message}" }
+            AppLogger.error("RemoteGameRepo", "Firestore batch delete error: ${e.message}", e)
             Result.failure(e)
         }
     }

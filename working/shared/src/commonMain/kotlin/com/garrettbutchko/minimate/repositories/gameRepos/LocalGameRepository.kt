@@ -1,20 +1,19 @@
 package com.garrettbutchko.minimate.repositories.gameRepos
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.room.dao.GameDao
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 class LocalGameRepository(private val gameDao: GameDao) {
 
     // --- SAVING ---
-    private val log = Logger.withTag("LocalGameRepo")
 
     suspend fun save(game: Game): Boolean {
         return try {
             gameDao.save(game)
             true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to save game locally" }
+            AppLogger.error("LocalGameRepo", "Failed to save game locally", e)
             false
         }
     }
@@ -24,7 +23,7 @@ class LocalGameRepository(private val gameDao: GameDao) {
             gameDao.save(games)
             true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to save games locally" }
+            AppLogger.error("LocalGameRepo", "Failed to save games locally", e)
             false
         }
     }
@@ -35,7 +34,7 @@ class LocalGameRepository(private val gameDao: GameDao) {
         return try {
             gameDao.fetch(id)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to fetch locally by id: $id" }
+            AppLogger.error("LocalGameRepo", "Failed to fetch locally by id: $id", e)
             null
         }
     }
@@ -48,7 +47,7 @@ class LocalGameRepository(private val gameDao: GameDao) {
         return try {
             gameDao.fetchGuestGame()
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to fetch guest game safely" }
+            AppLogger.error("LocalGameRepo", "Failed to fetch guest game safely", e)
             null
         }
     }
@@ -58,7 +57,7 @@ class LocalGameRepository(private val gameDao: GameDao) {
             gameDao.deleteGuestGames()
             true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to fetch guest game safely" }
+            AppLogger.error("LocalGameRepo", "Failed to fetch guest game safely", e)
             false
         }
     }
@@ -68,7 +67,7 @@ class LocalGameRepository(private val gameDao: GameDao) {
         return try {
             gameDao.fetchAll(ids)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to fetch games" }
+            AppLogger.error("LocalGameRepo", "Failed to fetch games", e)
             emptyList()
         }
     }
@@ -88,7 +87,7 @@ class LocalGameRepository(private val gameDao: GameDao) {
             gameDao.delete(id)
             true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to delete locally: $id" }
+            AppLogger.error("LocalGameRepo", "Failed to delete locally: $id", e)
             false
         }
     }
@@ -98,7 +97,7 @@ class LocalGameRepository(private val gameDao: GameDao) {
             gameDao.deleteByIds(ids)
             true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to delete multiple games" }
+            AppLogger.error("LocalGameRepo", "Failed to delete multiple games", e)
             false
         }
     }
@@ -112,10 +111,10 @@ class LocalGameRepository(private val gameDao: GameDao) {
     suspend fun deleteAllUnusedGames(): Int {
         return try {
             val count = gameDao.deleteAllUnusedGames()
-            log.d("✅ Deleted $count unused games")
+            AppLogger.success("LocalGameRepo", "Deleted $count unused games")
             count
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to clean unused games"}
+            AppLogger.error("LocalGameRepo", "Failed to clean unused games", e)
             0
         }
     }

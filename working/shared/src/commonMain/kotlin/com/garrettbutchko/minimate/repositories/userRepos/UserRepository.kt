@@ -1,9 +1,9 @@
 package com.garrettbutchko.minimate.repositories.userRepos
 
 import co.touchlab.skie.configuration.annotations.DefaultArgumentInterop
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.userModels.UserModel
+import com.garrettbutchko.minimate.utilities.AppLogger
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.*
 import kotlin.math.abs
@@ -15,7 +15,6 @@ class UserRepository(
     val localRepo: LocalUserRepository,
     val remoteRepo: RemoteUserRepository
 ) {
-    private val log = Logger.withTag("UserRepository")
     private val repositoryScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     /**
@@ -35,7 +34,7 @@ class UserRepository(
         // 1️⃣ Local Phase: Check database first
         val local = localRepo.fetch(id)
         if (local != null) {
-            log.d { "✅ Found local user immediately" }
+            AppLogger.debug("UserRepository", "Found local user immediately")
             onUpdate(local)
 
             // 2️⃣ Background Reconcile: Don't block the UI
@@ -67,30 +66,30 @@ class UserRepository(
                 val delta = abs(local.lastUpdated.seconds - remote.lastUpdated.seconds)
 
                 if (delta < 1) { // Already in sync
-                    log.d { "🔄 Already in sync" }
+                    AppLogger.debug("UserRepository", "Already in sync")
                     val updatedLocal = addAccountTypeIfNeeded(local, signInMethod)
                     if (updatedLocal != local) remoteRepo.save(updatedLocal, false)
                     updatedLocal
                 } else if (local.lastUpdated.seconds > remote.lastUpdated.seconds) {
-                    log.d { "🔄 Local → Remote" }
+                    AppLogger.debug("UserRepository", "Local -> Remote")
                     val updatedLocal = addAccountTypeIfNeeded(local, signInMethod)
                     remoteRepo.save(updatedLocal, false)
                     updatedLocal
                 } else {
-                    log.d { "🔄 Remote → Local" }
+                    AppLogger.debug("UserRepository", "Remote -> Local")
                     val updatedRemote = addAccountTypeIfNeeded(remote, signInMethod)
                     localRepo.save(updatedRemote, false)
                     updatedRemote
                 }
             }
             local != null && remote == null -> {
-                log.d { "🔄 Local → Remote (no remote)" }
+                AppLogger.debug("UserRepository", "Local -> Remote (no remote)")
                 val updatedLocal = addAccountTypeIfNeeded(local, signInMethod)
                 remoteRepo.save(updatedLocal, false)
                 updatedLocal
             }
             local == null && remote != null -> {
-                log.d { "🔄 Remote → Local (no local)" }
+                AppLogger.debug("UserRepository", "Remote -> Local (no local)")
                 val updatedRemote = addAccountTypeIfNeeded(remote, signInMethod)
                 localRepo.save(updatedRemote, false)
                 updatedRemote
@@ -101,7 +100,7 @@ class UserRepository(
                     // DO NOT create a blank user — that would overwrite the real Firestore doc.
                     throw IllegalStateException("User $id not found locally or remotely. Remote fetch may have failed.")
                 }
-                log.d { "🆕 Creating new user" }
+                AppLogger.debug("UserRepository", "Creating new user")
                 createUser(id, firebaseUser, name, signInMethod, appleId, guestGame)
             }
         }
@@ -109,7 +108,7 @@ class UserRepository(
         // Sync photo URL from Firebase credential if the stored model is missing one
         val incomingPhoto = firebaseUser?.photoURL
         val finalResult = if (incomingPhoto != null && result.photoURL.isNullOrBlank()) {
-            log.d { "📸 Syncing missing photo URL from Firebase credential" }
+            AppLogger.debug("UserRepository", "Syncing missing photo URL from Firebase credential")
             val updated = result.copy(photoURL = incomingPhoto, lastUpdated = Timestamp.now())
             localRepo.save(updated, false)
             remoteRepo.save(updated, false)
@@ -184,8 +183,6 @@ class UserRepository(
         id: String,
         fileData: Data
     ): Result<String> {
-        val log = Logger.withTag("UserRepository")
-
         return try {
             // 1. Upload the raw 'Data' object to Firebase Storage via RemoteRepo
             // This returns the download URL String
@@ -207,22 +204,22 @@ class UserRepository(
                     val (localOK, remoteOK) = saveUnified(id, updatedUser)
 
                     if (localOK && remoteOK) {
-                        log.d { "✅ Profile photo URL synced across all data sources" }
+                        AppLogger.success("UserRepository", "Profile photo URL synced across all data sources")
                     } else {
-                        log.w { "⚠️ Photo uploaded, but database sync partially failed. Local: $localOK, Remote: $remoteOK" }
+                        AppLogger.warning("UserRepository", "Photo uploaded, but database sync partially failed. Local: $localOK, Remote: $remoteOK")
                     }
                 } else {
-                    log.w { "⚠️ No local user found for id: $id. Skipping database update." }
+                    AppLogger.warning("UserRepository", "No local user found for id: $id. Skipping database update.")
                 }
                 // 5. Return the successful URL (Equivalent to completion(.success(url)))
                 Result.success(newPhotoUrl)
             } else {
-                log.e { "❌ Failed to get new photo URL after upload" }
+                AppLogger.error("UserRepository", "Failed to get new photo URL after upload")
                 return Result.failure(Exception("Failed to upload photo"))
             }
 
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to upload profile photo for user: $id" }
+            AppLogger.error("UserRepository", "Failed to upload profile photo for user: $id", e)
             Result.failure(e)
         }
     }

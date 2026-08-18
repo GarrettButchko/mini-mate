@@ -1,6 +1,6 @@
 package com.garrettbutchko.minimate.viewModels
 
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.di.KoinHelper
 import com.garrettbutchko.minimate.di.KoinHelperParent
 
@@ -37,26 +37,27 @@ class JoinViewModel(
 
     fun joinGame() {
         val currentCode = _gameCode.value
-        Logger.i("JoinViewModel: joinGame called with code: $currentCode")
-        
+        AppLogger.info("JoinViewModel", "joinGame called with code: $currentCode")
+
         if (!canAttemptJoin(currentCode)) {
-            Logger.i("JoinViewModel: joinGame aborted - invalid code length")
+            AppLogger.warning("JoinViewModel", "joinGame aborted - invalid code length")
             return
         }
 
         val user = authModel.userModel.value
         if (user == null) {
-            Logger.i("JoinViewModel: joinGame aborted - no userModel found")
+            AppLogger.warning("JoinViewModel", "joinGame aborted - no userModel found")
             return
         }
-        
-        Logger.i("JoinViewModel: Attempting to join game $currentCode for user ${user.googleId}")
+
+        AppLogger.info("JoinViewModel", "Attempting to join game $currentCode for user ${user.googleId}")
         gameModel.joinGame(id = currentCode, userId = user.googleId) { success, error ->
-            Logger.i("JoinViewModel: joinGame result - success: $success, error: $error")
             if (success) {
+                AppLogger.success("JoinViewModel", "joinGame result - success: $success, error: $error")
                 _inGame.value = true
                 _message.value = ""
             } else {
+                AppLogger.warning("JoinViewModel", "joinGame result - success: $success, error: $error")
                 error?.let {
                     _message.value = it
                 }
@@ -67,11 +68,11 @@ class JoinViewModel(
     fun leaveGame() {
         val user = authModel.userModel.value
         if (user == null) {
-            Logger.i("JoinViewModel: leaveGame aborted - no userModel found")
+            AppLogger.warning("JoinViewModel", "leaveGame aborted - no userModel found")
             return
         }
 
-        Logger.i("JoinViewModel: leaveGame called for user ${user.googleId}")
+        AppLogger.info("JoinViewModel", "leaveGame called for user ${user.googleId}")
         gameModel.leaveGame(userId = user.googleId)
         _gameCode.value = ""
         _inGame.value = false
@@ -85,10 +86,10 @@ class JoinViewModel(
     fun joinDidDismiss(showJoin: Boolean) {
         val game = gameModel.game.value
         val shouldLeave = shouldLeaveGameOnHostDismiss(showJoin, game.id, game.started)
-        Logger.i("JoinViewModel: hostDidDismiss called - showHost: $showJoin, gameId: ${game.id}, started: ${game.started}, shouldLeave: $shouldLeave")
-        
+        AppLogger.info("JoinViewModel", "hostDidDismiss called - showHost: $showJoin, gameId: ${game.id}, started: ${game.started}, shouldLeave: $shouldLeave")
+
         if (shouldLeave) {
-            Logger.i("JoinViewModel: shouldLeave is true, calling leaveGame()")
+            AppLogger.info("JoinViewModel", "shouldLeave is true, calling leaveGame()")
             leaveGame()
         }
     }
@@ -98,10 +99,10 @@ class JoinViewModel(
      */
     fun gameDidStart(started: Boolean, onNavigate: () -> Unit) {
         val shouldNav = shouldNavigateOnGameStart(started)
-        Logger.i("JoinViewModel: gameDidStart reaction - started: $started, shouldNavigate: $shouldNav")
-        
+        AppLogger.info("JoinViewModel", "gameDidStart reaction - started: $started, shouldNavigate: $shouldNav")
+
         if (shouldNav) {
-            Logger.i("JoinViewModel: Triggering navigation callback")
+            AppLogger.info("JoinViewModel", "Triggering navigation callback")
             onNavigate()
         }
     }
@@ -111,10 +112,10 @@ class JoinViewModel(
      */
     fun gameDidDismiss(dismissed: Boolean) {
         val shouldReset = dismissed
-        Logger.i("JoinViewModel: gameDidDismiss reaction - dismissed: $dismissed, shouldReset: $shouldReset")
-        
+        AppLogger.info("JoinViewModel", "gameDidDismiss reaction - dismissed: $dismissed, shouldReset: $shouldReset")
+
         if (shouldReset) {
-            Logger.i("JoinViewModel: Resetting game state")
+            AppLogger.info("JoinViewModel", "Resetting game state")
             _message.value = "The host ended the game."
             _gameCode.value = ""
             _inGame.value = false

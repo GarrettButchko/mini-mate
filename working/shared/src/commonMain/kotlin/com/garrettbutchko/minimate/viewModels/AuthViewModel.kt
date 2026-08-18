@@ -1,7 +1,6 @@
 package com.garrettbutchko.minimate.viewModels
 
 import co.touchlab.skie.configuration.annotations.DefaultArgumentInterop
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.enums.SignInMethod
@@ -19,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.garrettbutchko.minimate.interfaces.AppNavigationManaging
 import com.garrettbutchko.minimate.extensions.safePhotoURL
+import com.garrettbutchko.minimate.utilities.AppLogger
 import dev.gitlive.firebase.auth.EmailAuthProvider
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -57,8 +57,6 @@ open class AuthViewModel(
     
     // Breaking circular dependency with lazy injection
     val userRepository: UserRepository by inject()
-
-    private val log = Logger.withTag("AuthViewModel")
 
     internal val _firebaseUser = MutableStateFlow<FirebaseUser?>(authRepository.currentUser)
     val firebaseUser: StateFlow<FirebaseUser?> = _firebaseUser.asStateFlow()
@@ -155,7 +153,7 @@ open class AuthViewModel(
         // Valid session → proceed normally
         if (result.getOrDefault(true)) return true
 
-        log.i("Account deleted on another device — cleaning up")
+        AppLogger.info("AuthViewModel", "Account deleted on another device — cleaning up")
         val userId = currentUserIdentifier
 
         runCatching { authRepository.logout() }
@@ -192,7 +190,7 @@ open class AuthViewModel(
         val loadedUser = try {
             userRepository.loadOrCreateUser(id = userId) { refreshedModel -> setUserModel(refreshedModel) }
         } catch (e: IllegalStateException) {
-            log.w("User load failed (transient?): ${e.message}. Retrying in 3s...")
+            AppLogger.warning("AuthViewModel", "User load failed (transient?): ${e.message}. Retrying in 3s...")
             delay(3_000.milliseconds)
             userRepository.loadOrCreateUser(id = userId) { refreshedModel -> setUserModel(refreshedModel) }
         }
@@ -329,7 +327,7 @@ open class AuthViewModel(
                     viewManager.navigateAfterSignIn()
                 }
             } catch (e: Exception) {
-                log.e(e) { "Failed to load or create user" }
+                AppLogger.error("AuthViewModel", "Failed to load or create user", e)
                 postAuthEvent(e.message, false)
             } finally {
                 _isLoadingUser.value = false

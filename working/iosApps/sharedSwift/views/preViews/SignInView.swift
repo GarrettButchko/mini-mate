@@ -246,7 +246,7 @@ struct StartButtons: View {
                     do {
                         try guestGame = await gameModel.kotlin.fetchGuestGame()
                     } catch {
-                        print("Error loading guest game: \(error)")
+                        AppLogger.shared.error(tag: "SignInView", message: "Error loading guest game: \(error)")
                     }
                 }
             }

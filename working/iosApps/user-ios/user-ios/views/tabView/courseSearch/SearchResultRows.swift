@@ -238,7 +238,7 @@ struct SearchResultRow: View {
                 let course = try await courseRepo.fetchCourseByName(name: name)
                 fetchedCourse = course
             } catch{
-                print("Preload failed for \(name): \(error.localizedDescription)")
+                AppLogger.shared.error(tag: "CourseSearchResultsView", message: "Preload failed for \(name): \(error.localizedDescription)")
             }
         }
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
 
 const PRICE_IDS: Record<string, string> = {
   partner: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ?? "",
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    console.error("checkout error", err);
+    logger.error("checkout", "Failed to create checkout session", err);
     return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
   }
 }

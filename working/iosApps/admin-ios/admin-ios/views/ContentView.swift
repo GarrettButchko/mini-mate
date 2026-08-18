@@ -45,7 +45,7 @@ struct ContentView: View {
                                     do {
                                         let _ = try await courseRepo.addOrUpdateCourse(course: course)
                                     } catch {
-                                        print("Error updating course color: \(error)")
+                                        AppLogger.shared.error(tag: "ContentView", message: "Error updating course color: \(error)")
                                     }
                                 }
             

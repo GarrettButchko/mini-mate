@@ -1,6 +1,5 @@
 package com.garrettbutchko.minimate.repositories
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.playerModels.LeaderboardEntry
 import com.garrettbutchko.minimate.dataModels.playerModels.Player
 import dev.gitlive.firebase.Firebase
@@ -9,14 +8,13 @@ import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.Direction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 class CourseLeaderboardRepository {
 
     private val db = Firebase.firestore
 
     // MARK: - Internal References
-
-    private val log = Logger.withTag("CourseLeaderboardRepo")
 
     private fun allTimeEntriesRef(courseID: String): CollectionReference {
         return db.collection("courses").document(courseID)
@@ -33,7 +31,7 @@ class CourseLeaderboardRepository {
                 .get()
             snapshot.documents.map { it.data() }
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to fetch top all time leaderboard for course: $courseID" }
+            AppLogger.error("CourseLeaderboardRepository", "Failed to fetch top all time leaderboard for course: $courseID", e)
             emptyList()
         }
     }
@@ -74,7 +72,7 @@ class CourseLeaderboardRepository {
             }
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to submit score for course: $courseID, player: ${player.id}" }
+            AppLogger.error("CourseLeaderboardRepository", "Failed to submit score for course: $courseID, player: ${player.id}", e)
             Result.failure(e)
         }
     }
@@ -86,7 +84,7 @@ class CourseLeaderboardRepository {
             allTimeEntriesRef(courseID).document(playerID).delete()
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to delete entry for course: $courseID, player: $playerID" }
+            AppLogger.error("CourseLeaderboardRepository", "Failed to delete entry for course: $courseID, player: $playerID", e)
             Result.failure(e)
         }
     }
@@ -122,7 +120,7 @@ class CourseLeaderboardRepository {
             batch.commit()
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to seed debug entries for course: $courseID" }
+            AppLogger.error("CourseLeaderboardRepository", "Failed to seed debug entries for course: $courseID", e)
             Result.failure(e)
         }
     }
@@ -146,7 +144,7 @@ class CourseLeaderboardRepository {
 
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to delete all entries for course: $courseID" }
+            AppLogger.error("CourseLeaderboardRepository", "Failed to delete all entries for course: $courseID", e)
             Result.failure(e)
         }
     }

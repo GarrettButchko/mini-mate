@@ -1,6 +1,6 @@
 package com.garrettbutchko.minimate.content.courseScreen
 
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 import android.Manifest
 import android.content.Intent
@@ -102,10 +102,10 @@ fun CourseScreen(
     ) { result ->
         val granted = result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        Logger.i("[CourseScreen] permission result granted=$granted")
+        AppLogger.info("CourseScreen", "permission result granted=$granted")
         runCatching { courseVM.requestLocationAccess() }
             .onFailure { error ->
-                Logger.i("[CourseScreen] permission callback error: ${error.message}")
+                AppLogger.error("CourseScreen", "permission callback error: ${error.message}")
             }
     }
 
@@ -137,8 +137,9 @@ fun CourseScreen(
     }
 
     LaunchedEffect(isLoadingCourses, isUpperHalf, mapItems.size, selectedCourse, nameExists.size) {
-        Logger.i(
-            "[CourseScreen] loading=$isLoadingCourses upperHalf=$isUpperHalf " +
+        AppLogger.info(
+            "CourseScreen",
+            "loading=$isLoadingCourses upperHalf=$isUpperHalf " +
                 "mapItems=${mapItems.size} selectedCourse=${selectedCourse?.name} " +
                 "nameExists=${nameExists.size}"
         )

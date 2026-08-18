@@ -1,6 +1,5 @@
 package com.garrettbutchko.minimate.repositories
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.dataModels.courseModels.SmallCourse
@@ -19,14 +18,13 @@ import dev.gitlive.firebase.firestore.FieldValue.Companion.delete
 import dev.gitlive.firebase.storage.Data
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 class CourseRepository {
 
     private val db = Firebase.firestore
     private val storage = Firebase.storage
     private val collectionName = "courses"
-
-    private val log = Logger.withTag("CourseRepo")
 
     // MARK: General Course
     suspend fun addOrUpdateCourse(course: Course): Result<Boolean> {
@@ -39,7 +37,7 @@ class CourseRepository {
             ref.set(course, merge = true)
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore encoding error:" + e.message }
+            AppLogger.error("CourseRepository", "Firestore encoding error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -55,7 +53,7 @@ class CourseRepository {
 
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to delete course item: " + e.message }
+            AppLogger.error("CourseRepository", "Failed to delete course item: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -69,7 +67,7 @@ class CourseRepository {
             }
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to set course item: " + e.message }
+            AppLogger.error("CourseRepository", "Failed to set course item: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -90,7 +88,7 @@ class CourseRepository {
                 mapItem?.let { createCourseWithMapItem(id, it) }
             }
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to fetch course: " + e.message }
+            AppLogger.error("CourseRepository", "Failed to fetch course: ${e.message}", e)
             null
         }
     }
@@ -106,7 +104,7 @@ class CourseRepository {
                 mapItem?.let { createCourseWithMapItem(id, it) }
             }
         } catch (e: Exception) {
-            Logger.i("❌ Failed to fetch course: ${e.message}")
+            AppLogger.error("CourseRepository", "Failed to fetch course: ${e.message}", e)
             null
         }
     }
@@ -130,7 +128,7 @@ class CourseRepository {
                 .get()
                 .documents.firstOrNull()?.data()
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore query error:" + e.message }
+            AppLogger.error("CourseRepository", "Firestore query error: ${e.message}", e)
             null
         }
     }
@@ -148,7 +146,7 @@ class CourseRepository {
                 .get()
             !snapshot.documents.isEmpty()
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore query error:" + e.message }
+            AppLogger.error("CourseRepository", "Firestore query error: ${e.message}", e)
             false
         }
     }
@@ -164,10 +162,10 @@ class CourseRepository {
         )
         return try {
             ref.set(newCourse)
-            log.i { "Created new course:$courseID" }
+            AppLogger.success("CourseRepository", "Created new course: $courseID")
             newCourse
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore write error:" + e.message }
+            AppLogger.error("CourseRepository", "Firestore write error: ${e.message}", e)
             null
         }
     }
@@ -180,7 +178,7 @@ class CourseRepository {
                 .get()
                 .documents.firstOrNull()?.id
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore query error:" + e.message }
+            AppLogger.error("CourseRepository", "Firestore query error: ${e.message}", e)
             null
         }
     }
@@ -202,7 +200,7 @@ class CourseRepository {
                     SmallCourse(id = doc.id, name = name)
                 }
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to fetch course IDs: " + e.message }
+            AppLogger.error("CourseRepository", "Failed to fetch course IDs: ${e.message}", e)
             emptyList()
         }
     }
@@ -218,7 +216,7 @@ class CourseRepository {
             }
             return true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to remove email:" + e.message }
+            AppLogger.error("CourseRepository", "Failed to remove email: ${e.message}", e)
             return false
         }
     }
@@ -233,7 +231,7 @@ class CourseRepository {
             }
             return true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to add admin ID:" + e.message }
+            AppLogger.error("CourseRepository", "Failed to add admin ID: ${e.message}", e)
             return false
         }
     }
@@ -244,7 +242,7 @@ class CourseRepository {
             ref.putData(imageData)
             return ref.getDownloadUrl()
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to upload course image:" + e.message }
+            AppLogger.error("CourseRepository", "Failed to upload course image: ${e.message}", e)
             return null
         }
     }
@@ -255,7 +253,7 @@ class CourseRepository {
             ref.delete()
             true
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to delete course image:" + e.message }
+            AppLogger.error("CourseRepository", "Failed to delete course image: ${e.message}", e)
             false
         }
     }

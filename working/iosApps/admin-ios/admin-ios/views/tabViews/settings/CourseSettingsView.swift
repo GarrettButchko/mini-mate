@@ -770,7 +770,7 @@ struct ParConfigurationSectionView: View {
                             do {
                                 let _ = try await LBRepo.deleteAllEntries(courseID: course.id)
                             } catch {
-                                print("Error deleting leaderboard entries: \(error)")
+                                AppLogger.shared.error(tag: "ParConfigurationSectionView", message: "Error deleting leaderboard entries: \(error)")
                             }
                         }
                     }

@@ -13,11 +13,8 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import co.touchlab.kermit.Logger
 
 class FoursquareSearchService(private val apiKey: String = BuildKonfig.FOURSQUARE_API_KEY) {
-
-    private val log = Logger.withTag("FoursquareSearchService")
 
     private val jsonParser = Json { ignoreUnknownKeys = true }
 
@@ -81,14 +78,14 @@ class FoursquareSearchService(private val apiKey: String = BuildKonfig.FOURSQUAR
 
             if (response.status.value !in 200..299) {
                 val errorBody = response.body<String>()
-                log.e("[FoursquareSearchService] HTTP ${response.status.value}: $errorBody")
+                AppLogger.error("FoursquareSearchService", "HTTP ${response.status.value}: $errorBody")
                 return emptyList()
             }
 
             val body = response.body<FsqSearchResponse>()
 
             if (body.results.isEmpty()) {
-                log.i("[FoursquareSearchService] no results from Foursquare for center=${center} radius=$radiusInMeters limit=$limit")
+                AppLogger.info("FoursquareSearchService", "no results from Foursquare for center=${center} radius=$radiusInMeters limit=$limit")
                 return emptyList()
             }
 
@@ -109,10 +106,10 @@ class FoursquareSearchService(private val apiKey: String = BuildKonfig.FOURSQUAR
                 )
             }.take(limit)
 
-            log.i("[FoursquareSearchService] mapped=${mapped.size} raw=${body.results.size} limit=$limit")
+            AppLogger.info("FoursquareSearchService", "mapped=${mapped.size} raw=${body.results.size} limit=$limit")
             return mapped
         } catch (e: Exception) {
-            log.e(e) { "[FoursquareSearchService] search failed: ${e.message}" }
+            AppLogger.error("FoursquareSearchService", "search failed: ${e.message}", e)
             return emptyList()
         }
     }

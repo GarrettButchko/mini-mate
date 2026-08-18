@@ -48,16 +48,16 @@ struct ContentView: View {
         .onChange(of: scenePhase) { oldPhase, newPhase in
             switch newPhase {
             case .active:
-                print("App is active")
+                AppLogger.shared.info(tag: "ContentView", message: "App is active")
                 // Only re-request if a decision has already been made — if still
                 // .notDetermined, the next cold start (onAppear) will handle it.
                 if CLLocationManager().authorizationStatus != .notDetermined {
                     locationHandler.requestLocationAccess()
                 }
             case .inactive:
-                print("App is inactive")
+                AppLogger.shared.info(tag: "ContentView", message: "App is inactive")
             case .background:
-                print("App moved to background")
+                AppLogger.shared.info(tag: "ContentView", message: "App moved to background")
             @unknown default:
                 break
             }
@@ -236,7 +236,7 @@ struct MainTabView: View {
                         }
                     }
                 } catch {
-                    print("⚠️ User load failed (\(error.localizedDescription)), retrying in 3s...")
+                    AppLogger.shared.warning(tag: "MainTabView", message: "User load failed (\(error.localizedDescription)), retrying in 3s...")
                     try await Task.sleep(nanoseconds: 3_000_000_000)
                     authModel.userModel = try await userRepo.loadOrCreateUser(id: id) { refreshedModel in
                         DispatchQueue.main.async {
@@ -247,7 +247,7 @@ struct MainTabView: View {
                 authModel.kotlinVM.markUserSynced()
             }
             
-            print("Running after user data loaded - userModel is now: \(String(describing: authModel.userModel?.name)) with \(authModel.userModel?.gameIDs.count ?? 0) games")
+            AppLogger.shared.info(tag: "MainTabView", message: "Running after user data loaded - userModel is now: \(String(describing: authModel.userModel?.name)) with \(authModel.userModel?.gameIDs.count ?? 0) games")
             
             // Mark initial load complete
             initialLoadComplete = true

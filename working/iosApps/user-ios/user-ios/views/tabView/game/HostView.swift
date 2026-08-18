@@ -359,7 +359,7 @@ struct HostView: View {
                         do {
                             let _ = try await localRepo.deleteGuestGame()
                         } catch {
-                            print("Error deleting guest game: \(error)")
+                            AppLogger.shared.error(tag: "HostView", message: "Error deleting guest game: \(error)")
                         }
                     }
                 },

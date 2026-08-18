@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const { password, uid } = await req.json();
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ courseId });
   } catch (err) {
-    console.error("add-course error", err);
+    logger.error("add-course", "Failed to add course", err);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }

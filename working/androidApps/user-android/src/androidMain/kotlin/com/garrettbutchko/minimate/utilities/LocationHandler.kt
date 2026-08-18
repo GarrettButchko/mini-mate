@@ -19,11 +19,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 class LocationHandler(private val context: Context) : LocationFinding {
-
-    private val log = Logger.withTag("LocationHandler")
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -36,7 +34,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
             longitude = location.longitude
         )
         _userLocation.value = coordinate
-        log.i("[LocationHandler] location update lat=${coordinate.latitude} lng=${coordinate.longitude}")
+        AppLogger.info("LocationHandler", "location update lat=${coordinate.latitude} lng=${coordinate.longitude}")
     }
 
     private val _mapItems = MutableStateFlow<List<MapItemDTO>>(emptyList())
@@ -72,7 +70,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
         val hasAccess = fineGranted || coarseGranted
 
         _hasLocationAccess.value = hasAccess
-        log.i("[LocationHandler] requestLocationAccess hasAccess=$hasAccess")
+        AppLogger.info("LocationHandler", "requestLocationAccess hasAccess=$hasAccess")
         if (!hasAccess) {
             return
         }
@@ -87,7 +85,7 @@ class LocationHandler(private val context: Context) : LocationFinding {
 
         if (bestLastKnown != null) {
             _userLocation.value = CoordinateDTO(bestLastKnown.latitude, bestLastKnown.longitude)
-            log.i("[LocationHandler] lastKnown location lat=${bestLastKnown.latitude} lng=${bestLastKnown.longitude}")
+            AppLogger.info("LocationHandler", "lastKnown location lat=${bestLastKnown.latitude} lng=${bestLastKnown.longitude}")
         }
 
         if (!updatesRegistered) {
@@ -196,9 +194,9 @@ class LocationHandler(private val context: Context) : LocationFinding {
         completion: (Boolean, MapRegionData?) -> Unit
     ) {
         val userLoc = _userLocation.value
-        log.i("[LocationHandler] searchNearbyCourses start userLocation=$userLoc mapItems=${_mapItems.value.size}")
+        AppLogger.info("LocationHandler", "searchNearbyCourses start userLocation=$userLoc mapItems=${_mapItems.value.size}")
         if (userLoc == null) {
-            log.i("[LocationHandler] searchNearbyCourses aborted: user location is null")
+            AppLogger.info("LocationHandler", "searchNearbyCourses aborted: user location is null")
             requestLocationAccess()
             completion(false, null)
             return

@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 /**
  * A Jetpack Compose implementation of QRScannerView using Google Play Services Code Scanner.
@@ -40,7 +41,7 @@ fun QRScannerView(
                 onCanceled()
             }
             .addOnFailureListener { e ->
-                e.printStackTrace()
+                AppLogger.error("QRScannerView", "QR scan failed", e)
                 onCanceled()
             }
     }

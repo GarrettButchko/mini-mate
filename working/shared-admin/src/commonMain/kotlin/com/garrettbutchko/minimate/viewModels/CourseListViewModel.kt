@@ -19,7 +19,7 @@ import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Clock
 import kotlin.time.Instant
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.functions.functions
@@ -31,8 +31,6 @@ open class CourseListViewModel(
     private val lbRepo: CourseLeaderboardRepository = CourseLeaderboardRepository(),
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
-    private val log = Logger.withTag("CourseListViewModel")
-
     // MARK: - Published Properties
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
@@ -242,9 +240,9 @@ open class CourseListViewModel(
         if (uid != null) {
             val success = courseRepo.addAdminIDtoCourse(uid, courseID)
             if (success) {
-                log.i("✅ Course claimed and user ID added to adminIDs")
+                AppLogger.success("CourseListViewModel", "Course claimed and user ID added to adminIDs")
             } else {
-                log.i("❌ Failed to add user ID to course adminIDs")
+                AppLogger.error("CourseListViewModel", "Failed to add user ID to course adminIDs")
             }
         }
     }
@@ -295,9 +293,9 @@ open class CourseListViewModel(
             functions.httpsCallable("removeAdminFromCourse").invoke(
                 mapOf("userId" to userId, "courseId" to courseID)
             )
-            log.i("✅ removeAdminFromCourse succeeded")
+            AppLogger.success("CourseListViewModel", "removeAdminFromCourse succeeded")
         } catch (e: Exception) {
-            log.e(e) { "❌ removeAdminFromCourse failed: ${e.message}" }
+            AppLogger.error("CourseListViewModel", "removeAdminFromCourse failed: ${e.message}", e)
         }
     }
 

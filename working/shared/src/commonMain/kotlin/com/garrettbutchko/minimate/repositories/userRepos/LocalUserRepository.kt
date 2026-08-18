@@ -1,15 +1,11 @@
 package com.garrettbutchko.minimate.repositories.userRepos
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.room.dao.UserDao
 import com.garrettbutchko.minimate.dataModels.userModels.UserModel
+import com.garrettbutchko.minimate.utilities.AppLogger
 import dev.gitlive.firebase.firestore.Timestamp
 
 class LocalUserRepository(private val userDao: UserDao) {
-
-
-
-    private val log = Logger.withTag("UserLocalRepo")
 
     /**
      * Replaces Swift fetch(id: String).
@@ -19,7 +15,7 @@ class LocalUserRepository(private val userDao: UserDao) {
         return try {
             userDao.fetch(id)
         } catch (e: Exception) {
-            log.e(e) { "❌ Local fetch error for id: $id" }
+            AppLogger.error("UserLocalRepo", "Local fetch error for id: $id", e)
             null
         }
     }
@@ -38,10 +34,10 @@ class LocalUserRepository(private val userDao: UserDao) {
             }
 
             userDao.save(userToSave)
-            log.d { "📦 Local save successful for: ${userToSave.googleId}" }
+            AppLogger.success("UserLocalRepo", "Local save successful for: ${userToSave.googleId}")
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Local save error" }
+            AppLogger.error("UserLocalRepo", "Local save error", e)
             Result.success(false)
         }
     }
@@ -53,10 +49,10 @@ class LocalUserRepository(private val userDao: UserDao) {
     suspend fun delete(id: String): Result<Boolean> {
         return try {
             userDao.delete(id)
-            log.d { "🗑️ Local delete successful for id: $id" }
+            AppLogger.success("UserLocalRepo", "Local delete successful for id: $id")
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Local delete error for id: $id" }
+            AppLogger.error("UserLocalRepo", "Local delete error for id: $id", e)
             Result.success(false)
         }
     }

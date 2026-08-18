@@ -1,6 +1,6 @@
 package com.garrettbutchko.minimate.content.main
 
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -84,7 +84,7 @@ fun ProView(
             val upgraded = currentUser.copy(isPro = true)
             authModel.setUserModel(upgraded)
             authModel.userRepository.saveUnified(upgraded.googleId, upgraded)
-            Logger.i("✅ Pro purchase persisted for ${upgraded.googleId}. token=${purchase?.purchaseToken}")
+            AppLogger.success("ProView", "Pro purchase persisted for ${upgraded.googleId}. token=${purchase?.purchaseToken}")
             thankYou = true
             onShowSheetChange(false)
         }

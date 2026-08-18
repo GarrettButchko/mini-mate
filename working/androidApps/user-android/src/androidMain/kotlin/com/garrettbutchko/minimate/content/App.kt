@@ -1,6 +1,6 @@
 package com.garrettbutchko.minimate.content
 
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 import android.Manifest
 import android.content.Context
@@ -139,14 +139,14 @@ fun App() {
         locationHandler.requestLocationAccess()
     }
 
-    // Preserves the previous per-call-site Logger.i() error logging for sign-in
+    // Preserves the previous per-call-site AppLogger error logging for sign-in
     // failures, now centralized to one place since AuthViewModel surfaces them via
     // authEvent instead of an onErrorMessage lambda per call.
     val authEvent by authModel.authEvent.collectAsState()
     LaunchedEffect(authEvent) {
         val event = authEvent
         if (event != null) {
-            Logger.i("Sign-in status: ${event.message ?: "Unknown error"}")
+            AppLogger.info("App", "Sign-in status: ${event.message ?: "Unknown error"}")
             authModel.consumeAuthEvent()
         }
     }
@@ -219,7 +219,7 @@ fun App() {
                         authModel = authModel,
                         onSignInWithGoogle = {
                             if (defaultWebClientId.isBlank()) {
-                                Logger.i("Missing default_web_client_id string; Google sign-in not configured.")
+                                AppLogger.error("App", "Missing default_web_client_id string; Google sign-in not configured.")
                             } else {
                                 authModel.signInWithGoogleAndHandleResult(
                                     context = context,
@@ -393,7 +393,7 @@ private fun MainTabView(
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
-            Logger.i("Failed to bootstrap user data on Android: ${e.message}")
+            AppLogger.error("App", "Failed to bootstrap user data on Android: ${e.message}", e)
         } finally {
             authModel.setLoading(false)
         }

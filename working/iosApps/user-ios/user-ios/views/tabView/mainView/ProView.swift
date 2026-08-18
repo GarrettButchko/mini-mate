@@ -88,7 +88,7 @@ struct ProView: View {
             Button {
                 Task {
                     guard let product = iapManager.products.first else {
-                        print("No products available for purchase.")
+                        AppLogger.shared.warning(tag: "ProView", message: "No products available for purchase.")
                         return
                     }
 
@@ -111,9 +111,9 @@ struct ProView: View {
                     do {
                         try await AppStore.sync()
                         // Success handling (e.g., show confirmation)
-                        print("Successfully restored purchases.")
+                        AppLogger.shared.success(tag: "ProView", message: "Successfully restored purchases.")
                     } catch {
-                        print("Failed to restore purchases: \(error)")
+                        AppLogger.shared.error(tag: "ProView", message: "Failed to restore purchases: \(error)")
                     }
                 }
             }

@@ -1,6 +1,6 @@
 package com.garrettbutchko.minimate.content.helper
 
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
@@ -92,12 +92,12 @@ fun AddToLeaderBoardButton(
                                     val result = courseLeaderBoardRepo.submitScore(courseId, player)
                                     if (result.isSuccess) {
                                         added = true
-                                        Logger.i("Score submitted successfully!")
+                                        AppLogger.success("AddToLeaderBoardButton", "Score submitted successfully!")
                                     } else {
-                                        Logger.i("Submission failed: ${result.exceptionOrNull()?.message}")
+                                        AppLogger.warning("AddToLeaderBoardButton", "Submission failed: ${result.exceptionOrNull()?.message}")
                                     }
                                 } catch (e: Exception) {
-                                    Logger.i("Network or System Error: ${e.localizedMessage}")
+                                    AppLogger.error("AddToLeaderBoardButton", "Network or System Error: ${e.localizedMessage}", e)
                                 } finally {
                                     isSubmitting = false
                                 }

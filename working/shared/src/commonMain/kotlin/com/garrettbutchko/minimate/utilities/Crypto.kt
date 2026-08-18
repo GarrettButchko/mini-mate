@@ -1,7 +1,5 @@
 package com.garrettbutchko.minimate.utilities
 
-import co.touchlab.kermit.Logger
-
 /**
  * Generates a short SHA-256 hash.
  * Note: For pure KMP (iOS/Android), you'd typically use a library like
@@ -16,7 +14,7 @@ fun shortHash(text: String): String {
  */
 fun randomNonceString(length: Int = 32): String {
     val actualLength = if (length > 0) length else {
-        Logger.i("❌ Invalid length: $length, using default 32")
+        AppLogger.error("Crypto", "Invalid length: $length, using default 32")
         32
     }
 

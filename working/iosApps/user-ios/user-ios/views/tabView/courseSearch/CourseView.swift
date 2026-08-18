@@ -135,7 +135,7 @@ struct CourseView: View {
                     do {
                         foundCourse = try await courseRepo.fetchCourseByName(name: name)
                     } catch {
-                        print("Fetch failed for \(name): \(error.localizedDescription)")
+                        AppLogger.shared.error(tag: "CourseView", message: "Fetch failed for \(name): \(error.localizedDescription)")
                     }
                 }
 

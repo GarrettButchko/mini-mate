@@ -1,7 +1,6 @@
 package com.garrettbutchko.minimate.viewModels
 
-import co.touchlab.kermit.Logger
-
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
@@ -215,7 +214,7 @@ class GameViewModel(
             launch {
                 ref.valueEvents.collect { snapshot ->
                     if (!snapshot.exists && _game.value.id.isNotEmpty() && !_game.value.dismissed) {
-                        Logger.i("GameViewModel: Game node deleted remotely — treating as dismissed")
+                        AppLogger.info("GameViewModel", "Game node deleted remotely — treating as dismissed")
                         _game.update { it.copy(dismissed = true) }
                     }
                 }
@@ -266,17 +265,17 @@ class GameViewModel(
                             }
                             "started" -> {
                                 val value = rawValue as? Boolean ?: ((rawValue as? Number)?.toInt() == 1)
-                                Logger.i("GameViewModel: Metadata update - started: $value")
+                                AppLogger.info("GameViewModel", "Metadata update - started: $value")
                                 currentGame.copy(started = value)
                             }
                             "dismissed" -> {
                                 val value = rawValue as? Boolean ?: ((rawValue as? Number)?.toInt() == 1)
-                                Logger.i("GameViewModel: Metadata update - dismissed: $value")
+                                AppLogger.info("GameViewModel", "Metadata update - dismissed: $value")
                                 currentGame.copy(dismissed = value)
                             }
                             "completed" -> {
                                 val value = rawValue as? Boolean ?: ((rawValue as? Number)?.toInt() == 1)
-                                Logger.i("GameViewModel: Metadata update - completed: $value")
+                                AppLogger.info("GameViewModel", "Metadata update - completed: $value")
                                 currentGame.copy(completed = value)
                             }
                             else -> currentGame
@@ -492,7 +491,7 @@ class GameViewModel(
             stopListening()
             liveGameRepo.deleteGame(_game.value.id) { result ->
                 if (result) {
-                    Logger.i("Deleted Game id: ${_game.value.id} From Firebase")
+                    AppLogger.success("GameViewModel", "Deleted Game id: ${_game.value.id} From Firebase")
                 }
             }
         }
@@ -519,20 +518,20 @@ class GameViewModel(
                         stopListening()
                         resetGame()
 
-                        Logger.d("GameViewModel: Attempting to delete game after dismissal propagation. isOnlineGame: ${_onlineGame.value}, gameIdToDelete: $gameIdToDelete")
+                        AppLogger.debug("GameViewModel", "Attempting to delete game after dismissal propagation. isOnlineGame: ${_onlineGame.value}, gameIdToDelete: $gameIdToDelete")
 
                         // Then delete the game from Firebase
                         liveGameRepo.deleteGame(gameIdToDelete) { result ->
                             if (result) {
-                                Logger.i("Deleted Game id: $gameIdToDelete From Firebase")
+                                AppLogger.success("GameViewModel", "Deleted Game id: $gameIdToDelete From Firebase")
                             } else {
-                                Logger.e("FAILED to delete Game id: $gameIdToDelete From Firebase")
+                                AppLogger.error("GameViewModel", "FAILED to delete Game id: $gameIdToDelete From Firebase")
                             }
                             isDismissing = false
                         }
                     }
                 } else {
-                    Logger.e("GameViewModel: Failed to push dismissed state to Firebase. Not deleting game.")
+                    AppLogger.error("GameViewModel", "Failed to push dismissed state to Firebase. Not deleting game.")
                     isDismissing = false
                 }
             }
@@ -543,7 +542,7 @@ class GameViewModel(
                 stopListening()
                 resetGame()
                 isDismissing = false
-                Logger.d("GameViewModel: Game dismissed locally (not online or ID empty).")
+                AppLogger.debug("GameViewModel", "Game dismissed locally (not online or ID empty).")
             }
         }
     }
@@ -573,25 +572,33 @@ class GameViewModel(
                         continuation.resume(Pair(l, r))
                     }
                 }
-                Logger.i("✅ Saved Game: local=$localOK, remote=$remoteOK")
+                AppLogger.success("GameViewModel", "Saved Game: local=$localOK, remote=$remoteOK")
                 saveSuccess = localOK || remoteOK
             } else {
                 val success = localGameRepository.save(finished)
-                Logger.i(if (success) "✅ Saved Guest Game" else "❌ Failed to save guest game")
+                if (success) {
+                    AppLogger.success("GameViewModel", "Saved Guest Game")
+                } else {
+                    AppLogger.error("GameViewModel", "Failed to save guest game")
+                }
                 saveSuccess = success
             }
 
             if (!saveSuccess) {
-                Logger.i("⚠️ Skipping user save - game save failed")
+                AppLogger.warning("GameViewModel", "Skipping user save - game save failed")
                 resetGameState()
                 return@launch
             }
 
             val currentUserId = authModel.userModel.value?.googleId
             if (currentUserId != null && (currentUserId == finished.hostUserId || isGuest)) {
-                Logger.i("running analytics")
+                AppLogger.info("GameViewModel", "running analytics")
                 val success = processAnalytics(finished)
-                Logger.i(if (success) "✅ Analytics processed" else "❌ Analytics failed")
+                if (success) {
+                    AppLogger.success("GameViewModel", "Analytics processed")
+                } else {
+                    AppLogger.error("GameViewModel", "Analytics failed")
+                }
                 analyticsSuccess = success
             }
 
@@ -603,14 +610,18 @@ class GameViewModel(
                 val (localUserOK, remoteUserOK) = authModel.userRepository.saveUnified(updatedUserModel.googleId, updatedUserModel)
                 authModel.setUserModel(updatedUserModel)
                 val userSaveSuccess = localUserOK || remoteUserOK
-                Logger.i(if (userSaveSuccess) "✅ Updated user model with new game ID" else "❌ Failed to update user model")
+                if (userSaveSuccess) {
+                    AppLogger.success("GameViewModel", "Updated user model with new game ID")
+                } else {
+                    AppLogger.error("GameViewModel", "Failed to update user model")
+                }
                 if (!analyticsSuccess) {
-                    Logger.i("⚠️ Analytics encountered issues, but game was saved")
+                    AppLogger.warning("GameViewModel", "Analytics encountered issues, but game was saved")
                 }
             } else {
-                Logger.i("❌ Unable to save user model - missing userModel or currentUserIdentifier")
+                AppLogger.error("GameViewModel", "Unable to save user model - missing userModel or currentUserIdentifier")
             }
-            
+
             if (finished.id.isNotEmpty() && _onlineGame.value) {
                 val result = suspendCancellableCoroutine { continuation ->
                     liveGameRepo.deleteGame(finished.id) {
@@ -618,7 +629,7 @@ class GameViewModel(
                     }
                 }
                 if (result) {
-                    Logger.i("Deleted Game id: ${finished.id} From Firebase Live DB")
+                    AppLogger.success("GameViewModel", "Deleted Game id: ${finished.id} From Firebase Live DB")
                 }
             }
 
@@ -635,7 +646,7 @@ class GameViewModel(
     suspend fun processAnalytics(finishedGame: Game): Boolean {
         val courseID = finishedGame.courseID
         if (courseID == null) {
-            Logger.i("No Course Id No Analytics")
+            AppLogger.warning("GameViewModel", "No Course Id No Analytics")
             return false
         }
 

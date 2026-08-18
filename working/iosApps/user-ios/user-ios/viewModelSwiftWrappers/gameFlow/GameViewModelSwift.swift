@@ -108,7 +108,7 @@ class GameViewModelSwift: ObservableObject {
                 isLoading.wrappedValue = bool.boolValue
             }
         } catch {
-            print("Error searching nearby: \(error)")
+            AppLogger.shared.error(tag: "GameViewModelSwift", message: "Error searching nearby: \(error)")
         }
     }
     
@@ -134,7 +134,7 @@ class GameViewModelSwift: ObservableObject {
                 }
             )
         } catch {
-            print("Retry failed: \(error)")
+            AppLogger.shared.error(tag: "GameViewModelSwift", message: "Retry failed: \(error)")
         }
     }
 }

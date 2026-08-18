@@ -218,7 +218,7 @@ struct ScoreCardView: View {
                         Text("Par: \(course.pars[i - 1])")
                             .font(.caption)
                             .onAppear {
-                                print(course.pars[i - 1])
+                                AppLogger.shared.debug(tag: "ScoreCardView", message: "Hole \(i) par: \(course.pars[i - 1])")
                             }
                     }
                 }
@@ -366,7 +366,7 @@ struct HoleRowView: View {
                 selectedNumber: Binding(
                     get: { Int(hole.strokes) },
                     set: { new in
-                        print("DEBUG: Changing hole \(hole.number) to \(new) strokes.")
+                        AppLogger.shared.debug(tag: "HoleRowView", message: "Changing hole \(hole.number) to \(new) strokes.")
                         hole.strokes = Int32(new)
 
                         // Force TotalRowView to redraw

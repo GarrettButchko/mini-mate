@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
 import com.garrettbutchko.minimate.viewModels.CourseMapActions
+import com.garrettbutchko.minimate.utilities.AppLogger
 import androidx.core.net.toUri
 
 class CourseMapActionsImpl(private val context: Context) : CourseMapActions {
@@ -27,7 +28,7 @@ class CourseMapActionsImpl(private val context: Context) : CourseMapActions {
                 context.startActivity(geoIntent)
             } catch (ex: Exception) {
                 // If even generic geo intent fails (rare)
-                ex.printStackTrace()
+                AppLogger.error("CourseMapActionsImpl", "Course map action failed", ex)
             }
         }
     }

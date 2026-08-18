@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const { email, customerId } = await req.json();
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    console.error("portal error", err);
+    logger.error("portal", "Failed to create portal session", err);
     return NextResponse.json({ error: "Failed to open billing portal" }, { status: 500 });
   }
 }

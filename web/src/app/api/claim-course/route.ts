@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrCreateCoursePassword } from "@/lib/coursePassword";
 import { deliverCode } from "@/lib/sendCode";
 import { db } from "@/lib/firebaseAdmin";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const { placeId, courseName, contact } = await req.json();
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, method });
   } catch (err) {
-    console.error("claim-course error", err);
+    logger.error("claim-course", "Failed to claim course", err);
     return NextResponse.json({ error: "Failed to claim course" }, { status: 500 });
   }
 }

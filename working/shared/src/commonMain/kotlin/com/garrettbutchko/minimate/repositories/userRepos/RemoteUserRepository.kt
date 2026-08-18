@@ -1,6 +1,5 @@
 package com.garrettbutchko.minimate.repositories.userRepos
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.dataModels.userModels.UserDTO
 import dev.gitlive.firebase.Firebase
@@ -9,6 +8,7 @@ import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.storage.storage
 import dev.gitlive.firebase.storage.Data
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 class RemoteUserRepository {
     private val db = Firebase.firestore
@@ -16,14 +16,12 @@ class RemoteUserRepository {
     private val storage = Firebase.storage
     private val usersCollection = db.collection("users")
 
-    private val log = Logger.withTag("RemoteUserRepo")
-
     suspend fun fetchByEmail(email: String): UserModel? {
         return try {
             val docs = usersCollection.where { "email" equalTo email }.limit(1).get().documents
             if (docs.isEmpty()) null else docs.first().data<UserDTO>().toUser()
         } catch (e: Exception) {
-            log.e(e) { "❌ fetchByEmail error: ${e.message}" }
+            AppLogger.error("RemoteUserRepository", "fetchByEmail error: ${e.message}", e)
             null
         }
     }
@@ -37,7 +35,7 @@ class RemoteUserRepository {
                 null
             }
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore fetch error: ${e.message}" }
+            AppLogger.error("RemoteUserRepository", "Firestore fetch error: ${e.message}", e)
             null
         }
     }
@@ -52,7 +50,7 @@ class RemoteUserRepository {
             usersCollection.document(userModel.googleId).set(updatedUser.toDTO(), merge = true)
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore save error: ${e.message}" }
+            AppLogger.error("RemoteUserRepository", "Firestore save error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -62,13 +60,13 @@ class RemoteUserRepository {
             val ref = usersCollection.document(id)
             val snapshot = ref.get()
             if (!snapshot.exists) {
-                log.w { "⚠️ User doc does not exist" }
+                AppLogger.warning("RemoteUserRepository", "User doc does not exist")
                 return Result.success(true)
             }
             ref.delete()
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ Firestore delete error: ${e.message}" }
+            AppLogger.error("RemoteUserRepository", "Firestore delete error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -78,7 +76,7 @@ class RemoteUserRepository {
             usersCollection.document(userModel.googleId).set(userModel.toDTO())
             Result.success(true)
         } catch (e: Exception) {
-            log.e(e) { "❌ saveReplace error: ${e.message}" }
+            AppLogger.error("RemoteUserRepository", "saveReplace error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -96,17 +94,17 @@ class RemoteUserRepository {
 
             ref.putData(imageData)
             val url = ref.getDownloadUrl()
-            
+
             try {
                 // In GitLive Firebase SDK, updateProfile uses photoUrl (String)
                 currentUser.updateProfile(photoUrl = url)
             } catch (e: Exception) {
-                log.e(e) { "⚠️ Failed to set Auth photoURL: ${e.message}" }
+                AppLogger.error("RemoteUserRepository", "Failed to set Auth photoURL: ${e.message}", e)
             }
 
             Result.success(url)
         } catch (e: Exception) {
-            log.e(e) { "❌ Failed to upload profile photo: ${e.message}" }
+            AppLogger.error("RemoteUserRepository", "Failed to upload profile photo: ${e.message}", e)
             Result.failure(e)
         }
     }

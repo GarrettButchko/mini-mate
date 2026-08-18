@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import co.touchlab.kermit.Logger
+import com.garrettbutchko.minimate.utilities.AppLogger
 import dev.gitlive.firebase.firestore.Timestamp
 
 class StatsViewModel(
@@ -22,8 +22,6 @@ class StatsViewModel(
     private val gameManager: GameManager,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
-    private val log = Logger.withTag("StatsViewModel")
-
     // MARK: - UI State
     private val _pickedSection = MutableStateFlow("Games")
     val pickedSection: StateFlow<String> = _pickedSection.asStateFlow()
@@ -128,9 +126,9 @@ class StatsViewModel(
                 localGameRepo.delete(gameID)
                 remoteGameRepo.delete(gameID)
 
-                log.d { "🗑️ Game $gameID removed from user and deleted from repositories" }
+                AppLogger.debug("StatsViewModel", "Game $gameID removed from user and deleted from repositories")
             } catch (e: Exception) {
-                log.e(e) { "❌ Failed to complete game deletion for $gameID" }
+                AppLogger.error("StatsViewModel", "Failed to complete game deletion for $gameID", e)
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.garrettbutchko.minimate.viewModels
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.interfaces.AppNavigationManaging
 import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
@@ -14,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 enum class DeleteAlertType {
     GOOGLE,
@@ -32,7 +32,6 @@ class ProfileViewModel(
     // Reuse AuthViewModel's already-injected repository instead of constructing a
     // second, disconnected FirebaseAuthRepository instance.
     private val authRepository get() = authModel.authRepository
-    private val log = Logger.withTag("ProfileViewModel")
 
     // MARK: - Published UI State
 
@@ -76,7 +75,7 @@ class ProfileViewModel(
             delay(2000)
             val completed = localGameRepo.deleteByIds(gameIDs)
             if (completed) {
-                log.i { "🗑️ Deleted all local games for user" }
+                AppLogger.success("ProfileViewModel", "Deleted all local games for user")
             }
             userRepo.deleteUnified(userID)
         }

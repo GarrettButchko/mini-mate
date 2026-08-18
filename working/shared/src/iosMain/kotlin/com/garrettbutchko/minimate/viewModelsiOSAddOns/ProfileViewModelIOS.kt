@@ -2,7 +2,6 @@
 
 package com.garrettbutchko.minimate.viewModelsiOSAddOns
 
-import co.touchlab.kermit.Logger
 import com.garrettbutchko.minimate.dataModels.userModels.UserModel
 import com.garrettbutchko.minimate.utilities.randomNonceString
 import com.garrettbutchko.minimate.utilities.sha256
@@ -20,10 +19,10 @@ import com.garrettbutchko.minimate.viewModels.ProfileViewModel
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import com.garrettbutchko.minimate.utilities.AppLogger
 
 private var activeReauthCoordinator: AppleRauthCoordinator? = null
 private var currentNonce: String? = null
-private val log = Logger.withTag("ProfileViewModelIOS")
 
 /**
  * Finishing step for iOS's Google reauth-and-delete: ProfileViewModelSwift.swift runs
@@ -144,7 +143,7 @@ fun ProfileViewModel.managePictureChange(newImage: UIImage?) {
     coroutineScope.launch {
         val result = userRepo.uploadProfilePhoto(userId, data)
         if (result.isSuccess) {
-            log.i { "✅ Photo URL: ${result.getOrNull()}" }
+            AppLogger.success("ProfileViewModelIOS", "Photo URL: ${result.getOrNull()}")
         } else {
             setBotMessage("Photo upload failed: ${result.exceptionOrNull()?.message}")
             setIsRed(true)

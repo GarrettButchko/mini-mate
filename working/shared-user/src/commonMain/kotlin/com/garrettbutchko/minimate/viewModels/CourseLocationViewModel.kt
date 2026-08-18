@@ -1,7 +1,6 @@
 package com.garrettbutchko.minimate.viewModels
 
-import co.touchlab.kermit.Logger
-
+import com.garrettbutchko.minimate.utilities.AppLogger
 import com.garrettbutchko.minimate.dataModels.courseModels.Course
 import com.garrettbutchko.minimate.dataModels.courseModels.SocialLink
 import com.garrettbutchko.minimate.dataModels.mapModels.MapItemDTO
@@ -88,7 +87,7 @@ class CourseLocationViewModel(
     }
 
     fun claimCourse() {
-        Logger.i("Claim course button tapped.")
+        AppLogger.info("CourseLocationViewModel", "Claim course button tapped.")
     }
 
     private fun updateState(mapItem: MapItemDTO?) {
