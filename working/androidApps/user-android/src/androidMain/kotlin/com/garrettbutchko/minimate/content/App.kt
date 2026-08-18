@@ -67,12 +67,13 @@ import com.garrettbutchko.minimate.managers.ViewType
 import com.garrettbutchko.minimate.interfaces.LocationFinding
 import com.garrettbutchko.minimate.repositories.gameRepos.LocalGameRepository
 import com.garrettbutchko.minimate.utilities.NetworkChecker
+import com.garrettbutchko.minimate.viewModels.AuthFlowCallbacks
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.CourseViewModel
 import com.garrettbutchko.minimate.viewModels.GameViewModel
 import com.garrettbutchko.minimate.viewModels.StatsViewModel
-import com.garrettbutchko.minimate.viewModels.signInWithGoogle
-import com.garrettbutchko.minimate.viewModels.signInWithApple
+import com.garrettbutchko.minimate.viewModels.signInWithGoogleAndHandleResult
+import com.garrettbutchko.minimate.viewModels.signInWithAppleAndHandleResult
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import androidx.compose.ui.graphics.Color
@@ -136,6 +137,18 @@ fun App() {
 
     LaunchedEffect(Unit) {
         locationHandler.requestLocationAccess()
+    }
+
+    // Preserves the previous per-call-site Logger.i() error logging for sign-in
+    // failures, now centralized to one place since AuthViewModel surfaces them via
+    // authEvent instead of an onErrorMessage lambda per call.
+    val authEvent by authModel.authEvent.collectAsState()
+    LaunchedEffect(authEvent) {
+        val event = authEvent
+        if (event != null) {
+            Logger.i("Sign-in status: ${event.message ?: "Unknown error"}")
+            authModel.consumeAuthEvent()
+        }
     }
 
     LaunchedEffect(currentView) {
@@ -208,39 +221,31 @@ fun App() {
                             if (defaultWebClientId.isBlank()) {
                                 Logger.i("Missing default_web_client_id string; Google sign-in not configured.")
                             } else {
-                                authModel.signInWithGoogle(context,
-                                    defaultWebClientId
-                                ) { result, photoUrl, email ->
-                                    authModel.handleSignInResult(
-                                        result = result,
-                                        photoUrl = photoUrl,
-                                        email = email,
-                                        onErrorMessage = { msg, _ -> Logger.i("Google sign-in error: ${msg ?: "Unknown error"}") },
+                                authModel.signInWithGoogleAndHandleResult(
+                                    context = context,
+                                    serverClientId = defaultWebClientId,
+                                    callbacks = AuthFlowCallbacks(
                                         onClearGuestGame = {
                                             appScope.launch {
                                                 localGameRepo.deleteGuestGame()
                                             }
                                         }
                                     )
-                                }
+                                )
                             }
                         },
                         onSignInWithApple = {
-                            authModel.signInWithApple(context) { result, name, email, appleId ->
-                                authModel.handleAppleSignInResult(
-                                    result = result,
-                                    name = name,
-                                    email = email,
-                                    appleId = appleId,
-                                    guestGame = guestGame.value,
-                                    onErrorMessage = { msg, _ -> Logger.i("Apple sign-in error: ${msg ?: "Unknown error"}") },
+                            authModel.signInWithAppleAndHandleResult(
+                                context = context,
+                                guestGame = guestGame.value,
+                                callbacks = AuthFlowCallbacks(
                                     onClearGuestGame = {
                                         appScope.launch {
                                             localGameRepo.deleteGuestGame()
                                         }
                                     }
                                 )
-                            }
+                            )
                         },
                         onCreateGuestGame = { name, email ->
                             gameModel.createGame(

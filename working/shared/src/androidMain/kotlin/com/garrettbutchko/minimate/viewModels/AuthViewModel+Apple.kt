@@ -5,6 +5,8 @@ import android.content.Context
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.OAuthProvider
+import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.enums.SignInMethod
 import com.garrettbutchko.minimate.utilities.randomNonceString
 import com.garrettbutchko.minimate.utilities.sha256
 import dev.gitlive.firebase.auth.AuthCredential
@@ -131,4 +133,30 @@ private fun AuthViewModel.handleAppleAuthResult(
     // currentUser reads from the shared native FirebaseAuth instance, so the newly
     // signed-in user is already available as a gitlive FirebaseUser here.
     completion(Result.success(authRepository.currentUser), name, email, appleId)
+}
+
+/**
+ * Android counterpart to iOS's AuthViewModelIOS.kt::signInWithApple(authorization:...) —
+ * same "chain platform sign-in straight into handleSignInResult" shape, using Android's
+ * own Firebase-native OAuth flow instead of iOS's ASAuthorization input. Lets callers
+ * (App.kt in both apps) wire one call instead of manually chaining signInWithApple +
+ * handleSignInResult with nested lambdas at every call site. Errors surface via
+ * [AuthViewModel.authEvent] instead of a callback.
+ */
+fun AuthViewModel.signInWithAppleAndHandleResult(
+    context: Context,
+    guestGame: Game? = null,
+    callbacks: AuthFlowCallbacks = AuthFlowCallbacks()
+) {
+    signInWithApple(context) { result, name, email, appleId ->
+        handleSignInResult(
+            result = result,
+            signInMethod = SignInMethod.APPLE,
+            name = name,
+            email = email,
+            appleId = appleId,
+            guestGame = guestGame,
+            callbacks = callbacks
+        )
+    }
 }

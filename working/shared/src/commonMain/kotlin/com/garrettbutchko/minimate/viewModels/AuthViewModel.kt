@@ -31,6 +31,24 @@ data class FirebaseUserSmallData (
     val photoURL: String?
 )
 
+/** A one-shot status message from a sign-in/sign-up flow — an error or just info. */
+data class AuthStatusEvent(val message: String?, val isError: Boolean)
+
+/**
+ * The lambdas that genuinely differ per call site across createOrSignInUserAndNavigateToHome,
+ * handleSignInResult, signUpUIManage, and signInUIManage — bundled so callers only override
+ * what they actually need instead of retyping all of them at every call. onErrorMessage isn't
+ * here: it's now [AuthViewModel.authEvent], a StateFlow each screen collects once instead of
+ * a lambda passed to every call.
+ */
+data class AuthFlowCallbacks(
+    val onClearGuestGame: (Game?) -> Unit = {},
+    val onClearForm: () -> Unit = {},
+    val onShowSignUp: () -> Unit = {},
+    val onShowVerifyEmail: () -> Unit = {},
+    val onSuccess: () -> Unit = {}
+)
+
 open class AuthViewModel(
     val authRepository: FirebaseAuthRepository,
     val viewManager: AppNavigationManaging,
@@ -42,7 +60,7 @@ open class AuthViewModel(
 
     private val log = Logger.withTag("AuthViewModel")
 
-    private val _firebaseUser = MutableStateFlow<FirebaseUser?>(authRepository.currentUser)
+    internal val _firebaseUser = MutableStateFlow<FirebaseUser?>(authRepository.currentUser)
     val firebaseUser: StateFlow<FirebaseUser?> = _firebaseUser.asStateFlow()
 
     private val _currentUserIdentifier = MutableStateFlow(authRepository.currentUser?.uid)
@@ -53,6 +71,18 @@ open class AuthViewModel(
 
     private val _isLoadingUser = MutableStateFlow(false)
     val isLoadingUser: StateFlow<Boolean> = _isLoadingUser.asStateFlow()
+
+    private val _authEvent = MutableStateFlow<AuthStatusEvent?>(null)
+    val authEvent: StateFlow<AuthStatusEvent?> = _authEvent.asStateFlow()
+
+    fun consumeAuthEvent() { _authEvent.value = null }
+
+    // internal, not private: platform-specific extensions (AuthViewModelIOS.kt,
+    // AuthViewModel+Apple.kt/+Google.kt) that fail before ever reaching
+    // handleSignInResult still need to be able to post to the same event channel.
+    internal fun postAuthEvent(message: String?, isError: Boolean) {
+        _authEvent.value = AuthStatusEvent(message, isError)
+    }
 
     /**
      * True once loadOrCreateUser has fully reconciled local + remote this session
@@ -93,7 +123,7 @@ open class AuthViewModel(
     val currentUserIdentifier: String?
         get() = _currentUserIdentifier.value
 
-    private fun syncCurrentUserIdentifier() {
+    internal fun syncCurrentUserIdentifier() {
         _currentUserIdentifier.value = _firebaseUser.value?.uid
     }
 
@@ -171,11 +201,6 @@ open class AuthViewModel(
         return loadedUser
     }
 
-    fun refreshUID() {
-        _firebaseUser.value = authRepository.currentUser
-        syncCurrentUserIdentifier()
-    }
-
     suspend fun refreshVerificationStatus(): Boolean {
         return authRepository.refreshVerificationStatus()
     }
@@ -239,10 +264,6 @@ open class AuthViewModel(
         }
     }
 
-    open suspend fun reauthenticateWithGoogle(): Result<AuthCredential> {
-        return Result.failure(Exception("Not implemented on this platform"))
-    }
-
     fun signInWithGoogleTokens(
         idToken: String,
         accessToken: String?,
@@ -262,19 +283,22 @@ open class AuthViewModel(
             }
         }
     }
-    @DefaultArgumentInterop.Enabled
-    fun createOrSignInUserAndNavigateToHome(
+    /**
+     * Only ever called internally (by handleSignInResult, signUpUIManage, signInUIManage —
+     * no external caller on either platform), so this stays private instead of exposing
+     * its own lambda-heavy signature.
+     */
+    private fun createOrSignInUserAndNavigateToHome(
         user: FirebaseUserSmallData,
         name: String? = null,
         signInMethod: SignInMethod? = null,
         appleId: String? = null,
         navToHome: Boolean = true,
         guestGame: Game? = null,
-        onErrorMessage: (String?, Boolean) -> Unit,
-        onClearGuestGame: (Game?) -> Unit,
+        callbacks: AuthFlowCallbacks = AuthFlowCallbacks(),
         completion: () -> Unit = {}
     ) {
-        onErrorMessage(null, false)
+        postAuthEvent(null, false)
         coroutineScope.launch {
             _isLoadingUser.value = true
             try {
@@ -289,16 +313,16 @@ open class AuthViewModel(
                 ) { immediateLocalUser ->
                     setUserModel(immediateLocalUser)
                 }
-                
+
                 // Final fully-resolved remote/local reconciled user
                 setUserModel(loadedUser)
                 hasSyncedUserThisSession = true
-                
+
                 // If the guest game was used as part of creation, we clear it out.
-                // UserRepository doesn't expose a "creation" boolean directly in loadOrCreateUser anymore, 
+                // UserRepository doesn't expose a "creation" boolean directly in loadOrCreateUser anymore,
                 // but we can just invoke onClearGuestGame if a guestGame was provided.
                 if (guestGame != null) {
-                    onClearGuestGame(null)
+                    callbacks.onClearGuestGame(null)
                 }
 
                 if (navToHome) {
@@ -306,7 +330,7 @@ open class AuthViewModel(
                 }
             } catch (e: Exception) {
                 log.e(e) { "Failed to load or create user" }
-                onErrorMessage(e.message, false)
+                postAuthEvent(e.message, false)
             } finally {
                 _isLoadingUser.value = false
                 completion()
@@ -319,11 +343,7 @@ open class AuthViewModel(
         emailInput: String,
         passwordInput: String,
         guestGame: Game? = null,
-        onClearForm: () -> Unit,
-        onSuccess: () -> Unit,
-        onErrorMessage: (String?, Boolean) -> Unit,
-        onClearGuestGame: (Game?) -> Unit,
-        onShowVerifyEmail: () -> Unit = {},
+        callbacks: AuthFlowCallbacks = AuthFlowCallbacks(),
         keepSignedIn: Boolean = false
     ) {
         coroutineScope.launch {
@@ -332,7 +352,7 @@ open class AuthViewModel(
 
             if (result.isFailure) {
                 _isLoadingUser.value = false
-                onErrorMessage(result.exceptionOrNull()?.message ?: "Sign up failed", false)
+                postAuthEvent(result.exceptionOrNull()?.message ?: "Sign up failed", false)
                 return@launch
             }
 
@@ -350,8 +370,7 @@ open class AuthViewModel(
                     signInMethod = SignInMethod.EMAIL,
                     navToHome = false,
                     guestGame = guestGame,
-                    onErrorMessage = onErrorMessage,
-                    onClearGuestGame = onClearGuestGame
+                    callbacks = callbacks
                 ) {
                     coroutineScope.launch {
                         // Keep the loading state alive through the verification
@@ -361,13 +380,13 @@ open class AuthViewModel(
 
                         if (verificationResult.isFailure) {
                             val error = verificationResult.exceptionOrNull()?.message ?: "Unknown error"
-                            onErrorMessage("Couldn’t send verification email: $error", false)
+                            postAuthEvent("Couldn’t send verification email: $error", false)
                         } else {
-                            onClearForm()
-                            onSuccess()
-                            onShowVerifyEmail()
+                            callbacks.onClearForm()
+                            callbacks.onSuccess()
+                            callbacks.onShowVerifyEmail()
                             if (!keepSignedIn) {
-                                onErrorMessage("Please Verify Your Email To Continue", true)
+                                postAuthEvent("Please Verify Your Email To Continue", true)
                                 logout()
                             }
                         }
@@ -380,84 +399,57 @@ open class AuthViewModel(
         }
     }
 
+    /**
+     * Common finish-line for every provider's sign-in flow: given a Firebase auth result
+     * plus whatever profile fields that provider already extracted, resolve/create the
+     * UserModel and navigate home. Merged from what used to be two near-identical
+     * functions (handleSignInResult for Google, handleAppleSignInResult for Apple) —
+     * they differed only in which optional fields get threaded through and the
+     * SignInMethod value, so [signInMethod] is now just another parameter.
+     *
+     * [photoUrl] is an override for [FirebaseUser.safePhotoURL] (e.g. Google's SDK often
+     * already hands back a profile picture URL) — passing null just falls back to the
+     * platform-safe read, same as the other safePhotoURL() call sites in this class.
+     */
     @DefaultArgumentInterop.Enabled
     fun handleSignInResult(
         result: Result<FirebaseUser?>,
-        photoUrl: String? = null,
-        email: String? = null,
-        onErrorMessage: (String?, Boolean) -> Unit,
-        onClearGuestGame: (Game?) -> Unit
-    ) {
-        result.fold(
-            onSuccess = { firebaseUser ->
-                if (firebaseUser != null) {
-                    _firebaseUser.value = firebaseUser
-                    syncCurrentUserIdentifier()
-
-                    val newPhotoURL = photoUrl ?: firebaseUser.photoURL
-
-                    val userData = FirebaseUserSmallData(
-                        uid = firebaseUser.uid,
-                        email = firebaseUser.email ?: email,
-                        displayName = firebaseUser.displayName,
-                        photoURL = newPhotoURL
-                    )
-                    createOrSignInUserAndNavigateToHome(
-                        user = userData,
-                        signInMethod = SignInMethod.GOOGLE,
-                        onErrorMessage = onErrorMessage,
-                        onClearGuestGame = onClearGuestGame
-                    )
-                } else {
-                    _isLoadingUser.value = false
-                    onErrorMessage("User data is missing.", true)
-                }
-            },
-            onFailure = { error ->
-                _isLoadingUser.value = false
-                onErrorMessage(error.message ?: "An unknown error occurred", true)
-            }
-        )
-    }
-
-    @DefaultArgumentInterop.Enabled
-    fun handleAppleSignInResult(
-        result: Result<FirebaseUser?>,
+        signInMethod: SignInMethod,
         name: String? = null,
+        photoUrl: String? = null,
         email: String? = null,
         appleId: String? = null,
         guestGame: Game? = null,
-        onErrorMessage: (String?, Boolean) -> Unit,
-        onClearGuestGame: (Game?) -> Unit
+        callbacks: AuthFlowCallbacks = AuthFlowCallbacks()
     ) {
         result.fold(
             onSuccess = { firebaseUser ->
                 if (firebaseUser != null) {
                     _firebaseUser.value = firebaseUser
                     syncCurrentUserIdentifier()
+
                     val userData = FirebaseUserSmallData(
                         uid = firebaseUser.uid,
                         email = firebaseUser.email ?: email,
                         displayName = firebaseUser.displayName,
-                        photoURL = firebaseUser.safePhotoURL()
+                        photoURL = firebaseUser.safePhotoURL(photoUrl)
                     )
                     createOrSignInUserAndNavigateToHome(
                         user = userData,
                         name = name,
-                        signInMethod = SignInMethod.APPLE,
+                        signInMethod = signInMethod,
                         appleId = appleId,
                         guestGame = guestGame,
-                        onErrorMessage = onErrorMessage,
-                        onClearGuestGame = onClearGuestGame
+                        callbacks = callbacks
                     )
                 } else {
                     _isLoadingUser.value = false
-                    onErrorMessage("User data is missing.", true)
+                    postAuthEvent("User data is missing.", true)
                 }
             },
             onFailure = { error ->
                 _isLoadingUser.value = false
-                onErrorMessage(error.message ?: "An unknown error occurred", true)
+                postAuthEvent(error.message ?: "An unknown error occurred", true)
             }
         )
     }
@@ -467,11 +459,7 @@ open class AuthViewModel(
         emailInput: String,
         passwordInput: String,
         guestGame: Game? = null,
-        onClearForm: () -> Unit,
-        onShowSignUp: () -> Unit,
-        onErrorMessage: (String?, Boolean) -> Unit,
-        onClearGuestGame: (Game?) -> Unit,
-        onShowVerifyEmail: () -> Unit = {},
+        callbacks: AuthFlowCallbacks = AuthFlowCallbacks(),
         keepSignedIn: Boolean = false
     ) {
         coroutineScope.launch {
@@ -480,11 +468,11 @@ open class AuthViewModel(
 
             if (result.isFailure) {
                 _isLoadingUser.value = false
-                onShowSignUp()
-                onErrorMessage("No User Found Please Sign Up", false)
+                callbacks.onShowSignUp()
+                postAuthEvent("No User Found Please Sign Up", false)
                 return@launch
             }
-            
+
             val firebaseUser = result.getOrNull()
 
             if (firebaseUser != null) {
@@ -501,8 +489,7 @@ open class AuthViewModel(
                         user = userData,
                         signInMethod = SignInMethod.EMAIL,
                         guestGame = guestGame,
-                        onErrorMessage = onErrorMessage,
-                        onClearGuestGame = onClearGuestGame
+                        callbacks = callbacks
                     ){}
 
                 } else {
@@ -513,12 +500,12 @@ open class AuthViewModel(
 
                         val error = verificationResult.exceptionOrNull()?.message ?: "Unknown error"
 
-                        onErrorMessage("Couldn’t send verification email: ${error}", false)
+                        postAuthEvent("Couldn’t send verification email: ${error}", false)
                     } else {
-                        onClearForm()
-                        onShowVerifyEmail()
+                        callbacks.onClearForm()
+                        callbacks.onShowVerifyEmail()
                         if (!keepSignedIn) {
-                            onErrorMessage("Please Verify Your Email To Continue", true)
+                            postAuthEvent("Please Verify Your Email To Continue", true)
                             logout() // Logout AFTER email is sent
                         }
                     }

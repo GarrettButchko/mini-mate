@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
+import com.garrettbutchko.minimate.viewModels.AuthFlowCallbacks
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
 import androidx.compose.ui.res.colorResource
@@ -87,6 +88,19 @@ fun EmailPasswordView(
         if (errorMessage != null) {
             delay(250.milliseconds)
             isLoading = false
+        }
+    }
+
+    // Mirror AuthViewModel's one-shot status events (sign-in/sign-up errors, previously
+    // an onErrorMessage callback) into this screen's local error state, consuming each
+    // one right after it's picked up.
+    val authEvent by authModel?.authEvent?.collectAsState() ?: remember { mutableStateOf(null) }
+    LaunchedEffect(authEvent) {
+        val event = authEvent
+        if (event != null) {
+            errorMessage = event.message
+            isErrorPositive = event.isError
+            authModel?.consumeAuthEvent()
         }
     }
 
@@ -271,26 +285,24 @@ fun EmailPasswordView(
                                         passwordInput = password,
                                         guestGame = guestGame,
                                         // Email is kept so the verify screen can name the address
-                                        onClearForm = {
-                                            onPasswordChange("")
-                                            onConfirmPasswordChange("")
-                                            isLoading = false
-                                        },
-                                        onShowSignUp = {
-                                            showSignUp = true
-                                            isLoading = false
-                                        },
-                                        onErrorMessage = { msg, type ->
-                                            errorMessage = msg
-                                            isErrorPositive = type
-                                        },
-                                        onClearGuestGame = { /* Handled in AuthViewModel / Repo */ },
-                                        onShowVerifyEmail = {
-                                            errorMessage = null
-                                            isErrorPositive = false
-                                            showSignUp = false
-                                            showVerifyEmail = true
-                                        },
+                                        callbacks = AuthFlowCallbacks(
+                                            onClearForm = {
+                                                onPasswordChange("")
+                                                onConfirmPasswordChange("")
+                                                isLoading = false
+                                            },
+                                            onShowSignUp = {
+                                                showSignUp = true
+                                                isLoading = false
+                                            },
+                                            onClearGuestGame = { /* Handled in AuthViewModel / Repo */ },
+                                            onShowVerifyEmail = {
+                                                errorMessage = null
+                                                isErrorPositive = false
+                                                showSignUp = false
+                                                showVerifyEmail = true
+                                            }
+                                        ),
                                         // Stay signed in so refreshVerificationStatus() has a
                                         // session to poll; finishVerification logs out after.
                                         keepSignedIn = true
@@ -300,26 +312,24 @@ fun EmailPasswordView(
                                         emailInput = email,
                                         passwordInput = password,
                                         guestGame = guestGame,
-                                        onClearForm = {
-                                            onPasswordChange("")
-                                            onConfirmPasswordChange("")
-                                            isLoading = false
-                                        },
-                                        onSuccess = {
-                                            showSignUp = false
-                                            isLoading = false
-                                        },
-                                        onErrorMessage = { msg, type ->
-                                            errorMessage = msg
-                                            isErrorPositive = type
-                                        },
-                                        onClearGuestGame = { /* Handled in AuthViewModel / Repo */ },
-                                        onShowVerifyEmail = {
-                                            errorMessage = null
-                                            isErrorPositive = false
-                                            showSignUp = false
-                                            showVerifyEmail = true
-                                        },
+                                        callbacks = AuthFlowCallbacks(
+                                            onClearForm = {
+                                                onPasswordChange("")
+                                                onConfirmPasswordChange("")
+                                                isLoading = false
+                                            },
+                                            onSuccess = {
+                                                showSignUp = false
+                                                isLoading = false
+                                            },
+                                            onClearGuestGame = { /* Handled in AuthViewModel / Repo */ },
+                                            onShowVerifyEmail = {
+                                                errorMessage = null
+                                                isErrorPositive = false
+                                                showSignUp = false
+                                                showVerifyEmail = true
+                                            }
+                                        ),
                                         keepSignedIn = true
                                     )
                                 }

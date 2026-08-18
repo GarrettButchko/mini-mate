@@ -29,8 +29,8 @@ import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import com.garrettbutchko.minimate.viewModels.CourseListViewModel
 import com.garrettbutchko.minimate.viewModels.LeaderBoardViewModel
 import com.garrettbutchko.minimate.viewModels.analytics.AnalyticsViewModel
-import com.garrettbutchko.minimate.viewModels.signInWithGoogle
-import com.garrettbutchko.minimate.viewModels.signInWithApple
+import com.garrettbutchko.minimate.viewModels.signInWithGoogleAndHandleResult
+import com.garrettbutchko.minimate.viewModels.signInWithAppleAndHandleResult
 import com.garrettbutchko.minimate.content.MiniMateDarkColorScheme
 import com.garrettbutchko.minimate.content.MiniMateLightColorScheme
 import org.koin.compose.koinInject
@@ -111,27 +111,13 @@ fun App() {
                         onNavigateToCourseList = { viewManager.navigateToCourseList() },
                         authViewModel = authViewModel,
                         onSignInWithGoogle = {
-                            authViewModel.signInWithGoogle(context, webClientId) { result, photoUrl, email ->
-                                authViewModel.handleSignInResult(
-                                    result = result,
-                                    photoUrl = photoUrl,
-                                    email = email,
-                                    onErrorMessage = { _, _ -> },
-                                    onClearGuestGame = { }
-                                )
-                            }
+                            authViewModel.signInWithGoogleAndHandleResult(
+                                context = context,
+                                serverClientId = webClientId
+                            )
                         },
                         onSignInWithApple = {
-                            authViewModel.signInWithApple(context) { result, name, email, appleId ->
-                                authViewModel.handleAppleSignInResult(
-                                    result = result,
-                                    name = name,
-                                    email = email,
-                                    appleId = appleId,
-                                    onErrorMessage = { _, _ -> },
-                                    onClearGuestGame = { }
-                                )
-                            }
+                            authViewModel.signInWithAppleAndHandleResult(context = context)
                         },
                         modifier = Modifier.fillMaxSize()
                     )

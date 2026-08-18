@@ -29,6 +29,7 @@ class AuthViewModelSwift: ObservableObject {
     @Published private var _firebaseUser: Firebase_authFirebaseUser?
     @Published private var _userModel: UserModel?
     @Published private var _isLoading: Bool = false
+    @Published private var _authEvent: AuthStatusEvent?
 
     // 2. Public Computed Properties with Getters and Setters
     var userModel: UserModel? {
@@ -47,10 +48,17 @@ class AuthViewModelSwift: ObservableObject {
 
     var isLoading: Bool {
         get { _isLoading }
-        set { 
+        set {
             self._isLoading = newValue
-            kotlinVM.setLoading(state: newValue) 
+            kotlinVM.setLoading(state: newValue)
         }
+    }
+
+    /// One-shot status message from a sign-in/sign-up flow — mirrors [AuthViewModel.authEvent].
+    var authEvent: AuthStatusEvent? { _authEvent }
+
+    func consumeAuthEvent() {
+        kotlinVM.consumeAuthEvent()
     }
 
     init() {
@@ -79,31 +87,12 @@ class AuthViewModelSwift: ObservableObject {
                 self._isLoading = loading.boolValue
             }
         }
-    }
-    
-    
-    func createOrSignInUserAndNavigateToHome(
-        user: FirebaseUserSmallData,
-        name: String? = nil,
-        errorMessage: Binding<(message: String?,type: Bool)>,
-        signInMethod: SignInMethod? = nil,
-        appleId: String? = nil,
-        navToHome: Bool = true,
-        guestGame: Binding<Game?>,
-        completion: @escaping(() -> Void)){
-            kotlinVM.createOrSignInUserAndNavigateToHome(
-                user: user,
-                name: name,
-                signInMethod: signInMethod,
-                appleId: appleId,
-                navToHome: navToHome,
-                guestGame: guestGame.wrappedValue) { message, type in
-                    errorMessage.wrappedValue = (message, type.boolValue)
-                } onClearGuestGame: { game in
-                    guestGame.wrappedValue = game
-                } completion: {
-                    completion()
-                }
+
+        Task {
+            for await event in kotlinVM.authEvent {
+                self._authEvent = event
+            }
+        }
     }
 
     func signInUIManage(
@@ -120,25 +109,25 @@ class AuthViewModelSwift: ObservableObject {
             emailInput: email.wrappedValue,
             passwordInput: password.wrappedValue,
             guestGame: guestGame.wrappedValue,
-            onClearForm: {
-                password.wrappedValue  = ""
-                confirmPassword.wrappedValue  = ""
-                isTextFieldFocused.wrappedValue = nil
-            },
-            onShowSignUp: {
-                showSignUp.wrappedValue = true
-            },
-            onErrorMessage: { message, type in
-                errorMessage.wrappedValue = (message, type.boolValue)
-            },
-            onClearGuestGame: { game in
-                guestGame.wrappedValue = game
-            },
-            onShowVerifyEmail: {
-                errorMessage.wrappedValue = (nil, false)
-                showSignUp.wrappedValue = false
-                showVerifyEmail.wrappedValue = true
-            },
+            callbacks: AuthFlowCallbacks(
+                onClearGuestGame: { game in
+                    guestGame.wrappedValue = game
+                },
+                onClearForm: {
+                    password.wrappedValue = ""
+                    confirmPassword.wrappedValue = ""
+                    isTextFieldFocused.wrappedValue = nil
+                },
+                onShowSignUp: {
+                    showSignUp.wrappedValue = true
+                },
+                onShowVerifyEmail: {
+                    errorMessage.wrappedValue = (nil, false)
+                    showSignUp.wrappedValue = false
+                    showVerifyEmail.wrappedValue = true
+                },
+                onSuccess: {}
+            ),
             keepSignedIn: true
         )
     }
@@ -157,25 +146,25 @@ class AuthViewModelSwift: ObservableObject {
             emailInput: email.wrappedValue,
             passwordInput: password.wrappedValue,
             guestGame: guestGame.wrappedValue,
-            onClearForm: {
-                password.wrappedValue = ""
-                confirmPassword.wrappedValue = ""
-                isTextFieldFocused.wrappedValue = nil
-            },
-            onSuccess: {
-                showSignUp.wrappedValue = false
-            },
-            onErrorMessage: { message, type in
-                errorMessage.wrappedValue = (message, type.boolValue)
-            },
-            onClearGuestGame: { game in
-                guestGame.wrappedValue = game
-            },
-            onShowVerifyEmail: {
-                errorMessage.wrappedValue = (nil, false)
-                showSignUp.wrappedValue = false
-                showVerifyEmail.wrappedValue = true
-            },
+            callbacks: AuthFlowCallbacks(
+                onClearGuestGame: { game in
+                    guestGame.wrappedValue = game
+                },
+                onClearForm: {
+                    password.wrappedValue = ""
+                    confirmPassword.wrappedValue = ""
+                    isTextFieldFocused.wrappedValue = nil
+                },
+                onShowSignUp: {},
+                onShowVerifyEmail: {
+                    errorMessage.wrappedValue = (nil, false)
+                    showSignUp.wrappedValue = false
+                    showVerifyEmail.wrappedValue = true
+                },
+                onSuccess: {
+                    showSignUp.wrappedValue = false
+                }
+            ),
             keepSignedIn: true
         )
     }
@@ -240,8 +229,13 @@ class AuthViewModelSwift: ObservableObject {
                     photoUrl: profileURL,
                     email: email,
                     guestGame: guestGame,
-                    onErrorMessage: { message, type in onErrorMessage(message, type.boolValue) },
-                    onClearGuestGame: onClearGuestGame
+                    callbacks: AuthFlowCallbacks(
+                        onClearGuestGame: onClearGuestGame,
+                        onClearForm: {},
+                        onShowSignUp: {},
+                        onShowVerifyEmail: {},
+                        onSuccess: {}
+                    )
                 )
             }
         }
@@ -307,12 +301,15 @@ class AuthViewModelSwift: ObservableObject {
             kotlinVM.signInWithApple(
                 authorization: authorization,
                 guestGame: guestGame.wrappedValue,
-                onErrorMessage: { message, type in
-                    errorMessage.wrappedValue = (message, type.boolValue)
-                },
-                onClearGuestGame: { game in
-                    guestGame.wrappedValue = game
-                }
+                callbacks: AuthFlowCallbacks(
+                    onClearGuestGame: { game in
+                        guestGame.wrappedValue = game
+                    },
+                    onClearForm: {},
+                    onShowSignUp: {},
+                    onShowVerifyEmail: {},
+                    onSuccess: {}
+                )
             )
         case .failure(let error):
             errorMessage.wrappedValue = (error.localizedDescription, true)

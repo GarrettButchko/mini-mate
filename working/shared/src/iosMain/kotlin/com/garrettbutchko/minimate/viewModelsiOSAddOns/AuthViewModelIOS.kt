@@ -3,8 +3,10 @@
 package com.garrettbutchko.minimate.viewModelsiOSAddOns
 
 import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.enums.SignInMethod
 import com.garrettbutchko.minimate.utilities.randomNonceString
 import com.garrettbutchko.minimate.utilities.sha256
+import com.garrettbutchko.minimate.viewModels.AuthFlowCallbacks
 import com.garrettbutchko.minimate.viewModels.AuthViewModel
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.OAuthProvider
@@ -16,14 +18,19 @@ import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
 
+/** iOS-only shim: re-read the current Firebase user into the VM and re-sync the identifier. */
+fun AuthViewModel.refreshUID() {
+    _firebaseUser.value = authRepository.currentUser
+    syncCurrentUserIdentifier()
+}
+
 fun AuthViewModel.signInWithGoogleAndHandleResult(
     idToken: String,
     accessToken: String?,
     photoUrl: String?,
     email: String?,
     guestGame: Game? = null,
-    onErrorMessage: (String?, Boolean) -> Unit,
-    onClearGuestGame: (Game?) -> Unit
+    callbacks: AuthFlowCallbacks = AuthFlowCallbacks()
 ) {
     val credential = GoogleAuthProvider.credential(idToken, accessToken)
     setLoading(true)
@@ -31,10 +38,10 @@ fun AuthViewModel.signInWithGoogleAndHandleResult(
         val result = authRepository.signInWithCredential(credential)
         handleSignInResult(
             result = result,
+            signInMethod = SignInMethod.GOOGLE,
             photoUrl = photoUrl,
             email = email,
-            onErrorMessage = onErrorMessage,
-            onClearGuestGame = onClearGuestGame
+            callbacks = callbacks
         )
     }
 }
@@ -51,21 +58,20 @@ fun AuthViewModel.handleSignInWithAppleRequest(request: ASAuthorizationAppleIDRe
 fun AuthViewModel.signInWithApple(
     authorization: ASAuthorization,
     guestGame: Game? = null,
-    onErrorMessage: (String?, Boolean) -> Unit,
-    onClearGuestGame: (Game?) -> Unit
+    callbacks: AuthFlowCallbacks = AuthFlowCallbacks()
 ) {
     val appleCred = authorization.credential as? ASAuthorizationAppleIDCredential
     val nonce = currentNonce
     val tokenData = appleCred?.identityToken
-    
+
     if (appleCred == null || nonce == null || tokenData == null) {
-        onErrorMessage("Invalid Apple credential", true)
+        postAuthEvent("Invalid Apple credential", true)
         return
     }
 
     val idToken = NSString.create(data = tokenData, encoding = NSUTF8StringEncoding)?.toString()
     if (idToken == null) {
-        onErrorMessage("Could not parse identity token", true)
+        postAuthEvent("Could not parse identity token", true)
         return
     }
 
@@ -95,15 +101,15 @@ fun AuthViewModel.signInWithApple(
     coroutineScope.launch {
         val result = authRepository.signInWithCredential(oauthCred)
 
-        // Hand over to the shared Apple sign-in result handler
-        handleAppleSignInResult(
+        // Hand over to the shared sign-in result handler
+        handleSignInResult(
             result = result,
+            signInMethod = SignInMethod.APPLE,
             name = name,
             email = appleEmail,
             appleId = appleId,
             guestGame = guestGame,
-            onErrorMessage = onErrorMessage,
-            onClearGuestGame = onClearGuestGame
+            callbacks = callbacks
         )
     }
 }

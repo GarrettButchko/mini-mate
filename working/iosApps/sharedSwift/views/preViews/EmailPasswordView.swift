@@ -208,6 +208,14 @@ struct EmailPasswordView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showVerifyEmail)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: errorMessage.message)
         .onChange(of: showVerifyEmail) { _, _ in isLoading = false }
+        // Mirrors AuthViewModel's one-shot status events (sign-in/sign-up errors,
+        // previously delivered via an onErrorMessage callback) into this screen's
+        // local error state, consuming each one right after it's picked up.
+        .onChange(of: authModel.authEvent) { _, event in
+            guard let event else { return }
+            errorMessage = (event.message, event.isError)
+            authModel.consumeAuthEvent()
+        }
         .task(id: showVerifyEmail) {
             guard showVerifyEmail else { return }
             while !Task.isCancelled {

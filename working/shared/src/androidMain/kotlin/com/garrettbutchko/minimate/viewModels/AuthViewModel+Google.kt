@@ -6,6 +6,8 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
+import com.garrettbutchko.minimate.dataModels.gameModels.Game
+import com.garrettbutchko.minimate.enums.SignInMethod
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dev.gitlive.firebase.auth.AuthCredential
@@ -132,6 +134,34 @@ fun getGoogleCredential(
         completion(Result.success(credential))
     } catch (e: Exception) {
         completion(Result.failure(e))
+    }
+}
+
+/**
+ * Android counterpart to iOS's AuthViewModelIOS.kt::signInWithGoogleAndHandleResult — same
+ * "chain platform sign-in straight into handleSignInResult" shape, using Android's own
+ * Credential Manager flow instead of iOS's raw idToken/accessToken inputs. Lets callers
+ * (App.kt in both apps) wire one call instead of manually chaining signInWithGoogle +
+ * handleSignInResult with nested lambdas at every call site.
+ *
+ * No guestGame param — handleSignInResult doesn't take one (Google sign-in doesn't merge
+ * guest games in this app, only Apple/email do); iOS's version has the same unused param,
+ * not worth copying here. Errors surface via [AuthViewModel.authEvent] instead of a
+ * callback — collect it once per screen instead of wiring a lambda through every call.
+ */
+fun AuthViewModel.signInWithGoogleAndHandleResult(
+    context: Context,
+    serverClientId: String,
+    callbacks: AuthFlowCallbacks = AuthFlowCallbacks()
+) {
+    signInWithGoogle(context, serverClientId) { result, photoUrl, email ->
+        handleSignInResult(
+            result = result,
+            signInMethod = SignInMethod.GOOGLE,
+            photoUrl = photoUrl,
+            email = email,
+            callbacks = callbacks
+        )
     }
 }
 
