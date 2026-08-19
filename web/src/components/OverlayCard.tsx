@@ -1,12 +1,14 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
 
-export function OverlayCard({ open, children, maxWidth = 400, backdropRadius = 28, floating = false, onBackdropClick }: {
+export function OverlayCard({ open, children, maxWidth = 400, backdropRadius = 28, floating = false, viewport = false, onBackdropClick }: {
   open: boolean;
   children: React.ReactNode;
   maxWidth?: number;
   backdropRadius?: number;
   floating?: boolean;
+  /** Covers the full browser viewport (position: fixed) instead of the nearest positioned ancestor. */
+  viewport?: boolean;
   onBackdropClick?: () => void;
 }) {
   return (
@@ -18,9 +20,9 @@ export function OverlayCard({ open, children, maxWidth = 400, backdropRadius = 2
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           style={{
-            position: "absolute", inset: 0,
+            position: viewport ? "fixed" : "absolute", inset: 0,
             background: "rgba(0,0,0,0.5)",
-            zIndex: 10,
+            zIndex: viewport ? 1000 : 10,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

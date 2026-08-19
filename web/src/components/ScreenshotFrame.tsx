@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { OverlayCard } from "./OverlayCard";
+import { IPHONE_CORNER_RATIO, IPHONE_SCREEN_ASPECT } from "@/lib/iphoneFrame";
 
 interface Props {
   imageSrc: string | null;
@@ -11,7 +12,9 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export default function ScreenshotFrame({ imageSrc, imageAlt, frameWidth = 100, frameHeight = 200, children }: Props) {
+const LIGHTBOX_HEIGHT = "min(82vh, 720px)";
+
+export default function ScreenshotFrame({ imageSrc, imageAlt, frameWidth = 100, frameHeight = frameWidth / IPHONE_SCREEN_ASPECT, children }: Props) {
   const [open, setOpen] = useState(false);
 
   const openLightbox = () => {
@@ -36,8 +39,8 @@ export default function ScreenshotFrame({ imageSrc, imageAlt, frameWidth = 100, 
         className="shrink-0"
       >
         <div
-          className="rounded-[28px] overflow-hidden flex items-center justify-center transition-opacity hover:opacity-80"
-          style={{ width: frameWidth, height: frameHeight, border: "2px solid var(--glass-border)", background: "var(--surface)" }}
+          className="overflow-hidden flex items-center justify-center transition-opacity hover:opacity-80"
+          style={{ width: frameWidth, height: frameHeight, borderRadius: frameWidth * IPHONE_CORNER_RATIO, background: "var(--surface)", boxShadow: "var(--shadow)" }}
         >
           {imageSrc ? (
             <Image src={imageSrc} alt={imageAlt} width={frameWidth} height={frameHeight} className="w-full h-full object-cover" />
@@ -57,8 +60,13 @@ export default function ScreenshotFrame({ imageSrc, imageAlt, frameWidth = 100, 
               alt={imageAlt}
               width={400}
               height={800}
-              className="rounded-[44px] shadow-2xl"
-              style={{ width: "auto", height: "min(82vh, 720px)", pointerEvents: "auto" }}
+              style={{
+                width: "auto",
+                height: LIGHTBOX_HEIGHT,
+                borderRadius: `calc(${LIGHTBOX_HEIGHT} * ${IPHONE_SCREEN_ASPECT} * ${IPHONE_CORNER_RATIO})`,
+                boxShadow: "var(--shadow)",
+                pointerEvents: "auto",
+              }}
               onClick={(e) => e.stopPropagation()}
             />
           )}

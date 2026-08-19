@@ -92,7 +92,7 @@ export default function CoursesPage() {
         <button
           onClick={findNearMe}
           disabled={search.loading}
-          className="w-full font-semibold text-white hover:opacity-90 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 mb-4 flex items-center justify-center gap-2"
+          className="w-full font-semibold text-white hover:opacity-90 hover:scale-101 active:scale-99 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 mb-4 flex items-center justify-center gap-2"
           style={{ background: "#AF52DE", borderRadius: 9999, height: 50, fontSize: 15 }}
         >
           {search.loading ? "Searching nearby…" : (

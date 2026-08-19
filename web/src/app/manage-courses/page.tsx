@@ -292,7 +292,7 @@ export default function ManageCoursesPage() {
                     onChange={(e) => setCode(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" && code.trim() && !busy) tryAdd(); }}
                     placeholder="Enter password"
-                    style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em" }}
+                    style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--text)" }}
                   />
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>

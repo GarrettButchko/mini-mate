@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import FaqSection from "@/components/FaqSection";
 import TestimonialGrid from "@/components/TestimonialGrid";
 import FeatureGrid from "@/components/FeatureGrid";
+import HeroPhoneVideo from "@/components/HeroPhoneVideo";
 import GetStartedButton from "@/components/GetStartedButton";
 import { tiers, type Tier, type TierFeature } from "@/lib/tiers";
 
@@ -17,12 +18,12 @@ const steps = [
 ];
 
 const highlights = [
-  { icon: MapPin, title: "Verified map listing", desc: "Show up when players search for mini golf near them.", imageSrc: null as string | null, imageAlt: "Map listing screen" },
-  { icon: Palette, title: "Custom branding", desc: "Your colors and logo on scorecards and your course profile.", imageSrc: null as string | null, imageAlt: "Custom branding screen" },
-  { icon: Megaphone, title: "In-app advertising", desc: "Serve your own ads to players inside the app.", imageSrc: null as string | null, imageAlt: "In-app advertising screen" },
-  { icon: Trophy, title: "Leaderboards", desc: "Run your own course leaderboard — players compete, you own the data.", imageSrc: null as string | null, imageAlt: "Leaderboard screen" },
-  { icon: BarChart2, title: "Analytics dashboard", desc: "Retention, growth, and experience metrics in a beautiful interface.", imageSrc: null as string | null, imageAlt: "Analytics dashboard screen" },
-  { icon: Users, title: "Player emails", desc: "Download a CSV of emails from players who've visited your course.", imageSrc: null as string | null, imageAlt: "Player emails screen" },
+  { icon: MapPin, title: "Verified map listing", desc: "Show up when players search for mini golf near them.", imageSrc: "/screenshots/map-listing.png", imageAlt: "Map listing screen" },
+  { icon: Palette, title: "Custom branding", desc: "Your colors and logo on scorecards and your course profile.", imageSrc: "/screenshots/custom-branding.png", imageAlt: "Custom branding screen" },
+  { icon: Megaphone, title: "In-app advertising", desc: "Serve your own ads to players inside the app.", imageSrc: "/screenshots/app-advertising.png", imageAlt: "In-app advertising screen" },
+  { icon: Trophy, title: "Leaderboards", desc: "Run your own course leaderboard — players compete, you own the data.", imageSrc: "/screenshots/leaderboard.png", imageAlt: "Leaderboard screen" },
+  { icon: BarChart2, title: "Analytics dashboard", desc: "Retention, growth, and experience metrics in a beautiful interface.", imageSrc: "/screenshots/analytics-dashboard.png", imageAlt: "Analytics dashboard screen" },
+  { icon: Users, title: "Player emails", desc: "Download a CSV of emails from players who've visited your course.", imageSrc: "/screenshots/player-emails.png", imageAlt: "Player emails screen" },
 ];
 
 const testimonials = [
@@ -130,7 +131,7 @@ export default function ForCoursesPage() {
             </div>
           </div>
           <div className="shrink-0 flex justify-center">
-            <div className="rounded-[44px]" style={{ width: 260, height: 520, border: "2px solid rgba(255,255,255,0.25)", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(20px)" }} />
+            <HeroPhoneVideo src="/videos/admin-main.mp4" />
           </div>
         </div>
       </section>

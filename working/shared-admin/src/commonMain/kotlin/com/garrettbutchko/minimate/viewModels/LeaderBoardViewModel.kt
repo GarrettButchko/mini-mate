@@ -17,6 +17,9 @@ open class LeaderBoardViewModel(
     private val _allTimeLeaderboard = MutableStateFlow<List<LeaderboardEntry>>(emptyList())
     val allTimeLeaderboard: StateFlow<List<LeaderboardEntry>> = _allTimeLeaderboard.asStateFlow()
 
+    private val _debugError = MutableStateFlow<String?>(null)
+    val debugError: StateFlow<String?> = _debugError.asStateFlow()
+
     private var listenJob: Job? = null
 
     // MARK: - Lifecycle
@@ -43,15 +46,20 @@ open class LeaderBoardViewModel(
     // MARK: - Actions
     
     fun seedDebugData(courseID: String) {
+        _debugError.value = "Seeding…"
         coroutineScope.launch {
-            lbRepo.deleteAllEntries(courseID)
             lbRepo.seedDebugEntries(courseID)
+                .onSuccess { _debugError.value = "Seeded 25 players" }
+                .onFailure { _debugError.value = it.message ?: "Failed to seed debug players" }
         }
     }
 
     fun clearDebugData(courseID: String) {
+        _debugError.value = "Clearing…"
         coroutineScope.launch {
             lbRepo.deleteAllEntries(courseID)
+                .onSuccess { _debugError.value = "Cleared all entries" }
+                .onFailure { _debugError.value = it.message ?: "Failed to clear entries" }
         }
     }
 

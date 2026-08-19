@@ -42,10 +42,14 @@ export interface FirestoreUser {
   ballColorDT: string | null;
 }
 
+export type AccountNotice = "signedOut" | "accountDeleted" | "accountDeletedElsewhere";
+
 interface AuthContextValue {
   user: User | null;
   firestoreUser: FirestoreUser | null;
   loading: boolean;
+  notice: AccountNotice | null;
+  dismissNotice: () => void;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
@@ -75,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [firestoreUser, setFirestoreUser] = useState<FirestoreUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState<AccountNotice | null>(null);
   const firestoreUnsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -134,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // was deleted on another device). Tear down the listener and sign out.
             firestoreUnsubRef.current?.();
             firestoreUnsubRef.current = null;
+            setNotice("accountDeletedElsewhere");
             void firebaseSignOut(auth);
             return;
           }
@@ -247,15 +253,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const uid = auth.currentUser.uid;
     await deleteUser(auth.currentUser);
     await deleteDoc(doc(db, "users", uid));
+    setNotice("accountDeleted");
   }
 
   async function signOut() {
     await firebaseSignOut(auth);
-    window.location.href = "/";
+    setNotice("signedOut");
+  }
+
+  function dismissNotice() {
+    setNotice(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, firestoreUser, loading, signInWithGoogle, signInWithApple, signInWithEmail, createAccountWithEmail, sendVerificationEmail, refreshEmailVerified, signOutQuietly, updateName, sendPasswordReset, reauthenticateWithEmail, reauthenticateWithGoogle, reauthenticateWithApple, deleteAccount, signOut }}>
+    <AuthContext.Provider value={{ user, firestoreUser, loading, notice, dismissNotice, signInWithGoogle, signInWithApple, signInWithEmail, createAccountWithEmail, sendVerificationEmail, refreshEmailVerified, signOutQuietly, updateName, sendPasswordReset, reauthenticateWithEmail, reauthenticateWithGoogle, reauthenticateWithApple, deleteAccount, signOut }}>
       {children}
     </AuthContext.Provider>
   );

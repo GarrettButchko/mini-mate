@@ -6,12 +6,13 @@ import SiteFooter from "@/components/SiteFooter";
 import FaqSection from "@/components/FaqSection";
 import TestimonialGrid from "@/components/TestimonialGrid";
 import FeatureGrid from "@/components/FeatureGrid";
+import HeroPhoneVideo from "@/components/HeroPhoneVideo";
 
 const features = [
-  { icon: Target, title: "Instant Scorecards", desc: "Start a round in seconds. Track every hole with live par comparison.", imageSrc: "/screenshots/test.jpg", imageAlt: "Scorecard screen" },
-  { icon: Globe, title: "Online Multiplayer", desc: "Play with friends online in real-time.", imageSrc: null, imageAlt: "Multiplayer lobby screen" },
-  { icon: BarChart2, title: "Stats & Recap", desc: "See your best rounds, stroke averages, and course records.", imageSrc: null as string | null, imageAlt: "Stats and recap screen" },
-  { icon: Map, title: "Course Discovery", desc: "Find verified mini golf venues near you powered by Foursquare.", imageSrc: null as string | null, imageAlt: "Course discovery screen" },
+  { icon: Target, title: "Instant Scorecards", desc: "Start a round in seconds. Track every hole with live par comparison.", imageSrc: "/screenshots/instant-scorecards.png", imageAlt: "Scorecard screen" },
+  { icon: Globe, title: "Online Multiplayer", desc: "Play with friends online in real-time.", imageSrc: "/screenshots/online-multiplayer.png", imageAlt: "Multiplayer lobby screen" },
+  { icon: BarChart2, title: "Stats & Recap", desc: "See your best rounds, stroke averages, and course records.", imageSrc: "/screenshots/stats-recap.png", imageAlt: "Stats and recap screen" },
+  { icon: Map, title: "Course Discovery", desc: "Find verified mini golf venues near you powered by Foursquare.", imageSrc: "/screenshots/course-discovery.png", imageAlt: "Course discovery screen" },
 ];
 
 const steps = [
@@ -65,7 +66,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="shrink-0 flex justify-center">
-            <div className="rounded-[44px]" style={{ width: 260, height: 520, border: "2px solid rgba(255,255,255,0.25)", background: "rgba(0,0,0,0.2)", backdropFilter: "blur(20px)" }} />
+            <HeroPhoneVideo src="/videos/user-main.mp4" />
           </div>
         </div>
       </section>

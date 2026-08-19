@@ -14,9 +14,9 @@ export default function HeroPhoneVideo({ src, width = 260 }: Props) {
         width,
         height,
         borderRadius: width * IPHONE_CORNER_RATIO,
-        border: "2px solid rgba(255,255,255,0.25)",
         background: "rgba(0,0,0,0.2)",
         backdropFilter: "blur(20px)",
+        boxShadow: "var(--shadow)",
       }}
     >
       <video

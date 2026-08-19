@@ -27,7 +27,7 @@ export default function FeatureGrid({ heading, features, accentColor = "#34C759"
                 <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>{f.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{f.desc}</p>
               </div>
-              <ScreenshotFrame imageSrc={f.imageSrc} imageAlt={f.imageAlt} frameWidth={100} frameHeight={200}>
+              <ScreenshotFrame imageSrc={f.imageSrc} imageAlt={f.imageAlt} frameWidth={100}>
                 <f.icon size={28} style={{ color: "var(--text-muted)", opacity: 0.2 }} />
               </ScreenshotFrame>
             </div>

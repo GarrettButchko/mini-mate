@@ -593,13 +593,19 @@ struct AdTitleView: View {
     @EnvironmentObject var courseViewModel: CourseListViewModelSwift
     
     var body: some View {
+        let text = courseViewModel.limitedTextBinding(keyPath: \.adTitle, deleteKey: "adTitle", limit: 32)
+
         VStack {
             HStack {
                 Text("Ad Title:")
                 Spacer()
+                Text("\(courseViewModel.selectedCourse?.adTitle?.count ?? 0)/32")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
-            TextField("title", text: courseViewModel.limitedTextBinding(keyPath: \.adTitle, deleteKey: "adTitle", limit: 32))
+            TextField("title", text: text)
+                .characterLimit(text, maxLength: 32)
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 15, style: .continuous)
@@ -614,13 +620,19 @@ struct AdDescriptionView: View {
     @EnvironmentObject var courseViewModel: CourseListViewModelSwift
     
     var body: some View {
+        let text = courseViewModel.limitedTextBinding(keyPath: \.adDescription, deleteKey: "adDescription", limit: 40)
+
         VStack {
             HStack {
                 Text("Ad Description:")
                 Spacer()
+                Text("\(courseViewModel.selectedCourse?.adDescription?.count ?? 0)/40")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
-            TextField("description", text: courseViewModel.limitedTextBinding(keyPath: \.adDescription, deleteKey: "adDescription", limit: 40))
+            TextField("description", text: text)
+                .characterLimit(text, maxLength: 40)
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 15, style: .continuous)

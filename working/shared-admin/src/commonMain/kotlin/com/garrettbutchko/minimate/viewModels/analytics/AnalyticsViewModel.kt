@@ -11,6 +11,7 @@ import com.garrettbutchko.minimate.repositories.analytics.AnalyticsRange
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -278,7 +279,14 @@ open class AnalyticsViewModel(
         }
     }
 
+    private var healthJob: Job? = null
+
     fun loadHealthData(course: Course? = null) {
+        // Cancel any in-flight load so overlapping calls (e.g. FirstCoursePreviewSheet
+        // and the dashboard both loading health for the same course during onboarding)
+        // can't race and clobber the shared retentionVM/growthVM caches out of order.
+        healthJob?.cancel()
+
         _currentCourse.value = course
         if (course == null) {
             AppLogger.info("AnalyticsViewModel", "No course to load health data for")
@@ -293,18 +301,16 @@ open class AnalyticsViewModel(
         _loadingEmails.value = true
         _isLoadingHealth.value = true
 
-        coroutineScope.launch(Dispatchers.Default) {
+        healthJob = coroutineScope.launch(Dispatchers.Default) {
             val analyticsJob = async { onAppearDailyAnalyticsSuspend(course) }
             val retentionJob = async { onAppearRetentionSuspend(course) }
 
             analyticsJob.await()
             retentionJob.await()
 
-            // Ensure retention caches reflect the fully-loaded email data before
-            // computing health, regardless of reactive collector timing across
-            // dispatchers (fixes iOS/Android score divergence).
-            retentionVM.recomputePlayerTiers()
-
+            // retentionJob (onAppearRetentionSuspend) assigns retentionVM.allEmails
+            // and recomputes tiers itself before returning, so retentionVM's caches
+            // are already current here.
             val report = calculateCourseHealthBackground()
 
             launch(Dispatchers.Main) {
@@ -382,7 +388,15 @@ open class AnalyticsViewModel(
 
     private suspend fun onAppearRetentionSuspend(course: Course) {
         _loadingEmails.value = true
-        _allEmails.value = analyticsRepo.fetchEmails(courseID = course.id)
+        val emails = analyticsRepo.fetchEmails(courseID = course.id)
+        _allEmails.value = emails
+        // Assign directly instead of waiting on the reactive _allEmails collector
+        // in setupChildViewModels() — that collector runs on its own independent
+        // coroutine with no ordering guarantee relative to this call, which let
+        // recomputePlayerTiers() below run against a stale retentionVM.allEmails
+        // and produce a retention score that visibly changed once the collector
+        // caught up.
+        retentionVM.allEmails = emails
         retentionVM.recomputePlayerTiers()
         _loadingEmails.value = false
     }

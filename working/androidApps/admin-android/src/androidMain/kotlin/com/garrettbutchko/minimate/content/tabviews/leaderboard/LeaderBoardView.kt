@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.QrCode
@@ -28,6 +29,9 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SportsScore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.IconButton
 import com.garrettbutchko.minimate.admin.BuildConfig
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -437,35 +441,52 @@ fun InfoStateFeatureItem(
 // ---------------------------------------------------------------------------
 @Composable
 private fun LeaderboardDebugTools(vm: LeaderBoardViewModel, courseId: String) {
+    val debugError by vm.debugError.collectAsState()
+    var showDebugMenu by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "⚙ Debug",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = { vm.seedDebugData(courseId) },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF34C759))
+        Box {
+            IconButton(
+                onClick = { showDebugMenu = true },
+                modifier = Modifier.size(40.dp)
             ) {
-                Text("Seed 25 Players")
+                Icon(
+                    imageVector = Icons.Default.Build,
+                    contentDescription = "Debug",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Button(
-                onClick = { vm.clearDebugData(courseId) },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30))
+            DropdownMenu(
+                expanded = showDebugMenu,
+                onDismissRequest = { showDebugMenu = false }
             ) {
-                Text("Clear All")
+                DropdownMenuItem(
+                    text = { Text("Seed 25 Players") },
+                    onClick = {
+                        showDebugMenu = false
+                        vm.seedDebugData(courseId)
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Clear All") },
+                    onClick = {
+                        showDebugMenu = false
+                        vm.clearDebugData(courseId)
+                    }
+                )
             }
+        }
+        debugError?.let { error ->
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFFF3B30)
+            )
         }
     }
 }

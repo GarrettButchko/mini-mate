@@ -78,6 +78,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.ClipEntry
@@ -833,6 +834,15 @@ private fun AdSectionContent(course: Course) {
                 courseListVM.updateLimitedCourseField(text, 32, "adTitle") { c, v -> c.copy(adTitle = v) }
             },
             label = { Text("Ad Title") },
+            supportingText = {
+                Text(
+                    "${adTitle.length}/32",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = subThreeOpp
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = AppTextFieldShape,
             colors = OutlinedTextFieldDefaults.colors(
@@ -854,6 +864,15 @@ private fun AdSectionContent(course: Course) {
                 courseListVM.updateLimitedCourseField(text, 40, "adDescription") { c, v -> c.copy(adDescription = v) }
             },
             label = { Text("Ad Description") },
+            supportingText = {
+                Text(
+                    "${adDesc.length}/40",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = subThreeOpp
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = AppTextFieldShape,
             colors = OutlinedTextFieldDefaults.colors(
