@@ -2,10 +2,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { MapPin, Plus, Lock, ArrowRight, CheckCircle, Sparkles } from "lucide-react";
+import { MapPin, Plus, Lock, ArrowRight, CheckCircle, Sparkles, Settings, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCourses } from "@/lib/useAdminCourses";
-import { TIER_LABEL } from "@/lib/course";
+import { TIER_LABEL, CourseDoc } from "@/lib/course";
 import PageShell from "@/components/PageShell";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
@@ -36,6 +36,8 @@ export default function ManageCoursesPage() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
+  const [subscriptionMenuCourse, setSubscriptionMenuCourse] = useState<CourseDoc | null>(null);
+  const [portalBusy, setPortalBusy] = useState(false);
 
   useEffect(() => {
     if (!cooldownEnd) return;
@@ -103,15 +105,29 @@ export default function ManageCoursesPage() {
     }
   }
 
-  async function openSubscriptionPortal(customerId?: string | null) {
-    if (!customerId) return;
-    const res = await fetch("/api/portal", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customerId }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
+  async function openSubscriptionPortal(course: CourseDoc, flow: "cancel" | "update") {
+    if (!course.stripeCustomerId) return;
+    setPortalBusy(true);
+    try {
+      const res = await fetch("/api/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: course.stripeCustomerId,
+          subscriptionId: course.stripeSubscriptionId,
+          flow,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setSubscriptionMenuCourse(null);
+      setBanner({ text: "Couldn't open the billing portal — please try again.", kind: "error" });
+    } finally {
+      setPortalBusy(false);
+    }
   }
 
   return (
@@ -220,7 +236,7 @@ export default function ManageCoursesPage() {
                       <div className="flex flex-row gap-3 mt-4">
                         {course.stripeCustomerId && (
                           <button
-                            onClick={() => openSubscriptionPortal(course.stripeCustomerId)}
+                            onClick={() => setSubscriptionMenuCourse(course)}
                             className="flex-1 rounded-2xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-opacity hover:opacity-70"
                             style={{ background: "var(--surface-two)", color: PURPLE, cursor: "pointer", border: "none" }}
                           >
@@ -317,6 +333,46 @@ export default function ManageCoursesPage() {
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "10px 0 6px" }}>
                   <LogoLoadingView size={25} color={PURPLE} />
                   <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)" }}>Adding…</p>
+                </div>
+              </OverlayCard>
+
+              {/* Manage subscription action sheet */}
+              <OverlayCard
+                open={!!subscriptionMenuCourse}
+                maxWidth={360}
+                backdropRadius={0}
+                onBackdropClick={() => { if (!portalBusy) setSubscriptionMenuCourse(null); }}
+              >
+                <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                  Manage subscription
+                </p>
+                <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-muted)" }}>
+                  {subscriptionMenuCourse?.name}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <button
+                    onClick={() => subscriptionMenuCourse && openSubscriptionPortal(subscriptionMenuCourse, "update")}
+                    disabled={portalBusy}
+                    style={{ display: "flex", alignItems: "center", gap: 10, height: 46, borderRadius: 14, border: "none", background: "var(--surface-two)", cursor: portalBusy ? "default" : "pointer", padding: "0 14px", fontSize: 13, fontWeight: 600, color: "var(--text)", opacity: portalBusy ? 0.6 : 1 }}
+                  >
+                    <Settings size={15} style={{ color: PURPLE, flexShrink: 0 }} />
+                    Change subscription details
+                  </button>
+                  <button
+                    onClick={() => subscriptionMenuCourse && openSubscriptionPortal(subscriptionMenuCourse, "cancel")}
+                    disabled={portalBusy}
+                    style={{ display: "flex", alignItems: "center", gap: 10, height: 46, borderRadius: 14, border: "none", background: "var(--surface-two)", cursor: portalBusy ? "default" : "pointer", padding: "0 14px", fontSize: 13, fontWeight: 600, color: RED, opacity: portalBusy ? 0.6 : 1 }}
+                  >
+                    <XCircle size={15} style={{ color: RED, flexShrink: 0 }} />
+                    Cancel subscription
+                  </button>
+                  <button
+                    onClick={() => setSubscriptionMenuCourse(null)}
+                    disabled={portalBusy}
+                    style={{ height: 38, borderRadius: 9, border: "none", background: "transparent", cursor: portalBusy ? "default" : "pointer", fontSize: 13, fontWeight: 600, color: "var(--text-muted)", marginTop: 4 }}
+                  >
+                    Close
+                  </button>
                 </div>
               </OverlayCard>
 

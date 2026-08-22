@@ -16,6 +16,7 @@
 		2102E22F2F6C680C00F971E4 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E22E2F6C680C00F971E4 /* FirebaseFirestore */; };
 		2102E2312F6C680C00F971E4 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E2302F6C680C00F971E4 /* FirebaseStorage */; };
 		212C726D302BC05C002ED1CB /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 212C726C302BC05C002ED1CB /* ConfettiSwiftUI */; };
+		218089433038EC5300733DDC /* StatusOverlayKit in Frameworks */ = {isa = PBXBuildFile; productRef = 218089423038EC5300733DDC /* StatusOverlayKit */; };
 		21BBF546302D0B5A0031955A /* SwipeableRow in Frameworks */ = {isa = PBXBuildFile; productRef = 21BBF545302D0B5A0031955A /* SwipeableRow */; };
 		21D595672FD7BC3800A7BABF /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 21D595662FD7BC3800A7BABF /* FirebaseFunctions */; };
 		21FA50A32F70E97B00701BBB /* MarqueeText in Frameworks */ = {isa = PBXBuildFile; productRef = 21FA50A22F70E97B00701BBB /* MarqueeText */; };
@@ -59,6 +60,7 @@
 			files = (
 				2102E2272F6C680C00F971E4 /* FirebaseAnalytics in Frameworks */,
 				2102E22B2F6C680C00F971E4 /* FirebaseCore in Frameworks */,
+				218089433038EC5300733DDC /* StatusOverlayKit in Frameworks */,
 				2102E22D2F6C680C00F971E4 /* FirebaseDatabase in Frameworks */,
 				21FA50A32F70E97B00701BBB /* MarqueeText in Frameworks */,
 				2102937E2F6E26BC00375E34 /* GoogleSignInSwift in Frameworks */,
@@ -134,6 +136,7 @@
 				21D595662FD7BC3800A7BABF /* FirebaseFunctions */,
 				212C726C302BC05C002ED1CB /* ConfettiSwiftUI */,
 				21BBF545302D0B5A0031955A /* SwipeableRow */,
+				218089423038EC5300733DDC /* StatusOverlayKit */,
 			);
 			productName = "admin-ios";
 			productReference = 2102E2172F6C67A500F971E4 /* admin-ios.app */;
@@ -169,6 +172,7 @@
 				21FA50A12F70E97B00701BBB /* XCRemoteSwiftPackageReference "MarqueeText" */,
 				212C726B302BC05C002ED1CB /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
 				21BBF544302D0B5A0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */,
+				218089413038EC5300733DDC /* XCRemoteSwiftPackageReference "status-overlay-kit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2102E2182F6C67A500F971E4 /* Products */;
@@ -469,6 +473,14 @@
 				minimumVersion = 3.0.0;
 			};
 		};
+		218089413038EC5300733DDC /* XCRemoteSwiftPackageReference "status-overlay-kit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/GarrettButchko/status-overlay-kit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		21BBF544302D0B5A0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/GarrettButchko/swipeable-row-ios";
@@ -532,6 +544,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 212C726B302BC05C002ED1CB /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
 			productName = ConfettiSwiftUI;
+		};
+		218089423038EC5300733DDC /* StatusOverlayKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 218089413038EC5300733DDC /* XCRemoteSwiftPackageReference "status-overlay-kit" */;
+			productName = StatusOverlayKit;
 		};
 		21BBF545302D0B5A0031955A /* SwipeableRow */ = {
 			isa = XCSwiftPackageProductDependency;

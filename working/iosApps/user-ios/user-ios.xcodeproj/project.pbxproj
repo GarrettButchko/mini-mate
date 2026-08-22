@@ -15,6 +15,7 @@
 		2102E1F52F6C653700F971E4 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E1F42F6C653700F971E4 /* FirebaseDatabase */; };
 		2102E1F72F6C653B00F971E4 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E1F62F6C653B00F971E4 /* FirebaseFirestore */; };
 		2102E1F92F6C653F00F971E4 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2102E1F82F6C653F00F971E4 /* FirebaseStorage */; };
+		218089463038EC5E00733DDC /* StatusOverlayKit in Frameworks */ = {isa = PBXBuildFile; productRef = 218089453038EC5E00733DDC /* StatusOverlayKit */; };
 		21BBF549302D0B7E0031955A /* SwipeableRow in Frameworks */ = {isa = PBXBuildFile; productRef = 21BBF548302D0B7E0031955A /* SwipeableRow */; };
 		21D748632F71F6FB0014F6E7 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 21D748622F71F6FB0014F6E7 /* GoogleMobileAds */; };
 		21D748662F71F7730014F6E7 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 21D748652F71F7730014F6E7 /* ConfettiSwiftUI */; };
@@ -26,7 +27,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		21D7487F2F7232080014F6E7 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		21D7487F2F7232080014F6E7 /* Exceptions for "user-ios" folder in "user-ios" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -45,7 +46,7 @@
 		21B56BC12F64A65000DF589D /* user-ios */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				21D7487F2F7232080014F6E7 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+				21D7487F2F7232080014F6E7 /* Exceptions for "user-ios" folder in "user-ios" target */,
 			);
 			path = "user-ios";
 			sourceTree = "<group>";
@@ -59,6 +60,7 @@
 			files = (
 				2102E1EF2F6C652E00F971E4 /* FirebaseAnalytics in Frameworks */,
 				2102E1F32F6C653400F971E4 /* FirebaseCore in Frameworks */,
+				218089463038EC5E00733DDC /* StatusOverlayKit in Frameworks */,
 				21D748632F71F6FB0014F6E7 /* GoogleMobileAds in Frameworks */,
 				2102E1F52F6C653700F971E4 /* FirebaseDatabase in Frameworks */,
 				21FA50A02F70E96B00701BBB /* MarqueeText in Frameworks */,
@@ -134,6 +136,7 @@
 				21D748622F71F6FB0014F6E7 /* GoogleMobileAds */,
 				21D748652F71F7730014F6E7 /* ConfettiSwiftUI */,
 				21BBF548302D0B7E0031955A /* SwipeableRow */,
+				218089453038EC5E00733DDC /* StatusOverlayKit */,
 			);
 			productName = "user-ios";
 			productReference = 21B56BBF2F64A65000DF589D /* user-ios.app */;
@@ -170,6 +173,7 @@
 				21D748612F71F6FB0014F6E7 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 				21D748642F71F7730014F6E7 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
 				21BBF547302D0B7E0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */,
+				218089443038EC5E00733DDC /* XCRemoteSwiftPackageReference "status-overlay-kit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 21B56BC02F64A65000DF589D /* Products */;
@@ -466,6 +470,14 @@
 				minimumVersion = 12.10.0;
 			};
 		};
+		218089443038EC5E00733DDC /* XCRemoteSwiftPackageReference "status-overlay-kit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/GarrettButchko/status-overlay-kit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		21BBF547302D0B7E0031955A /* XCRemoteSwiftPackageReference "swipeable-row-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/GarrettButchko/swipeable-row-ios";
@@ -540,6 +552,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2155C0962F6667C4001BBDC5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		218089453038EC5E00733DDC /* StatusOverlayKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 218089443038EC5E00733DDC /* XCRemoteSwiftPackageReference "status-overlay-kit" */;
+			productName = StatusOverlayKit;
 		};
 		21BBF548302D0B7E0031955A /* SwipeableRow */ = {
 			isa = XCSwiftPackageProductDependency;

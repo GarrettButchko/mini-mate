@@ -4,8 +4,37 @@ import { stripe } from "@/lib/stripe";
 import { getOrCreateCoursePassword } from "@/lib/coursePassword";
 import { deliverCode } from "@/lib/sendCode";
 import { db } from "@/lib/firebaseAdmin";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
+
+const TIER_BY_PRICE_ID: Record<string, number> = {
+  [process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID ?? ""]: 2,
+  [process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID ?? ""]: 3,
+};
+
+const ACTIVE_STATUSES = new Set<Stripe.Subscription.Status>(["active", "trialing", "past_due"]);
+
+async function coursesForSubscription(subscriptionId: string) {
+  const snap = await db.collection("courses").where("stripeSubscriptionId", "==", subscriptionId).get();
+  return snap.docs;
+}
+
+async function syncSubscription(subscription: Stripe.Subscription) {
+  const docs = await coursesForSubscription(subscription.id);
+  if (!docs.length) return;
+
+  if (!ACTIVE_STATUSES.has(subscription.status)) {
+    await Promise.all(docs.map((doc) => doc.ref.set({ tier: 1, stripeSubscriptionId: null }, { merge: true })));
+    return;
+  }
+
+  const priceId = subscription.items.data[0]?.price.id;
+  const tier = priceId ? TIER_BY_PRICE_ID[priceId] : undefined;
+  if (!tier) return;
+
+  await Promise.all(docs.map((doc) => doc.ref.set({ tier }, { merge: true })));
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -50,6 +79,14 @@ export async function POST(req: NextRequest) {
       },
       { merge: true }
     );
+  }
+
+  if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {
+    try {
+      await syncSubscription(event.data.object as Stripe.Subscription);
+    } catch (err) {
+      logger.error("webhook", "Failed to sync subscription", err);
+    }
   }
 
   return NextResponse.json({ received: true });
