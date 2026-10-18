@@ -48,7 +48,6 @@ npm run build
 
 ```bash
 cd functions
-npm run lint
 npm run build
 ```
 
