@@ -1,54 +1,59 @@
-# MiniMate
+# JellyBoi
 
-MiniMate is a digital companion for mini golf businesses — designed to modernize the course experience with digital scorekeeping, leaderboards, and customer insights. 
+JellyBoi is the MiniMate platform for modern mini golf experiences, including digital scorekeeping, live leaderboards, and operator tools.
 
-This repository is a **Kotlin Multiplatform (KMP)** project containing four applications (Admin Android, User Android, Admin iOS, and User iOS) and a shared logic module.
+## Repository Overview
 
-## Project Structure
+This repository contains multiple apps and shared modules:
 
-- **`working/shared`**: Kotlin Multiplatform module containing shared business logic, data models, and constants used by all four apps.
-- **`working/androidApps/admin-android`**: The Android application for course administrators.
-- **`working/androidApps/user-android`**: The Android application for players.
-- **`working/iosApps/admin-ios`**: The SwiftUI application for course administrators.
-- **`working/iosApps/user-ios`**: The SwiftUI application for players.
-
-## Features
-
-### For Players (User Apps)
-- Digital scorecards with automatic scoring.
-- Live leaderboards to compete locally or globally.
-- Personal game stats and achievements.
-
-### For Businesses (Admin Apps)
-- Branded experience with course details and assets.
-- Customer insights dashboard (play trends, engagement).
-- Promotions and event management.
-
-## Tech Stack
-
-- **Shared Logic**: Kotlin Multiplatform (KMP)
-- **Android**: Jetpack Compose, Kotlin
-- **iOS**: SwiftUI, SwiftData
-- **Backend**: Firebase (Auth, Firestore, Functions)
-- **Database**: Firestore (Remote), Room (Local)
+- `web/` – Next.js web application
+- `functions/` – Firebase Cloud Functions (TypeScript)
+- `working/shared/` – Kotlin Multiplatform shared module
+- `working/androidApps/` – Android apps
+- `working/iosApps/` – iOS apps
 
 ## Getting Started
 
-### Android Development
-1. Open the root directory in **Android Studio**.
-2. Select either `:admin-android` or `:user-android` from the run configurations.
-3. Build and run on an emulator or device.
+### Web app
 
-### iOS Development
-1. Navigate to `working/iosApps/`.
-2. Open `MiniMate.xcworkspace` in **Xcode**.
-3. Select either the `admin-ios` or `user-ios` scheme.
-4. Ensure `GoogleService-Info.plist` is added to the respective app targets.
-5. Build and run on a simulator or device.
+```bash
+cd web
+npm install
+npm run dev
+```
 
-## Contributing
-- Follow the existing project structure: place shared logic in the `shared` module and platform-specific UI in the respective app folders.
-- Ensure all four apps are tested when making changes to shared data models.
+### Firebase Functions
 
-## License & Contact
-This project is maintained privately. For questions or access, contact the maintainer.
+```bash
+cd functions
+npm install
+npm run build
+```
+
+### Mobile (KMP)
+
+Open the repository in Android Studio for Android/KMP development, or open `working/iosApps/MiniMate.xcworkspace` in Xcode for iOS development.
+
+## Useful Commands
+
+### Web
+
+```bash
+cd web
+npm run lint
+npm run build
+```
+
+### Functions
+
+```bash
+cd functions
+npm run lint
+npm run build
+```
+
+### Shared/mobile
+
+```bash
+./gradlew build
+```
